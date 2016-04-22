@@ -8,6 +8,7 @@ Javascript library for visualizing OncoGrids and related tracks
 - Install global modules
     ```
     npm install --global gulp-cli
+    
     npm install --global bower
     ```
 
