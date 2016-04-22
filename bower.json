@@ -1,0 +1,26 @@
+{
+  "name": "OncoGrid",
+  "description": "OncoGrid Visualization for ICGC",
+  "version": "0.0.1",
+  "homepage": "https://github.com/icgc/oncogrid",
+  "repository": {
+    "type": "git",
+    "url": "git://git@github.com:icgc/oncogrid.git"
+  },
+  "authors": [
+    {
+      "name": "Dusan Andric"
+    }
+  ],
+  "license": "GPLv3",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "3.5.6"
+  }
+}

@@ -1,0 +1,18 @@
+# Javascript Temporary Files
+npm-debug.log
+.cake_task_cache
+public/
+node_modules/
+components/
+.sass-cache/
+.tmp/
+unit.xml
+e2e.xml
+bower_components/
+
+# *nix temporary files
+*~
+*.swp
+
+# Mac metadata
+.DS_Store

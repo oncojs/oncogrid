@@ -1,0 +1,17 @@
+{
+  "name": "OncoGrid",
+  "description": "OncoGrid Visualization for ICGC",
+  "version": "3.8.21.x",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://git@github.com:icgc/oncogrid.git"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-minify": "0.0.10"
+  },
+  "engines": {
+    "node": ">=0.8.0"
+  }
+}
