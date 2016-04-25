@@ -17,31 +17,35 @@
 
 'use strict';
 
-var oncogrid = (function (d3) {
-  return function(donors, genes, observations, element, params) {
-    this.donors = donors;
-    this.genes = genes;
-    this.observations = observations;
-    this.element = element;
-    this.params = params;
+var oncogrid = (function (d3, oncogrid) {
 
-    this.heatMap = false; // Heatmap view turned off by default.
-
-    this.colorMap = {
-      'missense_variant': '#ff825a',
-      'frameshift_variant': '#57dba4',
-      'stop_gained': '#af57db',
-      'start_lost': '#af57db',
-      'stop_lost': '#ffe',
-      'initiator_codon_variant': '#af57db',
-    };
-
+  return function (params) {
     var _self = this;
+
+    _self.donors = params.donors || [];
+    _self.genes = params.genes || [];
+    _self.observations = params.observations || [];
+    _self.element = params.element || 'body';
+
+    _self.heatMap = params.heatMap || true;
+
+    _self.colorMap = params.colorMap || {
+          'missense_variant': '#ff825a',
+          'frameshift_variant': '#57dba4',
+          'stop_gained': '#af57db',
+          'start_lost': '#af57db',
+          'stop_lost': '#ffe',
+          'initiator_codon_variant': '#af57db',
+        };
+
+    _self.width = params.width;
+    _self.height = params.height;
+
 
     /**
      * Returns 1 if at least one mutation, 0 otherwise.
      */
-    this.mutationScore = function(donor, gene) {
+    _self.mutationScore = function(donor, gene) {
 
       for (var i = 0; i < _self.observations.length; i++) {
         var obs = _self.observations[i];
@@ -56,7 +60,7 @@ var oncogrid = (function (d3) {
     /**
      * Returns 1 if at least one mutation, 0 otherwise.
      */
-    this.mutationGeneScore = function(donor, gene) {
+    _self.mutationGeneScore = function(donor, gene) {
 
       var retVal = 0;
       for (var i = 0; i < _self.observations.length; i++) {
@@ -72,7 +76,7 @@ var oncogrid = (function (d3) {
     /**
      * Computes scores for donor sorting.
      */
-    this.computeScores = function() {
+    _self.computeScores = function() {
 
       for (var i = 0; i < _self.donors.length; i++) {
         var donor = _self.donors[i];
@@ -85,7 +89,7 @@ var oncogrid = (function (d3) {
 
     };
 
-    this.computeGeneScores = function() {
+    _self.computeGeneScores = function() {
 
       for (var i = 0; i < _self.genes.length; i++) {
         var gene = _self.genes[i];
@@ -100,7 +104,7 @@ var oncogrid = (function (d3) {
     /**
      * Comparator for scores
      */
-    this.sortScore = function(a, b) {
+    _self.sortScore = function(a, b) {
       if (a.score < b.score) {
         return 1;
       } else if (a.score > b.score) {
@@ -113,18 +117,18 @@ var oncogrid = (function (d3) {
     /**
      * Sorts donors by score
      */
-    this.sortByScores = function() {
+    _self.sortByScores = function() {
       _self.donors.sort(_self.sortScore);
     };
 
-    this.genesSortbyScores = function() {
+    _self.genesSortbyScores = function() {
       _self.genes.sort(_self.sortScore);
     };
 
     /**
      * Helper for getting donor index position
      */
-    this.getDonorIndex = function(donors, donorId) {
+    _self.getDonorIndex = function(donors, donorId) {
       for (var i = 0; i < donors.length; i++) {
         var donor = donors[i];
         if (donor.donorId === donorId) {
@@ -138,16 +142,13 @@ var oncogrid = (function (d3) {
     /**
      * Initializes and creates the main SVG with rows and columns. Does prelim sort on data
      */
-    this.init = function() {
+    _self.init = function() {
 
       _self.div = d3.select('body').append('div')
           .attr('class', 'tooltip-oncogrid')
           .style('opacity', 0);
 
       _self.margin = { top: 10, right: 15, bottom: 15, left: 80 };
-      _self.width = _self.params.width;
-      _self.height = _self.params.height;
-
 
       _self.numDonors = _self.donors.length;
       _self.numGenes = _self.genes.length;
@@ -204,7 +205,7 @@ var oncogrid = (function (d3) {
      * Only to be called the first time the OncoGrid is rendered. It creates the rects representing the
      * mutation occurrences.
      */
-    this.renderFirst = function() {
+    _self.renderFirst = function() {
 
       _self.row.append('text')
           .attr('class', 'gene-label label-text-font')
@@ -252,7 +253,7 @@ var oncogrid = (function (d3) {
       _self.renderAgeHistogram();
     };
 
-    this.renderAgeHistogram = function() {
+    _self.renderAgeHistogram = function() {
 
       if (_self.topSVG === undefined || _self.topSVG === null) {
         _self.topSVG = d3.select('#oncogrid-topcharts').append('svg')
@@ -294,7 +295,7 @@ var oncogrid = (function (d3) {
     /**
      * Defines the row drag behaviour for moving genes and binds it to the row elements.
      */
-    this.defineRowDragBehaviour = function() {
+    _self.defineRowDragBehaviour = function() {
 
       var drag = d3.behavior.drag();
       drag.on('dragstart', function() {
@@ -302,7 +303,7 @@ var oncogrid = (function (d3) {
       });
       drag.on('drag', function(d) {
         var trans = d3.event.dy;
-        var dragged = genes.indexOf(d);
+        var dragged = _self.genes.indexOf(d);
         var selection = d3.select(this);
 
         selection.attr('transform', function() {
@@ -313,21 +314,21 @@ var oncogrid = (function (d3) {
         var newY = d3.transform(d3.select(this).attr('transform')).translate[1];
 
         d3.selectAll('.row').each(function(f) {
-          var curGeneIndex = genes.indexOf(f);
+          var curGeneIndex = _self.genes.indexOf(f);
           var curGene, yCoord;
           if (trans > 0 && curGeneIndex > dragged) {
             yCoord = d3.transform(d3.select(this).attr('transform')).translate[1];
             if (newY > yCoord) {
-              curGene = genes[dragged];
-              genes[dragged] = genes[curGeneIndex];
-              genes[curGeneIndex] = curGene;
+              curGene = _self.genes[dragged];
+              _self.genes[dragged] = _self.genes[curGeneIndex];
+              _self.genes[curGeneIndex] = curGene;
             }
           } else if (trans < 0 && curGeneIndex < dragged) {
             yCoord = d3.transform(d3.select(this).attr('transform')).translate[1];
             if (newY < yCoord) {
-              curGene = genes[dragged];
-              genes[dragged] = genes[curGeneIndex];
-              genes[curGeneIndex] = curGene;
+              curGene = _self.genes[dragged];
+              _self.genes[dragged] = _self.genes[curGeneIndex];
+              _self.genes[curGeneIndex] = curGene;
             }
           }
         });
@@ -349,7 +350,7 @@ var oncogrid = (function (d3) {
 
     };
 
-    this.cluster = function() {
+    _self.cluster = function() {
 
 
       _self.computeGeneScores();
@@ -362,7 +363,7 @@ var oncogrid = (function (d3) {
     /**
      * Render function ensures presentation matches the data. Called after modifying data.
      */
-    this.render = function() {
+    _self.render = function() {
 
 
       d3.selectAll('.row')
@@ -386,7 +387,7 @@ var oncogrid = (function (d3) {
     /**
      * Function that determines the y position of a mutation within a cell
      */
-    this.getY = function(d) {
+    _self.getY = function(d) {
 
       var pseudo_genes = _self.genes.map(function(g) {
         return g.id;
@@ -401,7 +402,7 @@ var oncogrid = (function (d3) {
           (keys.indexOf(d.consequence) - 1);
     };
 
-    this.getColor = function(d) {
+    _self.getColor = function(d) {
 
 
       if (_self.heatMap === true) {
@@ -411,7 +412,7 @@ var oncogrid = (function (d3) {
       }
     };
 
-    this.getOpacity = function() {
+    _self.getOpacity = function() {
 
 
       if (_self.heatMap === true) {
@@ -421,7 +422,7 @@ var oncogrid = (function (d3) {
       }
     };
 
-    this.getHeight = function() {
+    _self.getHeight = function() {
 
 
       if (_self.heatMap === true) {
@@ -431,7 +432,7 @@ var oncogrid = (function (d3) {
       }
     };
 
-    this.toggleHeatmap = function() {
+    _self.toggleHeatmap = function() {
 
       if (_self.heatMap === true) {
         _self.heatMap = false;
@@ -449,7 +450,7 @@ var oncogrid = (function (d3) {
           .attr('opacity', function(d) { return _self.getOpacity(d); });
     };
 
-    this.removeDonors = function(func) {
+    _self.removeDonors = function(func) {
 
 
       var removedList = [];
@@ -505,7 +506,7 @@ var oncogrid = (function (d3) {
           .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; });
     };
 
-    this.removeGenes = function(func) {
+    _self.removeGenes = function(func) {
 
       var removedList = [];
 
@@ -558,19 +559,20 @@ var oncogrid = (function (d3) {
           .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
     };
 
-    this.sortDonors = function(func) {
+    _self.sortDonors = function(func) {
 
       _self.donors.sort(func);
       _self.render();
     };
 
-    this.destroy = function() {
+    _self.destroy = function() {
       d3.selectAll('svg').remove();
       d3.select('#oncogrid-topcharts').select('svg').remove();
       delete _self.svg;
       delete _self.topSVG;
     };
 
-    return this;
+    return _self;
   };
-}(d3));
+
+}(d3, oncogrid || {}));
