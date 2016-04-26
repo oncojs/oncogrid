@@ -6,7 +6,7 @@ var minify = require('gulp-minify');
 var portalOncoDir = '/Users/dandric/Documents/workspace/dcc-portal/dcc-portal-ui/app/scripts/oncogrid/js';
 
 gulp.task('default', function() {
-  gulp.src(['src/oncogrid.js', 'src/scoring.js'])
+  gulp.src(['src/oncogrid.js', 'src/core.js', 'src/score.js', 'src/render.js'])
       .pipe(concat('oncogrid.js'))
       .pipe(minify({
         ext: {
