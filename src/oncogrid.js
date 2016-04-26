@@ -15,100 +15,236 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-'use strict';
+MainGrid = require('./MainGrid');
+OncoHistogram = require('./Histogram');
 
-var oncogrid = function(params) {
-  var _self = this;
+var OncoGrid;
 
-  _self.donors = params.donors || [];
-  _self.genes = params.genes || [];
-  _self.observations = params.observations || [];
-  _self.element = params.element || 'body';
+(function (){
+  'use strict';
 
-  _self.heatMap = params.heatMap || true;
+  OncoGrid = function(params) {
+    var _self = this;
 
-  _self.colorMap = params.colorMap || {
-        'missense_variant': '#ff825a',
-        'frameshift_variant': '#57dba4',
-        'stop_gained': '#af57db',
-        'start_lost': '#af57db',
-        'stop_lost': '#ffe',
-        'initiator_codon_variant': '#af57db',
-      };
+    _self.donors = params.donors || [];
+    _self.genes = params.genes || [];
+    _self.observations = params.observations || [];
 
-  _self.width = params.width;
-  _self.height = params.height;
+    _self.computeGeneScores();
+    _self.computeScores();
+    _self.sortByScores();
 
-};
+    _self.mainGrid = new MainGrid(params, _self.update(_self));
 
-/**
- * Initializes and creates the main SVG with rows and columns. Does prelim sort on data
- */
-oncogrid.prototype.init = function() {
-  var _self = this;
+    _self.charts = [];
+    _self.charts.push(_self.mainGrid);
+  };
 
-  _self.div = d3.select('body').append('div')
-      .attr('class', 'tooltip-oncogrid')
-      .style('opacity', 0);
+  /**
+   * Initializes and creates the main SVG with rows and columns. Does prelim sort on data
+   */
+  OncoGrid.prototype.render = function() {
+    var _self = this;
 
-  _self.margin = { top: 10, right: 15, bottom: 15, left: 80 };
+    _self.charts.forEach(function(chart) {
+        chart.render();
+    });
+  };
 
-  _self.numDonors = _self.donors.length;
-  _self.numGenes = _self.genes.length;
+  /**
+   * Updates all charts
+   */
+  OncoGrid.prototype.update = function(scope) {
+    var _self = scope;
 
-  _self.cellWidth = _self.width / _self.donors.length;
-  _self.cellHeight = _self.height / _self.genes.length;
+    return function(donorSort) {
+      donorSort = (typeof donorSort === 'undefined' || donorSort === null) ? false: donorSort;
 
-  _self.x = d3.scale.ordinal()
-      .domain(d3.range(_self.numDonors))
-      .rangeBands([0, _self.width]);
+      if (donorSort) {
+        _self.computeScores();
+        _self.sortByScores();
+      }
 
-  _self.y = d3.scale.ordinal()
-      .domain(d3.range(_self.numGenes))
-      .rangeBands([0, _self.height]);
+      _self.charts.forEach(function (chart) {
+        chart.update();
+      });
+    };
+  };
 
-  _self.svg = d3.select(_self.element).append('svg')
-      .attr('width', _self.width + _self.margin.left + _self.margin.right)
-      .attr('height', _self.height + _self.margin.top + _self.margin.bottom)
-      .style('margin-left', _self.margin.left + 'px')
-      .append('g')
-      .attr('transform', 'translate(' + _self.margin.left + ',' + _self.margin.top + ')');
+  /**
+   * Sorts donors by score
+   */
+  OncoGrid.prototype.sortByScores = function() {
+    var _self = this;
 
-  _self.svg.append('rect')
-      .attr('class', 'background')
-      .attr('width', _self.width)
-      .attr('height', _self.height);
+    _self.donors.sort(_self.sortScore);
+  };
 
-  _self.row = _self.svg.selectAll('.row')
-      .data(_self.genes)
-      .enter().append('g')
-      .attr('class', 'row')
-      .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
+  OncoGrid.prototype.genesSortbyScores = function() {
+    var _self = this;
 
-  _self.row.append('line')
-      .attr('x2', _self.width);
+    _self.genes.sort(_self.sortScore);
+  };
 
+  /**
+   * Helper for getting donor index position
+   */
+  OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
+    for (var i = 0; i < donors.length; i++) {
+      var donor = donors[i];
+      if (donor.donorId === donorId) {
+        return i;
+      }
+    }
 
-  _self.column = _self.svg.selectAll('.column')
-      .data(_self.donors)
-      .enter().append('g')
-      .attr('class', 'column')
-      .attr('donor', function(d) { return d.donorId; })
-      .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
+    return -1;
+  };
 
-  _self.column.append('line')
-      .attr('x1', -_self.width);
+  OncoGrid.prototype.cluster = function() {
+    var _self = this;
 
-  _self.computeGeneScores();
-  _self.computeScores();
-  _self.sortByScores();
-};
+    _self.computeGeneScores();
+    _self.genesSortbyScores();
+    _self.computeScores();
+    _self.sortByScores();
+    _self.update(_self)();
+  };
 
-oncogrid.prototype.destroy = function() {
-  var _self = this;
+  OncoGrid.prototype.removeDonors = function(func) {
+    var _self = this;
 
-  d3.selectAll('svg').remove();
-  d3.select('#oncogrid-topcharts').select('svg').remove();
-  delete _self.svg;
-  delete _self.topSVG;
-};
+    var removedList = [];
+
+    // Remove donors from data
+    for (var i = 0; i < _self.donors.length; i++) {
+      var donor = _self.donors[i];
+      if (func(donor)) {
+        removedList.push(donor.donorId);
+        d3.selectAll('.' + donor.donorId + '-cell').remove();
+        d3.selectAll('.' + donor.donorId + '-bar').remove();
+        _self.donors.splice(i, 1);
+        i--;
+      }
+    }
+
+    for (var j = 0; j < _self.observations.length; j++) {
+      var obs = _self.observations[j];
+      if (_self.donors.indexOf(obs.donorId) >= 0) {
+        _self.observations.splice(j, 1);
+        j--;
+      }
+    }
+
+    _self.update(_self)();
+  };
+
+  OncoGrid.prototype.removeGenes = function(func) {
+    var _self = this;
+
+    var removedList = [];
+
+    // Remove genes from data
+    for (var i = 0; i < _self.genes.length; i++) {
+      var gene = _self.genes[i];
+      if (func(gene)) {
+        removedList.push(gene.id);
+        d3.selectAll('.' + gene.id + '-cell').remove();
+        _self.genes.splice(i, 1);
+        i--;
+      }
+    }
+
+    _self.update(_self)();
+  };
+
+  OncoGrid.prototype.sortDonors = function(func) {
+    var _self = this;
+
+    _self.donors.sort(func);
+    _self.update(_self)();
+  };
+
+  OncoGrid.prototype.toggleHeatmap = function() {
+    var _self = this;
+
+    _self.mainGrid.toggleHeatmap();
+  };
+
+  /**
+   * Returns 1 if at least one mutation, 0 otherwise.
+   */
+  OncoGrid.prototype.mutationScore = function(donor, gene) {
+    var _self = this;
+
+    for (var i = 0; i < _self.observations.length; i++) {
+      var obs = _self.observations[i];
+      if (obs.donorId === donor && obs.gene === gene) {
+        return 1;
+      }
+    }
+
+    return 0;
+  };
+
+  /**
+   * Returns 1 if at least one mutation, 0 otherwise.
+   */
+  OncoGrid.prototype.mutationGeneScore = function(donor, gene) {
+    var _self = this;
+
+    var retVal = 0;
+    for (var i = 0; i < _self.observations.length; i++) {
+      var obs = _self.observations[i];
+      if (obs.gene === gene && obs.gene === gene) {
+        retVal++;
+      }
+    }
+
+    return retVal;
+  };
+
+  /**
+   * Computes scores for donor sorting.
+   */
+  OncoGrid.prototype.computeScores = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.donors.length; i++) {
+      var donor = _self.donors[i];
+      donor.score = 0;
+      for (var j = 0; j < _self.genes.length; j++) {
+        var gene = _self.genes[j];
+        donor.score += (_self.mutationScore(donor.donorId, gene.id) * Math.pow(2, _self.genes.length + 1 - j));
+      }
+    }
+
+  };
+
+  OncoGrid.prototype.computeGeneScores = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.genes.length; i++) {
+      var gene = _self.genes[i];
+      gene.score = 0;
+      for (var j = 0; j < _self.donors.length; j++) {
+        var donor = _self.donors[j];
+        gene.score += _self.mutationGeneScore(donor.donorId, gene.id);
+      }
+    }
+  };
+
+  /**
+   * Comparator for scores
+   */
+  OncoGrid.prototype.sortScore = function(a, b) {
+    if (a.score < b.score) {
+      return 1;
+    } else if (a.score > b.score) {
+      return -1;
+    } else {
+      return 0;
+    }
+  };
+}());
+
+module.exports = OncoGrid;

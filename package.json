@@ -8,9 +8,15 @@
     "url": "git://git@github.com:icgc/oncogrid.git"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1",
     "gulp-concat": "^2.6.0",
-    "gulp-minify": "0.0.10"
+    "gulp-jshint": "^2.0.0",
+    "gulp-minify": "0.0.10",
+    "gulp-rename": "^1.2.2",
+    "jshint": "^2.9.2",
+    "mocha": "^2.4.5"
   },
   "engines": {
     "node": ">=0.8.0"
