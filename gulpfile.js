@@ -3,7 +3,7 @@ var concat = require('gulp-concat');
 var minify = require('gulp-minify');
 
 // Change this to the location you would like to deploy to.
-var portalOncoDir = '/Users/dandric/Documents/workspace/dcc-portal/dcc-portal-ui/app/scripts/oncogrid/js';
+var portalOncoDir = 'path/to/application/';
 
 gulp.task('default', function() {
   gulp.src(['src/oncogrid.js', 'src/core.js', 'src/score.js', 'src/render.js'])
