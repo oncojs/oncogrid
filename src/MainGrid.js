@@ -37,8 +37,8 @@ var MainGrid;
           'initiator_codon_variant': '#af57db'
         };
 
-    _self.width = params.width;
-    _self.height = params.height;
+    _self.width = params.width || 500;
+    _self.height = params.height || 500;
 
     _self.margin = params.margin || { top: 10, right: 15, bottom: 15, left: 80 };
 
@@ -59,11 +59,12 @@ var MainGrid;
   MainGrid.prototype.init = function() {
     var _self = this;
 
-    _self.div = d3.select('body').append('div')
+    _self.div = d3.select(_self.element).append('div')
         .attr('class', 'tooltip-oncogrid')
         .style('opacity', 0);
 
     _self.svg = d3.select(_self.element).append('svg')
+        .attr('class', 'maingrid-svg')
         .attr('width', _self.width + _self.margin.left + _self.margin.right)
         .attr('height', _self.height + _self.margin.top + _self.margin.bottom)
         .style('margin-left', _self.margin.left + 'px')
@@ -345,6 +346,14 @@ var MainGrid;
 
     return -1;
   };
+
+  MainGrid.prototype.destroy = function() {
+    var _self = this;
+
+    d3.select(_self.element).select('.maingrid-svg').remove();
+    d3.select(_self.element).select('.tooltip-oncogrid').remove();
+  };
+
 }());
 
 module.exports = MainGrid;

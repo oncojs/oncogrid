@@ -245,6 +245,15 @@ var OncoGrid;
       return 0;
     }
   };
+
+  OncoGrid.prototype.destroy = function() {
+    var _self = this;
+
+    _self.charts.forEach(function (chart) {
+      chart.destroy();
+    });
+  };
+
 }());
 
 module.exports = OncoGrid;
