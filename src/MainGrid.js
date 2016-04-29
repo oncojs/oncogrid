@@ -23,6 +23,8 @@ var MainGrid;
   MainGrid = function (params, func) {
     var _self = this;
 
+    _self.prefix = params.prefix || 'og-';
+
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
@@ -60,11 +62,11 @@ var MainGrid;
     var _self = this;
 
     _self.div = d3.select(_self.element).append('div')
-        .attr('class', 'tooltip-oncogrid')
+        .attr('class', _self.prefix + 'tooltip-oncogrid')
         .style('opacity', 0);
 
     _self.svg = d3.select(_self.element).append('svg')
-        .attr('class', 'maingrid-svg')
+        .attr('class', _self.prefix + 'maingrid-svg')
         .attr('width', _self.width + _self.margin.left + _self.margin.right)
         .attr('height', _self.height + _self.margin.top + _self.margin.bottom)
         .style('margin-left', _self.margin.left + 'px')
@@ -350,8 +352,8 @@ var MainGrid;
   MainGrid.prototype.destroy = function() {
     var _self = this;
 
-    d3.select(_self.element).select('.maingrid-svg').remove();
-    d3.select(_self.element).select('.tooltip-oncogrid').remove();
+    d3.select(_self.element).select('.' + _self.prefix +'maingrid-svg').remove();
+    d3.select(_self.element).select('.'+ _self.prefix + 'tooltip-oncogrid').remove();
   };
 
 }());
