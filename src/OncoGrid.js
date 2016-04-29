@@ -30,6 +30,9 @@ var OncoGrid;
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
 
+
+    _self.computeDonorCounts();
+    _self.computeGeneCounts();
     _self.computeGeneScores();
     _self.computeScores();
     _self.sortByScores();
@@ -230,6 +233,40 @@ var OncoGrid;
         var donor = _self.donors[j];
         gene.score += _self.mutationGeneScore(donor.donorId, gene.id);
       }
+    }
+  };
+
+  OncoGrid.prototype.computeDonorCounts = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.donors.length; i++) {
+      var donor = _self.donors[i];
+      donor.count = 0;
+
+      for (var j = 0; j < _self.observations.length; j++) {
+        var obs = _self.observations[i];
+          if (donor.donorId === obs.donorId) {
+            donor.count+= 1;
+          }
+      }
+
+    }
+  };
+
+  OncoGrid.prototype.computeGeneCounts = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.genes.length; i++) {
+      var gene = _self.genes[i];
+      gene.count = 0;
+
+      for (var j = 0; j < _self.observations.length; j++) {
+        var obs = _self.observations[i];
+        if (gene.id === obs.gene) {
+          gene.count+= 1;
+        }
+      }
+
     }
   };
 
