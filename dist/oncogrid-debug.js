@@ -19,17 +19,20 @@
 
 var OncoHistogram;
 
-(function() {
+(function () {
   'use strict';
 
-  OncoHistogram = function(params) {
+  OncoHistogram = function (params) {
     var _self = this;
 
     _self.observations = params.observations;
     _self.domain = params.domain;
+    _self.element = params.element;
+    _self.position = params.position;
   };
 
-  // TODO: Finish this implementation
+  // TODO: Move implementation embedded in MainGrid to here. Make orientation configurable. 
+
 }());
 
 module.exports = OncoHistogram;
@@ -78,7 +81,9 @@ var MainGrid;
     _self.width = params.width || 500;
     _self.height = params.height || 500;
 
-    _self.margin = params.margin || { top: 10, right: 15, bottom: 15, left: 80 };
+    _self.histogramHeight = params.histogramHeight || 100;
+
+    _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
@@ -104,10 +109,10 @@ var MainGrid;
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
         .attr('width', _self.width + _self.margin.left + _self.margin.right)
-        .attr('height', _self.height + _self.margin.top + _self.margin.bottom)
+        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + 300)
         .style('margin-left', _self.margin.left + 'px')
         .append('g')
-        .attr('transform', 'translate(' + _self.margin.left + ',' + _self.margin.top + ')');
+        .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
 
     _self.svg.append('rect')
         .attr('class', 'background')
@@ -167,7 +172,66 @@ var MainGrid;
         .attr('fill', function(d) { return _self.getColor(d); })
         .attr('opacity', function(d) { return _self.getOpacity(d); })
         .attr('stroke-width', 2);
+
+    _self.renderHistogram();
   };
+
+  MainGrid.prototype.renderHistogram = function() {
+    var _self = this;
+
+    function getLargestCount() {
+      var retVal = 1;
+
+      for (var i = 0; i < _self.donors.length; i++) {
+        var donor = _self.donors[i];
+        retVal = Math.max(retVal, donor.count);
+      }
+
+      return retVal;
+    }
+
+    var topCount = getLargestCount();
+
+      _self.histogram = _self.svg.append('g')
+          .attr('width', _self.width + _self.margin.left + _self.margin.right)
+          .attr('height', _self.histogramHeight)
+          .style('margin-left', _self.margin.left + 'px')
+          .append('g')
+          .attr('transform', 'translate(0,-'+ (_self.histogramHeight + _self.margin.top * 1/1.61803398875) + ')');
+
+    _self.histogram.selectAll('rect')
+        .data(_self.donors)
+        .enter()
+        .append('rect')
+        .on('mouseover', function(d) {
+          _self.div.transition()
+              .duration(200)
+              .style('opacity', 0.9);
+          _self.div.html('Donor: ' + d.donorId + '<br/> Count:' + d.count + '<br/>')
+              .style('left', (d3.event.pageX + 10) + 'px')
+              .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+          _self.div.transition()
+              .duration(500)
+              .style('opacity', 0);
+        })
+        .transition()
+        .attr('class', function(d) { return 'sortable-bar ' + d.donorId+'-bar' })
+        .attr('width', _self.cellWidth - 2)
+        .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
+        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; })
+        .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
+        .attr('fill', '#1693C0');
+  };
+
+  MainGrid.prototype.updateHistogram = function() {
+    var _self = this;
+
+    _self.histogram.selectAll('rect')
+        .transition()
+        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; });
+  }
 
   /**
    * Render function ensures presentation matches the data. Called after modifying data.
@@ -193,6 +257,8 @@ var MainGrid;
           return _self.getY(d);
         })
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
+
+    _self.updateHistogram();
   };
 
   /**
@@ -429,6 +495,9 @@ var OncoGrid;
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
 
+
+    _self.computeDonorCounts();
+    _self.computeGeneCounts();
     _self.computeGeneScores();
     _self.computeScores();
     _self.sortByScores();
@@ -629,6 +698,40 @@ var OncoGrid;
         var donor = _self.donors[j];
         gene.score += _self.mutationGeneScore(donor.donorId, gene.id);
       }
+    }
+  };
+
+  OncoGrid.prototype.computeDonorCounts = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.donors.length; i++) {
+      var donor = _self.donors[i];
+      donor.count = 0;
+
+      for (var j = 0; j < _self.observations.length; j++) {
+        var obs = _self.observations[j];
+          if (donor.donorId === obs.donorId) {
+            donor.count+= 1;
+          }
+      }
+
+    }
+  };
+
+  OncoGrid.prototype.computeGeneCounts = function() {
+    var _self = this;
+
+    for (var i = 0; i < _self.genes.length; i++) {
+      var gene = _self.genes[i];
+      gene.count = 0;
+
+      for (var j = 0; j < _self.observations.length; j++) {
+        var obs = _self.observations[j];
+        if (gene.id === obs.gene) {
+          gene.count+= 1;
+        }
+      }
+
     }
   };
 

@@ -244,7 +244,7 @@ var OncoGrid;
       donor.count = 0;
 
       for (var j = 0; j < _self.observations.length; j++) {
-        var obs = _self.observations[i];
+        var obs = _self.observations[j];
           if (donor.donorId === obs.donorId) {
             donor.count+= 1;
           }
@@ -261,7 +261,7 @@ var OncoGrid;
       gene.count = 0;
 
       for (var j = 0; j < _self.observations.length; j++) {
-        var obs = _self.observations[i];
+        var obs = _self.observations[j];
         if (gene.id === obs.gene) {
           gene.count+= 1;
         }

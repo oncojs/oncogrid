@@ -18,17 +18,20 @@
 
 var OncoHistogram;
 
-(function() {
+(function () {
   'use strict';
 
-  OncoHistogram = function(params) {
+  OncoHistogram = function (params) {
     var _self = this;
 
     _self.observations = params.observations;
     _self.domain = params.domain;
+    _self.element = params.element;
+    _self.position = params.position;
   };
 
-  // TODO: Finish this implementation
+  // TODO: Move implementation embedded in MainGrid to here. Make orientation configurable. 
+
 }());
 
 module.exports = OncoHistogram;
