@@ -7,11 +7,11 @@ var destroyTester = function (grid) {
     grid.destroy();
 
     it('should have no more elements on screen', function () {
-      expect(d3.select(element).selectAll('.maingrid-svg')[0]).is.empty;
+      expect(d3.select(element).selectAll('.og-maingrid-svg')[0]).is.empty;
     });
 
     it('should have cleaned up hidden tooltips', function () {
-      expect(d3.select(element).selectAll('.tooltip-oncogrid')[0]).is.empty;
+      expect(d3.select(element).selectAll('.og-tooltip-oncogrid')[0]).is.empty;
     });
   });
 };
@@ -154,8 +154,8 @@ var dataAndConfig = function () {
 
       it('Main Grid should have correct dimensions', function () {
         // Width and Height are computer based on input dimensions and margins
-        expect(d3.select(element).select('.maingrid-svg').attr('width')).to.be.equal('795');
-        expect(d3.select(element).select('.maingrid-svg').attr('height')).to.be.equal('475');
+        expect(d3.select(element).select('.og-maingrid-svg').attr('width')).to.be.equal('795');
+        expect(d3.select(element).select('.og-maingrid-svg').attr('height')).to.be.equal('475');
       });
 
     });

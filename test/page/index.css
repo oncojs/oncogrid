@@ -1,0 +1,45 @@
+#grid-div .background {
+    fill: #f2f2f2;
+}
+
+#grid-div line {
+    stroke: #fff;
+    stroke-opacity: .5;
+    shape-rendering: crispEdges;
+}
+    
+#grid-div textarea {
+    padding: 2px;
+    width: 714px;
+    height: 360px;
+}
+    
+#grid-div .gene-label {
+    cursor: move;
+}
+    
+#grid-div .label-text-font {
+    font-size: 0.5rem;
+}
+    
+#grid-div .sortable-rect {
+    cursor: pointer; 
+}
+
+#grid-div .sortable-rect:hover {
+    stroke: red;
+    stroke-width: 2;
+}
+    
+#grid-div  div.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 60px;					
+    height: 36px;					
+    padding: 2px;				
+    font: 10px sans-serif;		
+    background: lightblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
