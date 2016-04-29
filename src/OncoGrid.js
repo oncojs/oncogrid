@@ -16,7 +16,6 @@
  */
 
 MainGrid = require('./MainGrid');
-OncoHistogram = require('./Histogram');
 
 var OncoGrid;
 
@@ -95,7 +94,7 @@ var OncoGrid;
   OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
     for (var i = 0; i < donors.length; i++) {
       var donor = donors[i];
-      if (donor.donorId === donorId) {
+      if (donor.id === donorId) {
         return i;
       }
     }
@@ -122,9 +121,9 @@ var OncoGrid;
     for (var i = 0; i < _self.donors.length; i++) {
       var donor = _self.donors[i];
       if (func(donor)) {
-        removedList.push(donor.donorId);
-        d3.selectAll('.' + donor.donorId + '-cell').remove();
-        d3.selectAll('.' + donor.donorId + '-bar').remove();
+        removedList.push(donor.id);
+        d3.selectAll('.' + donor.id + '-cell').remove();
+        d3.selectAll('.' + donor.id + '-bar').remove();
         _self.donors.splice(i, 1);
         i--;
       }
@@ -132,7 +131,7 @@ var OncoGrid;
 
     for (var j = 0; j < _self.observations.length; j++) {
       var obs = _self.observations[j];
-      if (_self.donors.indexOf(obs.donorId) >= 0) {
+      if (_self.donors.indexOf(obs.id) >= 0) {
         _self.observations.splice(j, 1);
         j--;
       }
@@ -181,7 +180,7 @@ var OncoGrid;
 
     for (var i = 0; i < _self.observations.length; i++) {
       var obs = _self.observations[i];
-      if (obs.donorId === donor && obs.gene === gene) {
+      if (obs.donorId === donor && obs.geneId === gene) {
         return 1;
       }
     }
@@ -198,7 +197,7 @@ var OncoGrid;
     var retVal = 0;
     for (var i = 0; i < _self.observations.length; i++) {
       var obs = _self.observations[i];
-      if (obs.gene === gene && obs.gene === gene) {
+      if (obs.donorId === donor && obs.geneId === gene) {
         retVal++;
       }
     }
@@ -217,7 +216,7 @@ var OncoGrid;
       donor.score = 0;
       for (var j = 0; j < _self.genes.length; j++) {
         var gene = _self.genes[j];
-        donor.score += (_self.mutationScore(donor.donorId, gene.id) * Math.pow(2, _self.genes.length + 1 - j));
+        donor.score += (_self.mutationScore(donor.id, gene.id) * Math.pow(2, _self.genes.length + 1 - j));
       }
     }
 
@@ -231,7 +230,7 @@ var OncoGrid;
       gene.score = 0;
       for (var j = 0; j < _self.donors.length; j++) {
         var donor = _self.donors[j];
-        gene.score += _self.mutationGeneScore(donor.donorId, gene.id);
+        gene.score += _self.mutationGeneScore(donor.id, gene.id);
       }
     }
   };
@@ -245,7 +244,7 @@ var OncoGrid;
 
       for (var j = 0; j < _self.observations.length; j++) {
         var obs = _self.observations[j];
-          if (donor.donorId === obs.donorId) {
+          if (donor.id === obs.donorId) {
             donor.count+= 1;
           }
       }
@@ -262,7 +261,7 @@ var OncoGrid;
 
       for (var j = 0; j < _self.observations.length; j++) {
         var obs = _self.observations[j];
-        if (gene.id === obs.gene) {
+        if (gene.id === obs.geneId) {
           gene.count+= 1;
         }
       }

@@ -15,6 +15,8 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+OncoHistogram = require('./Histogram');
+
 var MainGrid;
 
 (function() {
@@ -42,8 +44,6 @@ var MainGrid;
     _self.width = params.width || 500;
     _self.height = params.height || 500;
 
-    _self.histogramHeight = params.histogramHeight || 100;
-
     _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
     _self.numDonors = _self.donors.length;
@@ -56,7 +56,11 @@ var MainGrid;
 
     _self.updateCallback = func;
 
+    _self.histogramHeight = 100;
+
     _self.init();
+    _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+    _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
   };
 
 
@@ -69,8 +73,8 @@ var MainGrid;
 
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
-        .attr('width', _self.width + _self.margin.left + _self.margin.right)
-        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + 300)
+        .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)
+        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight*2)
         .style('margin-left', _self.margin.left + 'px')
         .append('g')
         .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
@@ -110,7 +114,7 @@ var MainGrid;
           _self.div.transition()
               .duration(200)
               .style('opacity', 0.9);
-          _self.div.html(d.donorId + '<br/>' + d.gene + '<br/>' + d.id)
+          _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId)
               .style('left', (d3.event.pageX + 10) + 'px')
               .style('top', (d3.event.pageY - 28) + 'px');
         })
@@ -124,7 +128,7 @@ var MainGrid;
           // window.location = '/mutations/' + d.id;
         })
         .transition()
-        .attr('class', function(d) { return 'sortable-rect ' + d.donorId + '-cell ' + d.gene + '-cell'; })
+        .attr('class', function(d) { return 'sortable-rect ' + d.donorId + '-cell ' + d.geneId + '-cell'; })
         .attr('cons', function(d) { return d.consequence; })
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); })
         .attr('y', function(d) { return _self.getY(d); })
@@ -134,65 +138,9 @@ var MainGrid;
         .attr('opacity', function(d) { return _self.getOpacity(d); })
         .attr('stroke-width', 2);
 
-    _self.renderHistogram();
+    _self.donorHistogram.render(_self.x, _self.div);
+    _self.geneHistogram.render(_self.y, _self.div);
   };
-
-  MainGrid.prototype.renderHistogram = function() {
-    var _self = this;
-
-    function getLargestCount() {
-      var retVal = 1;
-
-      for (var i = 0; i < _self.donors.length; i++) {
-        var donor = _self.donors[i];
-        retVal = Math.max(retVal, donor.count);
-      }
-
-      return retVal;
-    }
-
-    var topCount = getLargestCount();
-
-      _self.histogram = _self.svg.append('g')
-          .attr('width', _self.width + _self.margin.left + _self.margin.right)
-          .attr('height', _self.histogramHeight)
-          .style('margin-left', _self.margin.left + 'px')
-          .append('g')
-          .attr('transform', 'translate(0,-'+ (_self.histogramHeight + _self.margin.top * 1/1.61803398875) + ')');
-
-    _self.histogram.selectAll('rect')
-        .data(_self.donors)
-        .enter()
-        .append('rect')
-        .on('mouseover', function(d) {
-          _self.div.transition()
-              .duration(200)
-              .style('opacity', 0.9);
-          _self.div.html('Donor: ' + d.donorId + '<br/> Count:' + d.count + '<br/>')
-              .style('left', (d3.event.pageX + 10) + 'px')
-              .style('top', (d3.event.pageY - 28) + 'px');
-        })
-        .on('mouseout', function() {
-          _self.div.transition()
-              .duration(500)
-              .style('opacity', 0);
-        })
-        .transition()
-        .attr('class', function(d) { return 'sortable-bar ' + d.donorId+'-bar' })
-        .attr('width', _self.cellWidth - 2)
-        .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
-        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; })
-        .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
-        .attr('fill', '#1693C0');
-  };
-
-  MainGrid.prototype.updateHistogram = function() {
-    var _self = this;
-
-    _self.histogram.selectAll('rect')
-        .transition()
-        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; });
-  }
 
   /**
    * Render function ensures presentation matches the data. Called after modifying data.
@@ -219,7 +167,8 @@ var MainGrid;
         })
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
 
-    _self.updateHistogram();
+    _self.donorHistogram.update(_self.donors, _self.x);
+    _self.geneHistogram.update(_self.genes, _self.y);
   };
 
   /**
@@ -241,7 +190,7 @@ var MainGrid;
         .data(_self.donors)
         .enter().append('g')
         .attr('class', 'column')
-        .attr('donor', function(d) { return d.donorId; })
+        .attr('donor', function(d) { return d.id; })
         .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
     _self.column.append('line')
@@ -345,11 +294,11 @@ var MainGrid;
     });
 
     if (_self.heatMap === true) {
-      return _self.y(pseudo_genes.indexOf(d.gene));
+      return _self.y(pseudo_genes.indexOf(d.geneId));
     }
 
     var keys = Object.keys(_self.colorMap);
-    return  _self.y(pseudo_genes.indexOf(d.gene)) + (_self.cellHeight / keys.length) *
+    return  _self.y(pseudo_genes.indexOf(d.geneId)) + (_self.cellHeight / keys.length) *
         (keys.indexOf(d.consequence) - 1);
   };
 
@@ -404,7 +353,7 @@ var MainGrid;
   MainGrid.prototype.getDonorIndex = function(donors, donorId) {
     for (var i = 0; i < donors.length; i++) {
       var donor = donors[i];
-      if (donor.donorId === donorId) {
+      if (donor.id === donorId) {
         return i;
       }
     }

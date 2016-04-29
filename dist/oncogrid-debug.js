@@ -22,16 +22,114 @@ var OncoHistogram;
 (function () {
   'use strict';
 
-  OncoHistogram = function (params) {
+  OncoHistogram = function (params, s, rotated) {
     var _self = this;
 
+    console.log(params);
     _self.observations = params.observations;
-    _self.domain = params.domain;
-    _self.element = params.element;
-    _self.position = params.position;
+    _self.svg = s;
+    _self.rotated = rotated || false;
+
+    _self.donors = params.donors;
+    _self.genes = params.genes;
+
+    _self.domain = _self.rotated ? params.genes : params.donors;
+
+    _self.width = params.width || 500;
+    _self.height = params.height || 500;
+
+    _self.histogramHeight = 100;
+
+    _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
+
+    _self.numDomain = _self.domain.length;
+    _self.barWidth = _self.width / _self.domain.length;
   };
 
-  // TODO: Move implementation embedded in MainGrid to here. Make orientation configurable. 
+  OncoHistogram.prototype.render = function(x, div) {
+    var _self = this;
+    _self.x = x;
+    _self.div = div;
+
+    function getLargestCount() {
+      var retVal = 1;
+
+      for (var i = 0; i < _self.domain.length; i++) {
+        var donor = _self.domain[i];
+        retVal = Math.max(retVal, donor.count);
+      }
+
+      return retVal;
+    }
+
+    var topCount = getLargestCount();
+
+    _self.histogram = _self.svg.append('g')
+        .attr('width', function() {
+          if (_self.rotated) {
+            return _self.height;
+          } else {
+            return _self.width + _self.margin.left + _self.margin.right;
+          }
+        })
+        .attr('height', _self.histogramHeight)
+        .style('margin-left', _self.margin.left + 'px')
+        .attr('transform', function() {
+          if (_self.rotated) {
+             return 'rotate(90)translate(0,-' +  (_self.width) + ')';
+          } else {
+            return '';
+          }
+        })
+        .append('g')
+        .attr('transform', 'translate(0,-'+ (_self.histogramHeight + _self.margin.top/1.61803398875) + ')');
+
+    _self.histogram.selectAll('rect')
+        .data(_self.domain)
+        .enter()
+        .append('rect')
+        .on('mouseover', function(d) {
+          _self.div.transition()
+              .duration(200)
+              .style('opacity', 0.9);
+          _self.div.html('ID: ' + d.id + '<br/> Count:' + d.count + '<br/>')
+              .style('left', (d3.event.pageX + 10) + 'px')
+              .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+          _self.div.transition()
+              .duration(500)
+              .style('opacity', 0);
+        })
+        .transition()
+        .attr('class', function(d) { return 'sortable-bar ' + d.id+'-bar' })
+        .attr('width', _self.barWidth - 2)
+        .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; })
+        .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
+        .attr('fill', '#1693C0');
+  };
+
+  OncoHistogram.prototype.update = function(domain, x) {
+    var _self = this;
+    _self.x = x;
+    _self.domain = domain;
+
+    _self.histogram.selectAll('rect')
+        .transition()
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; });
+  };
+
+  OncoHistogram.prototype.getIndex = function(list, id) {
+    for (var i = 0; i < list.length; i++) {
+      var obj = list[i];
+      if (obj.id === id) {
+        return i;
+      }
+    }
+
+    return -1;
+  };
 
 }());
 
@@ -53,6 +151,8 @@ module.exports = OncoHistogram;
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+OncoHistogram = require('./Histogram');
 
 var MainGrid;
 
@@ -81,8 +181,6 @@ var MainGrid;
     _self.width = params.width || 500;
     _self.height = params.height || 500;
 
-    _self.histogramHeight = params.histogramHeight || 100;
-
     _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
     _self.numDonors = _self.donors.length;
@@ -95,7 +193,11 @@ var MainGrid;
 
     _self.updateCallback = func;
 
+    _self.histogramHeight = 100;
+
     _self.init();
+    _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+    _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
   };
 
 
@@ -108,8 +210,8 @@ var MainGrid;
 
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
-        .attr('width', _self.width + _self.margin.left + _self.margin.right)
-        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + 300)
+        .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)
+        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight*2)
         .style('margin-left', _self.margin.left + 'px')
         .append('g')
         .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
@@ -149,7 +251,7 @@ var MainGrid;
           _self.div.transition()
               .duration(200)
               .style('opacity', 0.9);
-          _self.div.html(d.donorId + '<br/>' + d.gene + '<br/>' + d.id)
+          _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId)
               .style('left', (d3.event.pageX + 10) + 'px')
               .style('top', (d3.event.pageY - 28) + 'px');
         })
@@ -163,7 +265,7 @@ var MainGrid;
           // window.location = '/mutations/' + d.id;
         })
         .transition()
-        .attr('class', function(d) { return 'sortable-rect ' + d.donorId + '-cell ' + d.gene + '-cell'; })
+        .attr('class', function(d) { return 'sortable-rect ' + d.donorId + '-cell ' + d.geneId + '-cell'; })
         .attr('cons', function(d) { return d.consequence; })
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); })
         .attr('y', function(d) { return _self.getY(d); })
@@ -173,65 +275,9 @@ var MainGrid;
         .attr('opacity', function(d) { return _self.getOpacity(d); })
         .attr('stroke-width', 2);
 
-    _self.renderHistogram();
+    _self.donorHistogram.render(_self.x, _self.div);
+    _self.geneHistogram.render(_self.y, _self.div);
   };
-
-  MainGrid.prototype.renderHistogram = function() {
-    var _self = this;
-
-    function getLargestCount() {
-      var retVal = 1;
-
-      for (var i = 0; i < _self.donors.length; i++) {
-        var donor = _self.donors[i];
-        retVal = Math.max(retVal, donor.count);
-      }
-
-      return retVal;
-    }
-
-    var topCount = getLargestCount();
-
-      _self.histogram = _self.svg.append('g')
-          .attr('width', _self.width + _self.margin.left + _self.margin.right)
-          .attr('height', _self.histogramHeight)
-          .style('margin-left', _self.margin.left + 'px')
-          .append('g')
-          .attr('transform', 'translate(0,-'+ (_self.histogramHeight + _self.margin.top * 1/1.61803398875) + ')');
-
-    _self.histogram.selectAll('rect')
-        .data(_self.donors)
-        .enter()
-        .append('rect')
-        .on('mouseover', function(d) {
-          _self.div.transition()
-              .duration(200)
-              .style('opacity', 0.9);
-          _self.div.html('Donor: ' + d.donorId + '<br/> Count:' + d.count + '<br/>')
-              .style('left', (d3.event.pageX + 10) + 'px')
-              .style('top', (d3.event.pageY - 28) + 'px');
-        })
-        .on('mouseout', function() {
-          _self.div.transition()
-              .duration(500)
-              .style('opacity', 0);
-        })
-        .transition()
-        .attr('class', function(d) { return 'sortable-bar ' + d.donorId+'-bar' })
-        .attr('width', _self.cellWidth - 2)
-        .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
-        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; })
-        .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
-        .attr('fill', '#1693C0');
-  };
-
-  MainGrid.prototype.updateHistogram = function() {
-    var _self = this;
-
-    _self.histogram.selectAll('rect')
-        .transition()
-        .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)) + 1; });
-  }
 
   /**
    * Render function ensures presentation matches the data. Called after modifying data.
@@ -258,7 +304,8 @@ var MainGrid;
         })
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
 
-    _self.updateHistogram();
+    _self.donorHistogram.update(_self.donors, _self.x);
+    _self.geneHistogram.update(_self.genes, _self.y);
   };
 
   /**
@@ -280,7 +327,7 @@ var MainGrid;
         .data(_self.donors)
         .enter().append('g')
         .attr('class', 'column')
-        .attr('donor', function(d) { return d.donorId; })
+        .attr('donor', function(d) { return d.id; })
         .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
     _self.column.append('line')
@@ -384,11 +431,11 @@ var MainGrid;
     });
 
     if (_self.heatMap === true) {
-      return _self.y(pseudo_genes.indexOf(d.gene));
+      return _self.y(pseudo_genes.indexOf(d.geneId));
     }
 
     var keys = Object.keys(_self.colorMap);
-    return  _self.y(pseudo_genes.indexOf(d.gene)) + (_self.cellHeight / keys.length) *
+    return  _self.y(pseudo_genes.indexOf(d.geneId)) + (_self.cellHeight / keys.length) *
         (keys.indexOf(d.consequence) - 1);
   };
 
@@ -443,7 +490,7 @@ var MainGrid;
   MainGrid.prototype.getDonorIndex = function(donors, donorId) {
     for (var i = 0; i < donors.length; i++) {
       var donor = donors[i];
-      if (donor.donorId === donorId) {
+      if (donor.id === donorId) {
         return i;
       }
     }
@@ -462,7 +509,7 @@ var MainGrid;
 
 module.exports = MainGrid;
 
-},{}],3:[function(require,module,exports){
+},{"./Histogram":1}],3:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
@@ -481,7 +528,6 @@ module.exports = MainGrid;
  */
 
 MainGrid = require('./MainGrid');
-OncoHistogram = require('./Histogram');
 
 var OncoGrid;
 
@@ -560,7 +606,7 @@ var OncoGrid;
   OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
     for (var i = 0; i < donors.length; i++) {
       var donor = donors[i];
-      if (donor.donorId === donorId) {
+      if (donor.id === donorId) {
         return i;
       }
     }
@@ -587,9 +633,9 @@ var OncoGrid;
     for (var i = 0; i < _self.donors.length; i++) {
       var donor = _self.donors[i];
       if (func(donor)) {
-        removedList.push(donor.donorId);
-        d3.selectAll('.' + donor.donorId + '-cell').remove();
-        d3.selectAll('.' + donor.donorId + '-bar').remove();
+        removedList.push(donor.id);
+        d3.selectAll('.' + donor.id + '-cell').remove();
+        d3.selectAll('.' + donor.id + '-bar').remove();
         _self.donors.splice(i, 1);
         i--;
       }
@@ -597,7 +643,7 @@ var OncoGrid;
 
     for (var j = 0; j < _self.observations.length; j++) {
       var obs = _self.observations[j];
-      if (_self.donors.indexOf(obs.donorId) >= 0) {
+      if (_self.donors.indexOf(obs.id) >= 0) {
         _self.observations.splice(j, 1);
         j--;
       }
@@ -646,7 +692,7 @@ var OncoGrid;
 
     for (var i = 0; i < _self.observations.length; i++) {
       var obs = _self.observations[i];
-      if (obs.donorId === donor && obs.gene === gene) {
+      if (obs.donorId === donor && obs.geneId === gene) {
         return 1;
       }
     }
@@ -663,7 +709,7 @@ var OncoGrid;
     var retVal = 0;
     for (var i = 0; i < _self.observations.length; i++) {
       var obs = _self.observations[i];
-      if (obs.gene === gene && obs.gene === gene) {
+      if (obs.donorId === donor && obs.geneId === gene) {
         retVal++;
       }
     }
@@ -682,7 +728,7 @@ var OncoGrid;
       donor.score = 0;
       for (var j = 0; j < _self.genes.length; j++) {
         var gene = _self.genes[j];
-        donor.score += (_self.mutationScore(donor.donorId, gene.id) * Math.pow(2, _self.genes.length + 1 - j));
+        donor.score += (_self.mutationScore(donor.id, gene.id) * Math.pow(2, _self.genes.length + 1 - j));
       }
     }
 
@@ -696,7 +742,7 @@ var OncoGrid;
       gene.score = 0;
       for (var j = 0; j < _self.donors.length; j++) {
         var donor = _self.donors[j];
-        gene.score += _self.mutationGeneScore(donor.donorId, gene.id);
+        gene.score += _self.mutationGeneScore(donor.id, gene.id);
       }
     }
   };
@@ -710,7 +756,7 @@ var OncoGrid;
 
       for (var j = 0; j < _self.observations.length; j++) {
         var obs = _self.observations[j];
-          if (donor.donorId === obs.donorId) {
+          if (donor.id === obs.donorId) {
             donor.count+= 1;
           }
       }
@@ -727,7 +773,7 @@ var OncoGrid;
 
       for (var j = 0; j < _self.observations.length; j++) {
         var obs = _self.observations[j];
-        if (gene.id === obs.gene) {
+        if (gene.id === obs.geneId) {
           gene.count+= 1;
         }
       }
@@ -759,7 +805,7 @@ var OncoGrid;
 }());
 
 module.exports = OncoGrid;
-},{"./Histogram":1,"./MainGrid":2}],4:[function(require,module,exports){
+},{"./MainGrid":2}],4:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
