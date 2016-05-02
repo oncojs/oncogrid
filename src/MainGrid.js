@@ -61,6 +61,7 @@ var MainGrid;
     _self.init();
     _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
+
   };
 
 
@@ -107,7 +108,7 @@ var MainGrid;
 
     _self.defineRowDragBehaviour();
 
-    _self.svg.selectAll('svg')
+    _self.svg.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
         .on('mouseover', function(d) {
@@ -151,6 +152,8 @@ var MainGrid;
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
       _self.numDonors = _self.donors.length;
       _self.numGenes = _self.genes.length;
+      _self.cellWidth = _self.width / _self.numDonors;
+      _self.cellHeight = _self.height /  _self.numGenes;
       _self.computeCoordinates();
     }
 
@@ -162,6 +165,8 @@ var MainGrid;
 
     d3.selectAll('.sortable-rect')
         .transition()
+        .attr('width', _self.cellWidth)
+        .attr('height', _self.cellHeight)
         .attr('y', function(d) {
           return _self.getY(d);
         })

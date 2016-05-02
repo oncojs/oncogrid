@@ -24,13 +24,9 @@ var OncoHistogram;
   OncoHistogram = function (params, s, rotated) {
     var _self = this;
 
-    console.log(params);
     _self.observations = params.observations;
     _self.svg = s;
     _self.rotated = rotated || false;
-
-    _self.donors = params.donors;
-    _self.genes = params.genes;
 
     _self.domain = _self.rotated ? params.genes : params.donors;
 
@@ -42,7 +38,7 @@ var OncoHistogram;
     _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
     _self.numDomain = _self.domain.length;
-    _self.barWidth = _self.width / _self.domain.length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
   };
 
   OncoHistogram.prototype.render = function(x, div) {
@@ -113,9 +109,11 @@ var OncoHistogram;
     var _self = this;
     _self.x = x;
     _self.domain = domain;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 
     _self.histogram.selectAll('rect')
         .transition()
+        .attr('width', _self.barWidth - 2)
         .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; });
   };
 
