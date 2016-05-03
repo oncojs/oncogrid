@@ -151,6 +151,7 @@ module.exports = OncoHistogram;
  */
 
 OncoHistogram = require('./Histogram');
+OncoTrack = require('./Track');
 
 var MainGrid;
 
@@ -194,7 +195,13 @@ var MainGrid;
     _self.histogramHeight = 100;
 
     _self.init();
+
     _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+
+    _self.donorTrack =
+        new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
+    _self.donorTrack.init();
+
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
 
   };
@@ -275,6 +282,8 @@ var MainGrid;
         .attr('stroke-width', 2);
 
     _self.donorHistogram.render(_self.x, _self.div);
+    _self.donorTrack.render(_self.x);
+
     _self.geneHistogram.render(_self.y, _self.div);
   };
 
@@ -292,13 +301,13 @@ var MainGrid;
       _self.computeCoordinates();
     }
 
-    d3.selectAll('.row')
+    _self.row
         .transition()
         .attr('transform', function(d) {
           return 'translate( 0, ' + _self.y(_self.genes.indexOf(d)) + ')';
         });
 
-    d3.selectAll('.sortable-rect')
+    _self.svg.selectAll('.sortable-rect')
         .transition()
         .attr('width', _self.cellWidth)
         .attr('height', _self.cellHeight)
@@ -308,6 +317,8 @@ var MainGrid;
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
 
     _self.donorHistogram.update(_self.donors, _self.x);
+    _self.donorTrack.update(_self.donors, _self.x);
+
     _self.geneHistogram.update(_self.genes, _self.y);
   };
 
@@ -326,10 +337,10 @@ var MainGrid;
       _self.column.remove();
     }
 
-    _self.column = _self.svg.selectAll('.column')
+    _self.column = _self.svg.selectAll('.donor-column')
         .data(_self.donors)
         .enter().append('g')
-        .attr('class', 'column')
+        .attr('class', 'donor-column')
         .attr('donor', function(d) { return d.id; })
         .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
@@ -345,10 +356,10 @@ var MainGrid;
       _self.row.remove();
     }
 
-    _self.row = _self.svg.selectAll('.row')
+    _self.row = _self.svg.selectAll('.gene-row')
         .data(_self.genes)
         .enter().append('g')
-        .attr('class', 'row')
+        .attr('class', 'gene-row')
         .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
     _self.row.append('line')
@@ -390,7 +401,7 @@ var MainGrid;
 
       var newY = d3.transform(d3.select(this).attr('transform')).translate[1];
 
-      d3.selectAll('.row').each(function(f) {
+      _self.row.each(function(f) {
         var curGeneIndex = _self.genes.indexOf(f);
         var curGene, yCoord;
         if (trans > 0 && curGeneIndex > dragged) {
@@ -415,7 +426,7 @@ var MainGrid;
       _self.updateCallback(true);
     });
 
-    var dragSelection = d3.selectAll('.row').call(drag);
+    var dragSelection = _self.row.call(drag);
     dragSelection.on('click', function() {
       if (d3.event.defaultPrevented) {
       }
@@ -512,7 +523,7 @@ var MainGrid;
 
 module.exports = MainGrid;
 
-},{"./Histogram":1}],3:[function(require,module,exports){
+},{"./Histogram":1,"./Track":4}],3:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
@@ -531,7 +542,6 @@ module.exports = MainGrid;
  */
 
 MainGrid = require('./MainGrid');
-OncoTrack = require('./Track');
 
 var OncoGrid;
 
@@ -553,14 +563,9 @@ var OncoGrid;
     _self.sortByScores();
 
     _self.mainGrid = new MainGrid(params, _self.update(_self));
-    
-
-    var donorTrack = new OncoTrack(params, _self.mainGrid.svg, false);
-    donorTrack.init();
 
     _self.charts = [];
     _self.charts.push(_self.mainGrid);
-    _self.charts.push(donorTrack);
   };
 
   /**
@@ -814,7 +819,7 @@ var OncoGrid;
 }());
 
 module.exports = OncoGrid;
-},{"./MainGrid":2,"./Track":4}],4:[function(require,module,exports){
+},{"./MainGrid":2}],4:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
@@ -837,8 +842,10 @@ var OncoTrack;
 (function() {
   'use strict';
 
-  OncoTrack = function(params, s, rotated) {
+  OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
     var _self = this;
+
+    _self.prefix = params.prefix || 'og-';
 
     _self.svg = s;
     _self.rotated = rotated || false;
@@ -848,19 +855,18 @@ var OncoTrack;
     _self.domain = _self.rotated ? params.genes : params.donors;
     _self.width = (_self.rotated ? params.height : params.width) || 500;
 
-    _self.cellHeight = 25;
+    _self.cellHeight = params.trackHeight || 25;
 
     _self.translateDown = (_self.rotated ? params.width : params.height) || 500;
 
     _self.numDomain = _self.domain.length;
     _self.cellWidth  = _self.width / _self.numDomain;
 
-    _self.availableTracks = [
-      {"name": "Age at Diagnosis", "fieldName": "age_diagnosis", "type": "int"},
-      {"name": "Alive", "fieldName": "alive", "type": "bool"}
-    ];
+    _self.availableTracks = tracks|| [];
+    _self.opacityFunc = opacityFunc;
+    _self.fillFunc = fillFunc;
 
-    _self.height = 25 * _self.availableTracks.length;
+    _self.height = _self.cellHeight * _self.availableTracks.length;
   };
 
   OncoTrack.prototype.init = function() {
@@ -882,7 +888,7 @@ var OncoTrack;
     _self.track = _self.svg.append('g')
         .attr('width', _self.width)
         .attr('height', _self.height)
-        .attr('class', _self.prefix + 'donor-track')
+        .attr('class', _self.prefix + 'donor-track') // TODO: come up with better name
         .attr('transform', function() {
           if (_self.rotated) {
             return 'rotate(90)translate(0,-' +  (_self.width) + ')';
@@ -900,29 +906,44 @@ var OncoTrack;
 
   };
 
-  OncoTrack.prototype.render = function() {
+  OncoTrack.prototype.render = function(x) {
     var _self = this;
 
+    _self.x = x;
     _self.computeCoordinates();
 
-    console.log(_self.trackData);
-    _self.track.selectAll('.' + _self.prefix + 'donor-track')
+    _self.track.selectAll('.' + _self.prefix + 'donor-track') // TODO: come up with better name
         .data(_self.trackData).enter()
         .append('rect')
         .transition()
-        .attr('class', function(d) { return ''; })
+        .attr('class', function(d) {
+          return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName
+              + ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+        })
         .attr('x', function(d) { return _self.getX(d); })
         .attr('y', function(d) { return _self.getY(d); })
         .attr('width', _self.cellWidth)
         .attr('height', _self.cellHeight)
-        .attr('fill', '#6d72c5')
-        .attr('opacity', function(d) {
-          if (d.type === 'int') {
-            return d.value / 100;
-          } else if (d.type === 'bool') {
-            return d.value ? 1 : 0;
-          }
-        });
+        .attr('fill', _self.fillFunc)
+        .attr('opacity', _self.opacityFunc);
+  };
+
+  OncoTrack.prototype.update = function(domain, x) {
+    var _self = this;
+
+    _self.domain = domain;
+    _self.x = x;
+
+    if (_self.domain.length !== _self.numDomain) {
+      _self.numDomain = _self.domain.length;
+      _self.computeCoordinates();
+    }
+    _self.cellWidth  = (_self.rotated ? _self.height : _self.width) / _self.numDomain;
+
+    _self.track.selectAll('.' + _self.prefix + 'donor-track-data')
+        .transition()
+        .attr('x', function(d) { return _self.getX(d); })
+        .attr('width', _self.cellWidth);
   };
 
   OncoTrack.prototype.getX = function(obj) {
@@ -950,10 +971,6 @@ var OncoTrack;
    */
   OncoTrack.prototype.computeCoordinates = function() {
     var _self = this;
-
-    _self.x = d3.scale.ordinal()
-        .domain(d3.range(_self.domain.length))
-        .rangeBands([0, _self.width]);
 
     if (typeof _self.column !== 'undefined') {
       _self.column.remove();

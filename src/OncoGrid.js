@@ -16,7 +16,6 @@
  */
 
 MainGrid = require('./MainGrid');
-OncoTrack = require('./Track');
 
 var OncoGrid;
 
@@ -38,14 +37,9 @@ var OncoGrid;
     _self.sortByScores();
 
     _self.mainGrid = new MainGrid(params, _self.update(_self));
-    
-
-    var donorTrack = new OncoTrack(params, _self.mainGrid.svg, false);
-    donorTrack.init();
 
     _self.charts = [];
     _self.charts.push(_self.mainGrid);
-    _self.charts.push(donorTrack);
   };
 
   /**

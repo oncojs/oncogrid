@@ -16,6 +16,7 @@
  */
 
 OncoHistogram = require('./Histogram');
+OncoTrack = require('./Track');
 
 var MainGrid;
 
@@ -59,7 +60,13 @@ var MainGrid;
     _self.histogramHeight = 100;
 
     _self.init();
+
     _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+
+    _self.donorTrack =
+        new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
+    _self.donorTrack.init();
+
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
 
   };
@@ -140,6 +147,8 @@ var MainGrid;
         .attr('stroke-width', 2);
 
     _self.donorHistogram.render(_self.x, _self.div);
+    _self.donorTrack.render(_self.x);
+
     _self.geneHistogram.render(_self.y, _self.div);
   };
 
@@ -157,13 +166,13 @@ var MainGrid;
       _self.computeCoordinates();
     }
 
-    d3.selectAll('.row')
+    _self.row
         .transition()
         .attr('transform', function(d) {
           return 'translate( 0, ' + _self.y(_self.genes.indexOf(d)) + ')';
         });
 
-    d3.selectAll('.sortable-rect')
+    _self.svg.selectAll('.sortable-rect')
         .transition()
         .attr('width', _self.cellWidth)
         .attr('height', _self.cellHeight)
@@ -173,6 +182,8 @@ var MainGrid;
         .attr('x', function(d) { return _self.x(_self.getDonorIndex(_self.donors, d.donorId)); });
 
     _self.donorHistogram.update(_self.donors, _self.x);
+    _self.donorTrack.update(_self.donors, _self.x);
+
     _self.geneHistogram.update(_self.genes, _self.y);
   };
 
@@ -191,10 +202,10 @@ var MainGrid;
       _self.column.remove();
     }
 
-    _self.column = _self.svg.selectAll('.column')
+    _self.column = _self.svg.selectAll('.donor-column')
         .data(_self.donors)
         .enter().append('g')
-        .attr('class', 'column')
+        .attr('class', 'donor-column')
         .attr('donor', function(d) { return d.id; })
         .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
@@ -210,10 +221,10 @@ var MainGrid;
       _self.row.remove();
     }
 
-    _self.row = _self.svg.selectAll('.row')
+    _self.row = _self.svg.selectAll('.gene-row')
         .data(_self.genes)
         .enter().append('g')
-        .attr('class', 'row')
+        .attr('class', 'gene-row')
         .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
     _self.row.append('line')
@@ -255,7 +266,7 @@ var MainGrid;
 
       var newY = d3.transform(d3.select(this).attr('transform')).translate[1];
 
-      d3.selectAll('.row').each(function(f) {
+      _self.row.each(function(f) {
         var curGeneIndex = _self.genes.indexOf(f);
         var curGene, yCoord;
         if (trans > 0 && curGeneIndex > dragged) {
@@ -280,7 +291,7 @@ var MainGrid;
       _self.updateCallback(true);
     });
 
-    var dragSelection = d3.selectAll('.row').call(drag);
+    var dragSelection = _self.row.call(drag);
     dragSelection.on('click', function() {
       if (d3.event.defaultPrevented) {
       }
