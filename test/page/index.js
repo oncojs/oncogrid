@@ -10,10 +10,10 @@ var donors = [
 
 
 var genes = [
-  {"id": "ENSG00000141510", "symbol": "TP53"},
-  {"id": "ENSG00000157764", "symbol": "BRAF"},
-  {"id": "ENSG00000155657", "symbol": "TTN"},
-  {"id": "ENSG00000164796", "symbol": "CSMD3"}
+  {"id": "ENSG00000141510", "symbol": "TP53", "totalDonors": 40},
+  {"id": "ENSG00000157764", "symbol": "BRAF", "totalDonors": 21},
+  {"id": "ENSG00000155657", "symbol": "TTN", "totalDonors": 12},
+  {"id": "ENSG00000164796", "symbol": "CSMD3", "totalDonors": 4}
 ];
 
 
@@ -49,19 +49,31 @@ var donorFill = function (d) {
   }
 };
 
+var geneOpacity = function (d) {
+  console.log(d);
+  return d.value / 40;
+};
+
+var geneTracks = [
+  {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int'},
+];
+
+
 var params = {
   element: '#grid-div',
   donors: donors,
   genes: genes,
   observations: observations,
   height: 450,
-  width: 700,
+  width: 600,
   heatMap: true,
   trackHeight: 20,
   donorTracks: [{'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int'},
     {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool'}],
   donorOpacityFunc: donorOpacity,
-  donorFillFunc: donorFill
+  donorFillFunc: donorFill,
+  geneTracks: geneTracks,
+  geneOpacity: geneOpacity
 };
 
 var grid = new OncoGrid(params);

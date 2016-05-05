@@ -29,7 +29,7 @@ var OncoHistogram;
     _self.svg = s;
     _self.rotated = rotated || false;
 
-    _self.domain = _self.rotated ? params.genes : params.donors;
+    _self.domain = (_self.rotated ? params.genes : params.donors) || [];
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
@@ -98,10 +98,10 @@ var OncoHistogram;
               .style('opacity', 0);
         })
         .transition()
-        .attr('class', function(d) { return 'sortable-bar ' + d.id+'-bar' })
-        .attr('width', _self.barWidth - 2)
+        .attr('class', function(d) { return 'sortable-bar ' + d.id+'-bar'; })
+        .attr('width', _self.barWidth - 1)
         .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
-        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; })
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); })
         .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
         .attr('fill', '#1693C0');
   };
@@ -114,8 +114,8 @@ var OncoHistogram;
 
     _self.histogram.selectAll('rect')
         .transition()
-        .attr('width', _self.barWidth - 2)
-        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; });
+        .attr('width', _self.barWidth - 1)
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); });
   };
 
   OncoHistogram.prototype.getIndex = function(list, id) {
@@ -163,6 +163,8 @@ var MainGrid;
 
     _self.prefix = params.prefix || 'og-';
 
+    _self.minCellHeight = params.minCellHeight || 8;
+
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
@@ -177,16 +179,22 @@ var MainGrid;
           'initiator_codon_variant': '#af57db'
         };
 
-    _self.width = params.width || 500;
-    _self.height = params.height || 500;
-
-    _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
-
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
 
+    _self.width = params.width || 500;
+    _self.height = params.height || 500;
+
     _self.cellWidth = _self.width / _self.donors.length;
     _self.cellHeight = _self.height / _self.genes.length;
+
+    if (_self.cellHeight < 10) {
+      _self.cellHeight = 10;
+      params.height = _self.numGenes * _self.minCellHeight;
+      _self.height = params.height;
+    }
+
+    _self.margin = params.margin || { top: 30, right: 100, bottom: 15, left: 80 };
 
     _self.heatMap = params.heatMap;
 
@@ -204,6 +212,10 @@ var MainGrid;
 
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
 
+    _self.geneTrack =
+        new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacity, params.donorFillFunc);
+    _self.geneTrack.init();
+
   };
 
 
@@ -214,6 +226,7 @@ var MainGrid;
         .attr('class', _self.prefix + 'tooltip-oncogrid')
         .style('opacity', 0);
 
+    // Todo: The root svg should be the responsibility of the OncoGrid root object, not it's child.
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
         .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)
@@ -285,6 +298,7 @@ var MainGrid;
     _self.donorTrack.render(_self.x);
 
     _self.geneHistogram.render(_self.y, _self.div);
+    _self.geneTrack.render(_self.y);
   };
 
   /**
@@ -320,6 +334,7 @@ var MainGrid;
     _self.donorTrack.update(_self.donors, _self.x);
 
     _self.geneHistogram.update(_self.genes, _self.y);
+    _self.geneTrack.update(_self.genes, _self.y);
   };
 
   /**
@@ -852,19 +867,21 @@ var OncoTrack;
 
     _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
-    _self.domain = _self.rotated ? params.genes : params.donors;
+    _self.domain = (_self.rotated ? params.genes : params.donors) || [];
     _self.width = (_self.rotated ? params.height : params.width) || 500;
 
     _self.cellHeight = params.trackHeight || 25;
-
-    _self.translateDown = (_self.rotated ? params.width : params.height) || 500;
-
     _self.numDomain = _self.domain.length;
+
     _self.cellWidth  = _self.width / _self.numDomain;
 
     _self.availableTracks = tracks|| [];
     _self.opacityFunc = opacityFunc;
     _self.fillFunc = fillFunc;
+
+    // TODO: This is awful, needs fixing and cleaning.
+    _self.translateDown =
+        (_self.rotated ? -1 *(params.width + 150 + _self.availableTracks.length*_self.cellHeight) : params.height) || 500;
 
     _self.height = _self.cellHeight * _self.availableTracks.length;
   };
@@ -881,7 +898,7 @@ var OncoTrack;
           value: _self.domain[i][_self.availableTracks[j].fieldName],
           fieldName: _self.availableTracks[j].fieldName,
           type: _self.availableTracks[j].type
-        })
+        });
       }
     }
 
@@ -891,7 +908,7 @@ var OncoTrack;
         .attr('class', _self.prefix + 'donor-track') // TODO: come up with better name
         .attr('transform', function() {
           if (_self.rotated) {
-            return 'rotate(90)translate(0,-' +  (_self.width) + ')';
+            return 'rotate(90)';
           } else {
             return '';
           }
@@ -917,8 +934,8 @@ var OncoTrack;
         .append('rect')
         .transition()
         .attr('class', function(d) {
-          return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName
-              + ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+          return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
+              ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
         })
         .attr('x', function(d) { return _self.getX(d); })
         .attr('y', function(d) { return _self.getY(d); })
@@ -937,8 +954,8 @@ var OncoTrack;
     if (_self.domain.length !== _self.numDomain) {
       _self.numDomain = _self.domain.length;
       _self.computeCoordinates();
+      _self.cellWidth  = _self.width / _self.numDomain;
     }
-    _self.cellWidth  = (_self.rotated ? _self.height : _self.width) / _self.numDomain;
 
     _self.track.selectAll('.' + _self.prefix + 'donor-track-data')
         .transition()

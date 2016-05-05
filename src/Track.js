@@ -30,19 +30,21 @@ var OncoTrack;
 
     _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
-    _self.domain = _self.rotated ? params.genes : params.donors;
+    _self.domain = (_self.rotated ? params.genes : params.donors) || [];
     _self.width = (_self.rotated ? params.height : params.width) || 500;
 
     _self.cellHeight = params.trackHeight || 25;
-
-    _self.translateDown = (_self.rotated ? params.width : params.height) || 500;
-
     _self.numDomain = _self.domain.length;
+
     _self.cellWidth  = _self.width / _self.numDomain;
 
     _self.availableTracks = tracks|| [];
     _self.opacityFunc = opacityFunc;
     _self.fillFunc = fillFunc;
+
+    // TODO: This is awful, needs fixing and cleaning.
+    _self.translateDown =
+        (_self.rotated ? -1 *(params.width + 150 + _self.availableTracks.length*_self.cellHeight) : params.height) || 500;
 
     _self.height = _self.cellHeight * _self.availableTracks.length;
   };
@@ -59,7 +61,7 @@ var OncoTrack;
           value: _self.domain[i][_self.availableTracks[j].fieldName],
           fieldName: _self.availableTracks[j].fieldName,
           type: _self.availableTracks[j].type
-        })
+        });
       }
     }
 
@@ -69,7 +71,7 @@ var OncoTrack;
         .attr('class', _self.prefix + 'donor-track') // TODO: come up with better name
         .attr('transform', function() {
           if (_self.rotated) {
-            return 'rotate(90)translate(0,-' +  (_self.width) + ')';
+            return 'rotate(90)';
           } else {
             return '';
           }
@@ -95,8 +97,8 @@ var OncoTrack;
         .append('rect')
         .transition()
         .attr('class', function(d) {
-          return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName
-              + ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+          return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
+              ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
         })
         .attr('x', function(d) { return _self.getX(d); })
         .attr('y', function(d) { return _self.getY(d); })
@@ -115,8 +117,8 @@ var OncoTrack;
     if (_self.domain.length !== _self.numDomain) {
       _self.numDomain = _self.domain.length;
       _self.computeCoordinates();
+      _self.cellWidth  = _self.width / _self.numDomain;
     }
-    _self.cellWidth  = (_self.rotated ? _self.height : _self.width) / _self.numDomain;
 
     _self.track.selectAll('.' + _self.prefix + 'donor-track-data')
         .transition()

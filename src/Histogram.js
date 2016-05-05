@@ -28,7 +28,7 @@ var OncoHistogram;
     _self.svg = s;
     _self.rotated = rotated || false;
 
-    _self.domain = _self.rotated ? params.genes : params.donors;
+    _self.domain = (_self.rotated ? params.genes : params.donors) || [];
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
@@ -97,10 +97,10 @@ var OncoHistogram;
               .style('opacity', 0);
         })
         .transition()
-        .attr('class', function(d) { return 'sortable-bar ' + d.id+'-bar' })
-        .attr('width', _self.barWidth - 2)
+        .attr('class', function(d) { return 'sortable-bar ' + d.id+'-bar'; })
+        .attr('width', _self.barWidth - 1)
         .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
-        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; })
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); })
         .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
         .attr('fill', '#1693C0');
   };
@@ -113,8 +113,8 @@ var OncoHistogram;
 
     _self.histogram.selectAll('rect')
         .transition()
-        .attr('width', _self.barWidth - 2)
-        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)) + 1; });
+        .attr('width', _self.barWidth - 1)
+        .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); });
   };
 
   OncoHistogram.prototype.getIndex = function(list, id) {

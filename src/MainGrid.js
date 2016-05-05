@@ -28,6 +28,8 @@ var MainGrid;
 
     _self.prefix = params.prefix || 'og-';
 
+    _self.minCellHeight = params.minCellHeight || 8;
+
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
@@ -42,16 +44,22 @@ var MainGrid;
           'initiator_codon_variant': '#af57db'
         };
 
-    _self.width = params.width || 500;
-    _self.height = params.height || 500;
-
-    _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
-
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
 
+    _self.width = params.width || 500;
+    _self.height = params.height || 500;
+
     _self.cellWidth = _self.width / _self.donors.length;
     _self.cellHeight = _self.height / _self.genes.length;
+
+    if (_self.cellHeight < 10) {
+      _self.cellHeight = 10;
+      params.height = _self.numGenes * _self.minCellHeight;
+      _self.height = params.height;
+    }
+
+    _self.margin = params.margin || { top: 30, right: 100, bottom: 15, left: 80 };
 
     _self.heatMap = params.heatMap;
 
@@ -69,6 +77,10 @@ var MainGrid;
 
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
 
+    _self.geneTrack =
+        new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacity, params.donorFillFunc);
+    _self.geneTrack.init();
+
   };
 
 
@@ -79,6 +91,7 @@ var MainGrid;
         .attr('class', _self.prefix + 'tooltip-oncogrid')
         .style('opacity', 0);
 
+    // Todo: The root svg should be the responsibility of the OncoGrid root object, not it's child.
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
         .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)
@@ -150,6 +163,7 @@ var MainGrid;
     _self.donorTrack.render(_self.x);
 
     _self.geneHistogram.render(_self.y, _self.div);
+    _self.geneTrack.render(_self.y);
   };
 
   /**
@@ -185,6 +199,7 @@ var MainGrid;
     _self.donorTrack.update(_self.donors, _self.x);
 
     _self.geneHistogram.update(_self.genes, _self.y);
+    _self.geneTrack.update(_self.genes, _self.y);
   };
 
   /**

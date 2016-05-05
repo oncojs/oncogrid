@@ -51,15 +51,15 @@ var emptyTester = function () {
 var simpleTester = function () {
   describe('With Data but Unmatched', function () {
 
-    var donors = [{"donorId": "DO27811", "age": 49}, {"donorId": "DO27853", "age": 62}, {
-      "donorId": "DO27827",
+    var donors = [{"id": "DO27811", "age": 49}, {"id": "DO27853", "age": 62}, {
+      "id": "DO27827",
       "age": 59
     }];
     var genes = [{"id": "ENSG00000141510", "symbol": "TP53"}, {"id": "ENSG00000157764", "symbol": "BRAF"}];
-    var observations = [{"id": "MU47148354", "donorId": "DO7328", "gene": "ENSG00000257923"},
-      {"id": "MU47203364", "donorId": "DO7328", "gene": "ENSG00000134982"},
-      {"id": "MU47148354", "donorId": "DO7328", "gene": "ENSG00000257923"},
-      {"id": "MU47203364", "donorId": "DO7328", "gene": "ENSG00000134982"}];
+    var observations = [{"id": "MU47148354", "donorId": "DO7328", "geneId": "ENSG00000257923"},
+      {"id": "MU47203364", "donorId": "DO7328", "geneId": "ENSG00000134982"},
+      {"id": "MU47148354", "donorId": "DO7328", "geneId": "ENSG00000257923"},
+      {"id": "MU47203364", "donorId": "DO7328", "geneId": "ENSG00000134982"}];
 
     var params = {
       element: '#test2',
@@ -95,12 +95,12 @@ var simpleTester = function () {
 var dataAndConfig = function () {
   describe('With Matching Data and Basic Config', function () {
 
-    var donors = [{"donorId": "DO1", "age": 49}, {"donorId": "DO2", "age": 62}, {"donorId": "DO3", "age": 59}];
+    var donors = [{"id": "DO1", "age": 49}, {"id": "DO2", "age": 62}, {"id": "DO3", "age": 59}];
     var genes = [{"id": "ENSG00000141510", "symbol": "TP53"}, {"id": "ENSG00000157764", "symbol": "BRAF"}];
-    var observations = [{"id": "MU1", "donorId": "DO1", "gene": "ENSG00000157764"},
-      {"id": "MU2", "donorId": "DO1", "gene": "ENSG00000141510"},
-      {"id": "MU3", "donorId": "DO2", "gene": "ENSG00000141510"},
-      {"id": "MU4", "donorId": "DO3", "gene": "ENSG00000157764"}];
+    var observations = [{"id": "MU1", "donorId": "DO1", "geneId": "ENSG00000157764"},
+      {"id": "MU2", "donorId": "DO1", "geneId": "ENSG00000141510"},
+      {"id": "MU3", "donorId": "DO2", "geneId": "ENSG00000141510"},
+      {"id": "MU4", "donorId": "DO3", "geneId": "ENSG00000157764"}];
 
     var params = {
       element: '#test3',
@@ -133,7 +133,7 @@ var dataAndConfig = function () {
       });
 
       it('should have donor DO1 ranked first', function () {
-        expect(grid.donors[0].donorId).to.be.equal('DO1');
+        expect(grid.donors[0].id).to.be.equal('DO1');
       });
 
       it('should have donor DO1 with a score of 12', function () {
@@ -145,7 +145,7 @@ var dataAndConfig = function () {
       });
 
       it('should have donor DO3 ranked last', function () {
-        expect(grid.donors[grid.donors.length - 1].donorId).to.be.equal('DO3');
+        expect(grid.donors[grid.donors.length - 1].id).to.be.equal('DO3');
       });
 
       it('should have donor DO3 with a score of 4', function () {
@@ -154,8 +154,8 @@ var dataAndConfig = function () {
 
       it('Main Grid should have correct dimensions', function () {
         // Width and Height are computer based on input dimensions and margins
-        expect(d3.select(element).select('.og-maingrid-svg').attr('width')).to.be.equal('795');
-        expect(d3.select(element).select('.og-maingrid-svg').attr('height')).to.be.equal('475');
+        expect(d3.select(element).select('.og-maingrid-svg').attr('width')).to.be.equal('1080');
+        expect(d3.select(element).select('.og-maingrid-svg').attr('height')).to.be.equal('695');
       });
 
     });
@@ -164,12 +164,12 @@ var dataAndConfig = function () {
 };
 
 var swapGenes = function() {
-  var donors = [{"donorId": "DO1", "age": 49}, {"donorId": "DO2", "age": 62}, {"donorId": "DO3", "age": 59}];
+  var donors = [{"id": "DO1", "age": 49}, {"id": "DO2", "age": 62}, {"id": "DO3", "age": 59}];
   var genes = [{"id": "ENSG00000141510", "symbol": "TP53"}, {"id": "ENSG00000157764", "symbol": "BRAF"}];
-  var observations = [{"id": "MU1", "donorId": "DO1", "gene": "ENSG00000157764"},
-    {"id": "MU2", "donorId": "DO1", "gene": "ENSG00000141510"},
-    {"id": "MU3", "donorId": "DO2", "gene": "ENSG00000141510"},
-    {"id": "MU4", "donorId": "DO3", "gene": "ENSG00000157764"}];
+  var observations = [{"id": "MU1", "donorId": "DO1", "geneId": "ENSG00000157764"},
+    {"id": "MU2", "donorId": "DO1", "geneId": "ENSG00000141510"},
+    {"id": "MU3", "donorId": "DO2", "geneId": "ENSG00000141510"},
+    {"id": "MU4", "donorId": "DO3", "geneId": "ENSG00000157764"}];
 
   var params = {
     element: '#test4',
@@ -196,7 +196,7 @@ var swapGenes = function() {
       grid.update(grid)(true);
 
       it('should have donor DO1 ranked first', function () {
-        expect(grid.donors[0].donorId).to.be.equal('DO1');
+        expect(grid.donors[0].id).to.be.equal('DO1');
       });
 
       it('should have donor DO1 with a score of 12', function () {
@@ -208,7 +208,7 @@ var swapGenes = function() {
       });
 
       it('should have donor DO2 ranked last', function () {
-        expect(grid.donors[grid.donors.length - 1].donorId).to.be.equal('DO2');
+        expect(grid.donors[grid.donors.length - 1].id).to.be.equal('DO2');
       });
 
       it('should have donor DO2 with a score of 4', function () {
