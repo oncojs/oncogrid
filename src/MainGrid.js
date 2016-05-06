@@ -78,7 +78,7 @@ var MainGrid;
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
 
     _self.geneTrack =
-        new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacity, params.donorFillFunc);
+        new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc, params.donorFillFunc);
     _self.geneTrack.init();
 
   };

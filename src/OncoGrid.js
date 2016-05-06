@@ -30,6 +30,7 @@ var OncoGrid;
     _self.observations = params.observations || [];
 
 
+    _self.createLookupTable();
     _self.computeDonorCounts();
     _self.computeGeneCounts();
     _self.computeGeneScores();
@@ -40,6 +41,30 @@ var OncoGrid;
 
     _self.charts = [];
     _self.charts.push(_self.mainGrid);
+  };
+
+  OncoGrid.prototype.createLookupTable = function () {
+    var _self = this;
+    var lookupTable = {};
+
+    for (var i = 0; i < _self.observations.length; i++) {
+      var obs = _self.observations[i];
+      var donorId = obs.donorId;
+      var geneId = obs.geneId;
+
+      if (lookupTable.hasOwnProperty(donorId)) {
+        if (lookupTable[donorId].hasOwnProperty(geneId)) {
+          lookupTable[donorId][geneId].push(obs.id);
+        } else {
+          lookupTable[donorId][geneId] = [obs.id];
+        }
+      } else {
+        lookupTable[donorId] = {};
+        lookupTable[donorId][geneId] = [obs.id];
+      }
+
+      _self.lookupTable = lookupTable;
+    }
   };
 
   /**
@@ -104,8 +129,6 @@ var OncoGrid;
 
   OncoGrid.prototype.cluster = function() {
     var _self = this;
-
-    _self.computeGeneScores();
     _self.genesSortbyScores();
     _self.computeScores();
     _self.sortByScores();
@@ -137,6 +160,7 @@ var OncoGrid;
       }
     }
 
+    _self.computeGeneScores();
     _self.update(_self)();
   };
 
@@ -178,31 +202,24 @@ var OncoGrid;
   OncoGrid.prototype.mutationScore = function(donor, gene) {
     var _self = this;
 
-    for (var i = 0; i < _self.observations.length; i++) {
-      var obs = _self.observations[i];
-      if (obs.donorId === donor && obs.geneId === gene) {
-        return 1;
-      }
+    if (_self.lookupTable.hasOwnProperty(donor) && _self.lookupTable[donor].hasOwnProperty(gene)) {
+      return 1;
+    } else {
+      return 0;
     }
-
-    return 0;
   };
 
   /**
-   * Returns 1 if at least one mutation, 0 otherwise.
+   * Returns # of mutations a gene has as it's score
    */
   OncoGrid.prototype.mutationGeneScore = function(donor, gene) {
     var _self = this;
 
-    var retVal = 0;
-    for (var i = 0; i < _self.observations.length; i++) {
-      var obs = _self.observations[i];
-      if (obs.donorId === donor && obs.geneId === gene) {
-        retVal++;
-      }
+    if (_self.lookupTable.hasOwnProperty(donor) && _self.lookupTable[donor].hasOwnProperty(gene)) {
+      return _self.lookupTable[donor][gene].length;
+    } else {
+      return 0;
     }
-
-    return retVal;
   };
 
   /**

@@ -73,7 +73,7 @@ var params = {
   donorOpacityFunc: donorOpacity,
   donorFillFunc: donorFill,
   geneTracks: geneTracks,
-  geneOpacity: geneOpacity
+  geneOpacityFunc: geneOpacity
 };
 
 var grid = new OncoGrid(params);
