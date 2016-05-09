@@ -6,6 +6,13 @@
     stroke: #fff;
     stroke-opacity: .5;
     shape-rendering: crispEdges;
+
+}
+
+#grid-div .og-histogram-axis {
+    stroke: #000;
+    stroke-opacity: 0.5;
+    shape-rendering: crispEdges;
 }
     
 #grid-div textarea {
@@ -14,19 +21,19 @@
     height: 360px;
 }
     
-#grid-div .gene-label {
+#grid-div .og-gene-label {
     cursor: move;
 }
     
-#grid-div .label-text-font {
+#grid-div .og-label-text-font {
     font-size: 0.5rem;
 }
     
-#grid-div .sortable-rect {
+#grid-div .og-sortable-rect {
     cursor: pointer; 
 }
 
-#grid-div .sortable-rect:hover {
+#grid-div .og-sortable-rect:hover {
     stroke: red;
     stroke-width: 2;
 }
