@@ -2,6 +2,9 @@
 
 Javascript library for visualizing OncoGrids and related tracks
 
+## Usage
+See: [API](API.md)
+
 ## Requirements
 
 - Install [node.js](http://nodejs.org/download/)

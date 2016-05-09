@@ -771,6 +771,15 @@ OncoGrid.prototype.sortDonors = function(func) {
   _self.update(_self)();
 };
 
+OncoGrid.prototype.sortGenes= function(func) {
+  var _self = this;
+
+  _self.computeScores();
+  _self.sortByScores();
+  _self.genes.sort(func);
+  _self.update(_self)();
+};
+
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
