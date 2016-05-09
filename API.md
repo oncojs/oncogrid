@@ -40,7 +40,7 @@ The `params` Object passed to OncoGrid is used to pass in both the data and requ
 optional configuration. The full description of the `params` object is as follows:
 
 * Required
-  * `element` - `string` - ID selector indicating to which DOM element the OncoGrid instance will use.
+  * `element` - `string selector | dom node` - indicating to which DOM element the OncoGrid instance will use.
   * `donors` - `Array` - List of objects representing donors. The only required field for the objects is `id`
   * `genes` - `Array` - List of objects representing genes. The only required field for the objects is `id`
   * `observations` - `Array` - List of objects representing mutations/observations.
