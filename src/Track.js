@@ -67,7 +67,7 @@ OncoTrack.prototype.init = function() {
   _self.track = _self.svg.append('g')
       .attr('width', _self.width)
       .attr('height', _self.height)
-      .attr('class', _self.prefix + 'donor-track') // TODO: come up with better name
+      .attr('class', _self.prefix + 'track') // TODO: come up with better name
       .attr('transform', function() {
         if (_self.rotated) {
           return 'rotate(90)';
@@ -91,12 +91,12 @@ OncoTrack.prototype.render = function(x) {
   _self.x = x;
   _self.computeCoordinates();
 
-  _self.track.selectAll('.' + _self.prefix + 'donor-track') // TODO: come up with better name
+  _self.track.selectAll('.' + _self.prefix + 'track') // TODO: come up with better name
       .data(_self.trackData).enter()
       .append('rect')
       .transition()
       .attr('class', function(d) {
-        return _self.prefix + 'donor-track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
+        return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
             ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
       })
       .attr('x', function(d) { return _self.getX(d); })
@@ -119,7 +119,7 @@ OncoTrack.prototype.update = function(domain, x) {
     _self.cellWidth  = _self.width / _self.numDomain;
   }
 
-  _self.track.selectAll('.' + _self.prefix + 'donor-track-data')
+  _self.track.selectAll('.' + _self.prefix + 'track-data')
       .transition()
       .attr('x', function(d) { return _self.getX(d); })
       .attr('width', _self.cellWidth);
