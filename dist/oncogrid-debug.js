@@ -616,6 +616,7 @@ OncoGrid = function(params) {
   _self.computeDonorCounts();
   _self.computeGeneCounts();
   _self.computeGeneScores();
+  _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
 
