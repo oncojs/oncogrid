@@ -61,6 +61,7 @@ OncoHistogram.prototype.render = function(x, div) {
   var topCount = getLargestCount();
 
   _self.histogram = _self.svg.append('g')
+      .attr('class', _self.prefix + 'histogram')
       .attr('width', function() {
         if (_self.rotated) {
           return _self.height;
