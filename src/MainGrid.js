@@ -58,17 +58,17 @@ MainGrid = function (params, func) {
   }
 
   _self.margin = params.margin || { top: 30, right: 100, bottom: 15, left: 80 };
-
   _self.heatMap = params.heatMap;
-
   _self.updateCallback = func;
-
   _self.histogramHeight = 100;
-
   _self.gridClick = params.gridClick;
 
   _self.init();
 
+
+  /**
+   * Histograms and tracks.
+   */
   _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
 
   _self.donorTrack =
@@ -114,19 +114,6 @@ MainGrid.prototype.render = function() {
   var _self = this;
 
   _self.computeCoordinates();
-
-  _self.row.append('text')
-      .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
-      .transition()
-      .attr('x', -6)
-      .attr('y', _self.cellHeight / 2)
-      .attr('dy', '.32em')
-      .attr('text-anchor', 'end')
-      .text(function(d, i) {
-        return _self.genes[i].symbol;
-      });
-
-  _self.defineRowDragBehaviour();
 
   _self.svg.selectAll('.' + _self.prefix + 'maingrid-svg')
       .data(_self.observations).enter()
@@ -249,13 +236,26 @@ MainGrid.prototype.computeCoordinates = function() {
   _self.row.append('text')
       .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
       .transition()
-      .attr('x', -6)
+      .attr('x', -8)
       .attr('y', _self.cellHeight / 2)
       .attr('dy', '.32em')
       .attr('text-anchor', 'end')
       .text(function(d, i) {
         return _self.genes[i].symbol;
       });
+
+  _self.row.append('text')
+      .attr('class',  _self.prefix + 'remove-gene ' + _self.prefix + 'label-text-font')
+      .on('click', function(d,i) {
+        console.log('Removing: ' + d.id);
+        _self.removeGene(i);
+      })
+      .transition()
+      .attr('style', 'display: none')
+      .attr('x', -60)
+      .attr('y', _self.cellHeight / 2)
+      .attr('dy', '.32em')
+      .text('X');
 
   _self.defineRowDragBehaviour();
 };
@@ -311,6 +311,25 @@ MainGrid.prototype.defineRowDragBehaviour = function() {
   dragSelection.on('click', function() {
     if (d3.event.defaultPrevented) {
     }
+  });
+
+  _self.row.on('mouseover', function() {
+    var curElement = this;
+    if (typeof curElement.timeout !== 'undefined') {
+      clearTimeout(curElement.timeout);
+    }
+
+    d3.select(this)
+        .select('.' + _self.prefix + 'remove-gene')
+        .attr('style', 'display: block');
+  });
+
+  _self.row.on('mouseout', function() {
+    var curElement = this;
+    curElement.timeout = setTimeout(function() {
+    d3.select(curElement).select('.' + _self.prefix + 'remove-gene')
+        .attr('style', 'display: none');
+    }, 500);
   });
 };
 
@@ -391,6 +410,19 @@ MainGrid.prototype.getDonorIndex = function(donors, donorId) {
   }
 
   return -1;
+};
+
+MainGrid.prototype.removeGene = function(i) {
+  var _self = this;
+
+  var gene = _self.genes[i];
+  if (gene) {
+    d3.selectAll('.' + gene.id + '-cell').remove();
+    d3.selectAll('.' + gene.id + '-bar').remove();
+    _self.genes.splice(i, 1);
+  }
+
+  _self.updateCallback(true);
 };
 
 MainGrid.prototype.destroy = function() {

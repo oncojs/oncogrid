@@ -33,7 +33,6 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
 
   _self.cellHeight = params.trackHeight || 25;
   _self.numDomain = _self.domain.length;
-
   _self.cellWidth = _self.width / _self.numDomain;
 
   _self.availableTracks = tracks || [];

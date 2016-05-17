@@ -127,6 +127,10 @@ OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
   return -1;
 };
 
+/**
+ * Sorts genes by scores and recomputes and sorts donors.
+ * Clusters towards top left corner of grid.
+ */
 OncoGrid.prototype.cluster = function() {
   var _self = this;
   _self.genesSortbyScores();
@@ -175,6 +179,7 @@ OncoGrid.prototype.removeGenes = function(func) {
     if (func(gene)) {
       removedList.push(gene.id);
       d3.selectAll('.' + gene.id + '-cell').remove();
+      d3.selectAll('.' + gene.id + '-bar').remove();
       _self.genes.splice(i, 1);
       i--;
     }

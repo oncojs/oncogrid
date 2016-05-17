@@ -24,7 +24,18 @@
 #grid-div .og-gene-label {
     cursor: move;
 }
-    
+
+#grid-div .og-remove-gene:before {
+    content: 'Remove';
+}
+
+#grid-div .og-remove-gene {
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-family: sans-serif;
+    color: red;
+}
+
 #grid-div .og-label-text-font {
     font-size: 0.5rem;
 }

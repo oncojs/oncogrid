@@ -30,12 +30,10 @@ OncoHistogram = function (params, s, rotated) {
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
-
   _self.width = params.width || 500;
   _self.height = params.height || 500;
 
   _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
-
   _self.histogramHeight = 100;
 
   _self.numDomain = _self.domain.length;
