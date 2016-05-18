@@ -1,3 +1,7 @@
+#grid-div {
+    cursor: crosshair;
+}
+
 #grid-div .background {
     fill: #f2f2f2;
 }
@@ -41,12 +45,17 @@
 }
     
 #grid-div .og-sortable-rect {
-    cursor: pointer; 
+
 }
 
 #grid-div .og-sortable-rect:hover {
     stroke: red;
-    stroke-width: 2;
+    stroke-width: 3;
+}
+
+#grid-div .og-highlight {
+    stroke: green;
+    stroke-width: 1;
 }
     
 #grid-div  div.og-tooltip-oncogrid {

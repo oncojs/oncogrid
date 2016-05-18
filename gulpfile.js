@@ -6,7 +6,7 @@ var rename = require('gulp-rename');
 var jshint = require('gulp-jshint');
 
 // Change this to the location you would like to deploy to.
-var portalOncoDir = 'path/to/application/';
+var copyDir = 'destination dir';
 
 gulp.task('default', function() {
   gulp.src(['src/index.js'])
@@ -33,5 +33,5 @@ gulp.task('lint', function() {
 });
 
 gulp.task('copy', function () {
-  gulp.src('dist/oncogrid-debug.js').pipe(gulp.dest(portalOncoDir));
+  gulp.src('dist/oncogrid-debug.js').pipe(gulp.dest(copyDir));
 });

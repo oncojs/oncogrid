@@ -301,11 +301,34 @@ MainGrid.prototype.render = function() {
         _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId)
             .style('left', (d3.event.pageX + 10) + 'px')
             .style('top', (d3.event.pageY - 28) + 'px');
+
+        _self.svg.selectAll('.' + d.donorId + '-cell')
+            .classed(_self.prefix + 'highlight', true);
+        _self.svg.selectAll('.' + d.geneId + '-cell')
+            .classed(_self.prefix + 'highlight', true);
+        _self.svg.selectAll('.' + d.donorId + '-bar')
+            .classed(_self.prefix + 'highlight', true);
+        _self.svg.selectAll('.' + d.geneId + '-bar')
+            .classed(_self.prefix + 'highlight', true);
+        _self.svg.selectAll('.' + d.geneId + '-label')
+            .classed(_self.prefix + 'highlight', true);
+
       })
-      .on('mouseout', function() {
+      .on('mouseout', function(d) {
         _self.div.transition()
             .duration(500)
             .style('opacity', 0);
+
+        _self.svg.selectAll('.' + d.donorId + '-cell')
+            .classed(_self.prefix + 'highlight', false);
+        _self.svg.selectAll('.' + d.geneId + '-cell')
+            .classed(_self.prefix + 'highlight', false);
+        _self.svg.selectAll('.' + d.donorId + '-bar')
+            .classed(_self.prefix + 'highlight', false);
+        _self.svg.selectAll('.' + d.geneId + '-bar')
+            .classed(_self.prefix + 'highlight', false);
+        _self.svg.selectAll('.' + d.geneId + '-label')
+            .classed(_self.prefix + 'highlight', false);
       })
       .on('click', function(d) {
         if (typeof _self.gridClick !== 'undefined') {
@@ -353,7 +376,7 @@ MainGrid.prototype.update = function() {
   _self.svg.selectAll('.' + _self.prefix + 'sortable-rect')
       .transition()
       .attr('width', _self.cellWidth)
-      .attr('height', _self.cellHeight)
+      .attr('height', _self.getHeight())
       .attr('y', function(d) {
         return _self.getY(d);
       })
@@ -410,7 +433,9 @@ MainGrid.prototype.computeCoordinates = function() {
       .attr('x2', _self.width);
 
   _self.row.append('text')
-      .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
+      .attr('class', function(g) {
+        return g.id + '-label ' + _self.prefix +'gene-label ' + _self.prefix + 'label-text-font';
+      })
       .transition()
       .attr('x', -8)
       .attr('y', _self.cellHeight / 2)
@@ -526,7 +551,7 @@ MainGrid.prototype.getY = function(d) {
 
   var keys = Object.keys(_self.colorMap);
   return  _self.y(pseudo_genes.indexOf(d.geneId)) + (_self.cellHeight / keys.length) *
-      (keys.indexOf(d.consequence) - 1);
+      (keys.indexOf(d.consequence));
 };
 
 MainGrid.prototype.getColor = function(d) {
