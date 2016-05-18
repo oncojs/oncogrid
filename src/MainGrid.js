@@ -122,37 +122,18 @@ MainGrid.prototype.render = function() {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
-        _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId)
+        _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId + '<br/>' + d.consequence)
             .style('left', (d3.event.pageX + 10) + 'px')
             .style('top', (d3.event.pageY - 28) + 'px');
 
-        _self.svg.selectAll('.' + d.donorId + '-cell')
-            .classed(_self.prefix + 'highlight', true);
-        _self.svg.selectAll('.' + d.geneId + '-cell')
-            .classed(_self.prefix + 'highlight', true);
-        _self.svg.selectAll('.' + d.donorId + '-bar')
-            .classed(_self.prefix + 'highlight', true);
-        _self.svg.selectAll('.' + d.geneId + '-bar')
-            .classed(_self.prefix + 'highlight', true);
-        _self.svg.selectAll('.' + d.geneId + '-label')
-            .classed(_self.prefix + 'highlight', true);
-
+        _self.highlight(d, true);
       })
       .on('mouseout', function(d) {
         _self.div.transition()
             .duration(500)
             .style('opacity', 0);
 
-        _self.svg.selectAll('.' + d.donorId + '-cell')
-            .classed(_self.prefix + 'highlight', false);
-        _self.svg.selectAll('.' + d.geneId + '-cell')
-            .classed(_self.prefix + 'highlight', false);
-        _self.svg.selectAll('.' + d.donorId + '-bar')
-            .classed(_self.prefix + 'highlight', false);
-        _self.svg.selectAll('.' + d.geneId + '-bar')
-            .classed(_self.prefix + 'highlight', false);
-        _self.svg.selectAll('.' + d.geneId + '-label')
-            .classed(_self.prefix + 'highlight', false);
+        _self.highlight(d, false);
       })
       .on('click', function(d) {
         if (typeof _self.gridClick !== 'undefined') {
@@ -358,6 +339,21 @@ MainGrid.prototype.defineRowDragBehaviour = function() {
   });
 };
 
+
+MainGrid.prototype.highlight = function(d, shouldHighlight) {
+  var _self = this;
+
+  _self.svg.selectAll('.' + d.donorId + '-cell')
+      .classed(_self.prefix + 'highlight', shouldHighlight);
+  _self.svg.selectAll('.' + d.geneId + '-cell')
+      .classed(_self.prefix + 'highlight', shouldHighlight);
+  _self.svg.selectAll('.' + d.donorId + '-bar')
+      .classed(_self.prefix + 'highlight', shouldHighlight);
+  _self.svg.selectAll('.' + d.geneId + '-bar')
+      .classed(_self.prefix + 'highlight', shouldHighlight);
+  _self.svg.selectAll('.' + d.geneId + '-label')
+      .classed(_self.prefix + 'highlight', shouldHighlight);
+}
 
 /**
  * Function that determines the y position of a mutation within a cell
