@@ -43,6 +43,10 @@ OncoGrid = function(params) {
   _self.charts.push(_self.mainGrid);
 };
 
+
+/**
+ * Creates a for constant time checks if an observation exists for a given donor, gene coordinate.
+ */
 OncoGrid.prototype.createLookupTable = function () {
   var _self = this;
   var lookupTable = {};
@@ -168,6 +172,10 @@ OncoGrid.prototype.removeDonors = function(func) {
   _self.update(_self)();
 };
 
+/**
+ * Removes genes and updates OncoGrid rendering.
+ * @param func function describing the criteria for removing a gene.
+ */
 OncoGrid.prototype.removeGenes = function(func) {
   var _self = this;
 
@@ -188,6 +196,10 @@ OncoGrid.prototype.removeGenes = function(func) {
   _self.update(_self)();
 };
 
+/**
+ * Sorts donors
+ * @param func a comparator function.
+ */
 OncoGrid.prototype.sortDonors = function(func) {
   var _self = this;
 
@@ -195,6 +207,10 @@ OncoGrid.prototype.sortDonors = function(func) {
   _self.update(_self)();
 };
 
+/**
+ * Sorts genes
+ * @param func a comparator function.
+ */
 OncoGrid.prototype.sortGenes= function(func) {
   var _self = this;
 
@@ -204,6 +220,9 @@ OncoGrid.prototype.sortGenes= function(func) {
   _self.update(_self)();
 };
 
+/**
+ * Toggles oncogrid between heatmap mode and regular mode showing individual consequence types.
+ */
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
@@ -253,6 +272,9 @@ OncoGrid.prototype.computeScores = function() {
 
 };
 
+/**
+ * Computes scores for gene sorting.
+ */
 OncoGrid.prototype.computeGeneScores = function() {
   var _self = this;
 
@@ -266,6 +288,9 @@ OncoGrid.prototype.computeGeneScores = function() {
   }
 };
 
+/**
+ * Computes the number of observations for a given donor.
+ */
 OncoGrid.prototype.computeDonorCounts = function() {
   var _self = this;
 
@@ -283,6 +308,9 @@ OncoGrid.prototype.computeDonorCounts = function() {
   }
 };
 
+/**
+ * Computes the number of observations for a given gene.
+ */
 OncoGrid.prototype.computeGeneCounts = function() {
   var _self = this;
 
@@ -313,6 +341,9 @@ OncoGrid.prototype.sortScore = function(a, b) {
   }
 };
 
+/**
+ *  Cleanup function to ensure the svg and any bindings are removed from the dom.
+ */
 OncoGrid.prototype.destroy = function() {
   var _self = this;
 

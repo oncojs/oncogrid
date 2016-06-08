@@ -24,6 +24,30 @@ var MainGrid;
 MainGrid = function (params, func) {
   var _self = this;
 
+  _self.updateCallback = func;
+  _self.loadParams(params);
+  _self.init();
+
+  // Histograms and tracks.
+  _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+  _self.donorTrack =
+      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
+  _self.donorTrack.init();
+
+  _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
+  _self.geneTrack =
+      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc, params.donorFillFunc);
+  _self.geneTrack.init();
+
+};
+
+/**
+ * Responsible for initializing instance fields of MainGrid from the provided params object.
+ * @param params
+ */
+MainGrid.prototype.loadParams = function (params) {
+  var _self = this;
+
   _self.prefix = params.prefix || 'og-';
 
   _self.minCellHeight = params.minCellHeight || 8;
@@ -57,33 +81,15 @@ MainGrid = function (params, func) {
     _self.height = params.height;
   }
 
-  _self.margin = params.margin || { top: 30, right: 100, bottom: 15, left: 80 };
+  _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
   _self.heatMap = params.heatMap;
-  _self.updateCallback = func;
   _self.histogramHeight = 100;
   _self.gridClick = params.gridClick;
-
-  _self.init();
-
-
-  /**
-   * Histograms and tracks.
-   */
-  _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
-
-  _self.donorTrack =
-      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
-  _self.donorTrack.init();
-
-  _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
-
-  _self.geneTrack =
-      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc, params.donorFillFunc);
-  _self.geneTrack.init();
-
 };
 
-
+/**
+ * Creates main svg element, background, and tooltip.
+ */
 MainGrid.prototype.init = function() {
   var _self = this;
 
@@ -164,6 +170,7 @@ MainGrid.prototype.render = function() {
 MainGrid.prototype.update = function() {
   var _self = this;
 
+  // Recalculate positions and dimensions of cells only on change in number of elements
   if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
@@ -195,7 +202,7 @@ MainGrid.prototype.update = function() {
 };
 
 /**
- * Updates coordinate system
+ * Updates coordinate system and renders the lines of the grid.
  */
 MainGrid.prototype.computeCoordinates = function() {
   var _self = this;
@@ -253,7 +260,6 @@ MainGrid.prototype.computeCoordinates = function() {
   _self.row.append('text')
       .attr('class',  _self.prefix + 'remove-gene ' + _self.prefix + 'label-text-font')
       .on('click', function(d,i) {
-        console.log('Removing: ' + d.id);
         _self.removeGene(i);
       })
       .transition()
@@ -339,7 +345,11 @@ MainGrid.prototype.defineRowDragBehaviour = function() {
   });
 };
 
-
+/**
+ * Determines if to highlight or remove highlight from associated data
+ * @param d The observation currently moused over.
+ * @param shouldHighlight whether to highlight or remove highlight
+ */
 MainGrid.prototype.highlight = function(d, shouldHighlight) {
   var _self = this;
 
@@ -353,7 +363,7 @@ MainGrid.prototype.highlight = function(d, shouldHighlight) {
       .classed(_self.prefix + 'highlight', shouldHighlight);
   _self.svg.selectAll('.' + d.geneId + '-label')
       .classed(_self.prefix + 'highlight', shouldHighlight);
-}
+};
 
 /**
  * Function that determines the y position of a mutation within a cell
@@ -374,6 +384,10 @@ MainGrid.prototype.getY = function(d) {
       (keys.indexOf(d.consequence));
 };
 
+/**
+ * Returns the color for the given observation.
+ * @param d observation.
+ */
 MainGrid.prototype.getColor = function(d) {
   var _self = this;
 
@@ -384,6 +398,10 @@ MainGrid.prototype.getColor = function(d) {
   }
 };
 
+/**
+ * Returns the desired opacity of observation rects. This changes between heatmap and regular mode.
+ * @returns {number}
+ */
 MainGrid.prototype.getOpacity = function() {
   var _self = this;
 
@@ -394,6 +412,10 @@ MainGrid.prototype.getOpacity = function() {
   }
 };
 
+/**
+ * Returns the height of an observation cell. This changes between heatmap and regular mode.
+ * @returns {number}
+ */
 MainGrid.prototype.getHeight = function() {
   var _self = this;
 
@@ -404,6 +426,9 @@ MainGrid.prototype.getHeight = function() {
   }
 };
 
+/**
+ * Toggles the observation rects between heatmap and regular mode.
+ */
 MainGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
@@ -433,6 +458,10 @@ MainGrid.prototype.getDonorIndex = function(donors, donorId) {
   return -1;
 };
 
+/**
+ * Removes all elements corresponding to the given gene and then removes it from the gene list.
+ * @param i index of the gene to remove.
+ */
 MainGrid.prototype.removeGene = function(i) {
   var _self = this;
 
@@ -446,6 +475,9 @@ MainGrid.prototype.removeGene = function(i) {
   _self.updateCallback(true);
 };
 
+/**
+ * Removes all svg elements for this grid.
+ */
 MainGrid.prototype.destroy = function() {
   var _self = this;
 
