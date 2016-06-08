@@ -97,7 +97,6 @@ MainGrid.prototype.init = function() {
       .attr('class', _self.prefix + 'tooltip-oncogrid')
       .style('opacity', 0);
 
-  // Todo: The root svg should be the responsibility of the OncoGrid root object, not it's child.
   _self.svg = d3.select(_self.element).append('svg')
       .attr('class', _self.prefix + 'maingrid-svg')
       .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)

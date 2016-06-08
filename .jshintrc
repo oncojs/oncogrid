@@ -1,0 +1,4 @@
+{
+  "globalstrict"  : true,
+  "browserify": true
+}

@@ -28,7 +28,6 @@ OncoGrid = function(params) {
   _self.genes = params.genes || [];
   _self.observations = params.observations || [];
 
-
   _self.createLookupTable();
   _self.computeDonorCounts();
   _self.computeGeneCounts();
@@ -42,7 +41,6 @@ OncoGrid = function(params) {
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
 };
-
 
 /**
  * Creates a for constant time checks if an observation exists for a given donor, gene coordinate.

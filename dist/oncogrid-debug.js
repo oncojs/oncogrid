@@ -46,6 +46,11 @@ OncoHistogram.prototype.render = function(x, div) {
   _self.x = x;
   _self.div = div;
 
+  /**
+   * Want to find the maximum value so we can label the axis and scale the bars accordingly.
+   * No need to make this function public.
+   * @returns {number}
+   */
   function getLargestCount() {
     var retVal = 1;
 
@@ -161,6 +166,9 @@ OncoHistogram.prototype.renderAxis = function(topCount) {
       .text(halfInt);
 };
 
+/**
+ * Helper the gets the index of the current id.
+ */
 OncoHistogram.prototype.getIndex = function(list, id) {
   for (var i = 0; i < list.length; i++) {
     var obj = list[i];
@@ -273,7 +281,6 @@ MainGrid.prototype.init = function() {
       .attr('class', _self.prefix + 'tooltip-oncogrid')
       .style('opacity', 0);
 
-  // Todo: The root svg should be the responsibility of the OncoGrid root object, not it's child.
   _self.svg = d3.select(_self.element).append('svg')
       .attr('class', _self.prefix + 'maingrid-svg')
       .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight*2)
@@ -694,7 +701,6 @@ OncoGrid = function(params) {
   _self.genes = params.genes || [];
   _self.observations = params.observations || [];
 
-
   _self.createLookupTable();
   _self.computeDonorCounts();
   _self.computeGeneCounts();
@@ -708,7 +714,6 @@ OncoGrid = function(params) {
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
 };
-
 
 /**
  * Creates a for constant time checks if an observation exists for a given donor, gene coordinate.
@@ -1088,7 +1093,7 @@ OncoTrack.prototype.init = function() {
   _self.track = _self.svg.append('g')
       .attr('width', _self.width)
       .attr('height', _self.height)
-      .attr('class', _self.prefix + 'track') // TODO: come up with better name
+      .attr('class', _self.prefix + 'track')
       .attr('transform', function() {
         if (_self.rotated) {
           return 'rotate(90)';
@@ -1112,7 +1117,7 @@ OncoTrack.prototype.render = function(x) {
   _self.x = x;
   _self.computeCoordinates();
 
-  _self.track.selectAll('.' + _self.prefix + 'track') // TODO: come up with better name
+  _self.track.selectAll('.' + _self.prefix + 'track')
       .data(_self.trackData).enter()
       .append('rect')
       .transition()
@@ -1128,6 +1133,9 @@ OncoTrack.prototype.render = function(x) {
       .attr('opacity', _self.opacityFunc);
 };
 
+/**
+ * Updates the rendering of the tracks.
+ */
 OncoTrack.prototype.update = function(domain, x) {
   var _self = this;
 
@@ -1234,6 +1242,7 @@ module.exports = OncoTrack;
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+"use strict";
 
 window.OncoGrid = require('./OncoGrid');
 },{"./OncoGrid":3}]},{},[5])

@@ -45,6 +45,11 @@ OncoHistogram.prototype.render = function(x, div) {
   _self.x = x;
   _self.div = div;
 
+  /**
+   * Want to find the maximum value so we can label the axis and scale the bars accordingly.
+   * No need to make this function public.
+   * @returns {number}
+   */
   function getLargestCount() {
     var retVal = 1;
 
@@ -160,6 +165,9 @@ OncoHistogram.prototype.renderAxis = function(topCount) {
       .text(halfInt);
 };
 
+/**
+ * Helper the gets the index of the current id.
+ */
 OncoHistogram.prototype.getIndex = function(list, id) {
   for (var i = 0; i < list.length; i++) {
     var obj = list[i];

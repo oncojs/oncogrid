@@ -66,7 +66,7 @@ OncoTrack.prototype.init = function() {
   _self.track = _self.svg.append('g')
       .attr('width', _self.width)
       .attr('height', _self.height)
-      .attr('class', _self.prefix + 'track') // TODO: come up with better name
+      .attr('class', _self.prefix + 'track')
       .attr('transform', function() {
         if (_self.rotated) {
           return 'rotate(90)';
@@ -90,7 +90,7 @@ OncoTrack.prototype.render = function(x) {
   _self.x = x;
   _self.computeCoordinates();
 
-  _self.track.selectAll('.' + _self.prefix + 'track') // TODO: come up with better name
+  _self.track.selectAll('.' + _self.prefix + 'track')
       .data(_self.trackData).enter()
       .append('rect')
       .transition()
@@ -106,6 +106,9 @@ OncoTrack.prototype.render = function(x) {
       .attr('opacity', _self.opacityFunc);
 };
 
+/**
+ * Updates the rendering of the tracks.
+ */
 OncoTrack.prototype.update = function(domain, x) {
   var _self = this;
 
