@@ -53,7 +53,7 @@ optional configuration. The full description of the `params` object is as follow
   * `margin` - `object` - Object holding the settings for the margins: `Default: { top: 30, right: 100, bottom: 15, left: 80 }`
   * `heatMap` - `bool` - If true, initial render will be in heatMap mode.
   * `donorOpacityFunc` - `function` - Function to determine cell opacity for donor track data.
-  * `geneOpcaticyFunc` - `function` - Function to determine cell opacity for gene track data.
+  * `geneOpacityFunc` - `function` - Function to determine cell opacity for gene track data.
   * `colorMap` - `object` - A mapping from consequence type to colour.
 
 
