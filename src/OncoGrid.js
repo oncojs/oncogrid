@@ -227,6 +227,12 @@ OncoGrid.prototype.toggleHeatmap = function() {
   _self.mainGrid.toggleHeatmap();
 };
 
+OncoGrid.prototype.toggleGridLines = function() {
+  var _self = this;
+
+  _self.mainGrid.toggleGridLines();
+};
+
 /**
  * Returns 1 if at least one mutation, 0 otherwise.
  */

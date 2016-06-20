@@ -268,6 +268,8 @@ MainGrid.prototype.loadParams = function (params) {
   _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
   _self.heatMap = params.heatMap;
   _self.histogramHeight = 100;
+
+  _self.drawGridLines = false;
   _self.gridClick = params.gridClick;
 };
 
@@ -314,15 +316,11 @@ MainGrid.prototype.render = function() {
         _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId + '<br/>' + d.consequence)
             .style('left', (d3.event.pageX + 10) + 'px')
             .style('top', (d3.event.pageY - 28) + 'px');
-
-        _self.highlight(d, true);
       })
       .on('mouseout', function(d) {
         _self.div.transition()
             .duration(500)
             .style('opacity', 0);
-
-        _self.highlight(d, false);
       })
       .on('click', function(d) {
         if (typeof _self.gridClick !== 'undefined') {
@@ -406,8 +404,10 @@ MainGrid.prototype.computeCoordinates = function() {
       .attr('donor', function(d) { return d.id; })
       .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
-  _self.column.append('line')
-      .attr('x1', -_self.width);
+  if (_self.drawGridLines) {
+    _self.column.append('line')
+        .attr('x1', -_self.height);
+  }
 
   _self.y = d3.scale.ordinal()
       .domain(d3.range(_self.genes.length))
@@ -424,8 +424,10 @@ MainGrid.prototype.computeCoordinates = function() {
       .attr('class', _self.prefix+'gene-row')
       .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
-  _self.row.append('line')
-      .attr('x2', _self.width);
+  if (_self.drawGridLines) {
+    _self.row.append('line')
+        .attr('x2', _self.width);
+  }
 
   _self.row.append('text')
       .attr('class', function(g) {
@@ -439,18 +441,6 @@ MainGrid.prototype.computeCoordinates = function() {
       .text(function(d, i) {
         return _self.genes[i].symbol;
       });
-
-  _self.row.append('text')
-      .attr('class',  _self.prefix + 'remove-gene ' + _self.prefix + 'label-text-font')
-      .on('click', function(d,i) {
-        _self.removeGene(i);
-      })
-      .transition()
-      .attr('style', 'display: none')
-      .attr('x', -60)
-      .attr('y', _self.cellHeight / 2)
-      .attr('dy', '.32em')
-      .text('X');
 
   _self.defineRowDragBehaviour();
 };
@@ -526,26 +516,6 @@ MainGrid.prototype.defineRowDragBehaviour = function() {
         .attr('style', 'display: none');
     }, 500);
   });
-};
-
-/**
- * Determines if to highlight or remove highlight from associated data
- * @param d The observation currently moused over.
- * @param shouldHighlight whether to highlight or remove highlight
- */
-MainGrid.prototype.highlight = function(d, shouldHighlight) {
-  var _self = this;
-
-  _self.svg.selectAll('.' + d.donorId + '-cell')
-      .classed(_self.prefix + 'highlight', shouldHighlight);
-  _self.svg.selectAll('.' + d.geneId + '-cell')
-      .classed(_self.prefix + 'highlight', shouldHighlight);
-  _self.svg.selectAll('.' + d.donorId + '-bar')
-      .classed(_self.prefix + 'highlight', shouldHighlight);
-  _self.svg.selectAll('.' + d.geneId + '-bar')
-      .classed(_self.prefix + 'highlight', shouldHighlight);
-  _self.svg.selectAll('.' + d.geneId + '-label')
-      .classed(_self.prefix + 'highlight', shouldHighlight);
 };
 
 /**
@@ -625,6 +595,18 @@ MainGrid.prototype.toggleHeatmap = function() {
       .attr('height', function(d) { return _self.getHeight(d); })
       .attr('fill', function(d) { return _self.getColor(d); })
       .attr('opacity', function(d) { return _self.getOpacity(d); });
+};
+
+MainGrid.prototype.toggleGridLines = function() {
+  var _self = this;
+
+  if (_self.drawGridLines) {
+    _self.drawGridLines = false;
+  } else {
+    _self.drawGridLines = true;
+  }
+
+  _self.computeCoordinates();
 };
 
 /**
@@ -898,6 +880,12 @@ OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
   _self.mainGrid.toggleHeatmap();
+};
+
+OncoGrid.prototype.toggleGridLines = function() {
+  var _self = this;
+
+  _self.mainGrid.toggleGridLines();
 };
 
 /**
@@ -1192,7 +1180,7 @@ OncoTrack.prototype.computeCoordinates = function() {
       .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
   _self.column.append('line')
-      .attr('x1', -_self.width);
+      .attr('x1', -_self.height);
 
   _self.y = d3.scale.ordinal()
       .domain(d3.range(_self.availableTracks.length))

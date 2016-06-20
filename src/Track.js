@@ -165,7 +165,7 @@ OncoTrack.prototype.computeCoordinates = function() {
       .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
   _self.column.append('line')
-      .attr('x1', -_self.width);
+      .attr('x1', -_self.height);
 
   _self.y = d3.scale.ordinal()
       .domain(d3.range(_self.availableTracks.length))
