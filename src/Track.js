@@ -31,7 +31,7 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
   _self.width = (_self.rotated ? params.height : params.width) || 500;
 
-  _self.cellHeight = params.trackHeight || 25;
+  _self.cellHeight = params.trackHeight || 20;
   _self.numDomain = _self.domain.length;
   _self.cellWidth = _self.width / _self.numDomain;
 
@@ -45,6 +45,8 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
           params.height) || 500;
 
   _self.height = _self.cellHeight * _self.availableTracks.length;
+
+  _self.drawGridLines = false;
 };
 
 OncoTrack.prototype.init = function() {
@@ -164,8 +166,10 @@ OncoTrack.prototype.computeCoordinates = function() {
       .attr('donor', function(d) { return d.id; })
       .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
-  _self.column.append('line')
-      .attr('x1', -_self.height);
+  if (_self.drawGridLines) {
+    _self.column.append('line')
+        .attr('x1', -_self.height);
+  }
 
   _self.y = d3.scale.ordinal()
       .domain(d3.range(_self.availableTracks.length))
@@ -181,8 +185,10 @@ OncoTrack.prototype.computeCoordinates = function() {
       .attr('class', _self.prefix + 'row')
       .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
-  _self.row.append('line')
-      .attr('x2', _self.width);
+  if (_self.drawGridLines) {
+    _self.row.append('line')
+        .attr('x2', _self.width);
+  }
 
   _self.row.append('text')
       .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
@@ -194,6 +200,18 @@ OncoTrack.prototype.computeCoordinates = function() {
       .text(function(d, i) {
         return _self.availableTracks[i].name;
       });
+};
+
+OncoTrack.prototype.toggleGridLines = function() {
+  var _self = this;
+
+  if (_self.drawGridLines) {
+    _self.drawGridLines = false;
+  } else {
+    _self.drawGridLines = true;
+  }
+
+  _self.computeCoordinates();
 };
 
 module.exports = OncoTrack;

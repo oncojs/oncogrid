@@ -15,6 +15,22 @@
 
 }
 
+#grid-div line .og-vertical-cross{
+    stroke: black;
+    stroke-opacity: 1;
+    stroke-width: 2;
+    shape-rendering: crispEdges;
+
+}
+
+#grid-div line .og-horizontal-cross{
+    stroke: black;
+    stroke-opacity: 1;
+    stroke-width: 2;
+    shape-rendering: crispEdges;
+
+}
+
 #grid-div .og-histogram-axis {
     stroke: #000;
     stroke-opacity: 0.5;

@@ -34,7 +34,7 @@ OncoHistogram = function (params, s, rotated) {
   _self.height = params.height || 500;
 
   _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
-  _self.histogramHeight = 100;
+  _self.histogramHeight = 80;
 
   _self.numDomain = _self.domain.length;
   _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
@@ -163,6 +163,13 @@ OncoHistogram.prototype.renderAxis = function(topCount) {
       .attr('dy', '.32em')
       .attr('text-anchor', 'end')
       .text(halfInt);
+
+  _self.histogram.append('text')
+      .attr('class', _self.prefix + 'label-text-font')
+      .attr('dy', '.32em')
+      .attr('text-anchor', 'end')
+      .attr('transform', 'rotate(-90)translate('+ secondHeight/-2+',-25)')
+      .text("Mutation freq.");
 };
 
 /**
