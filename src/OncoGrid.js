@@ -233,6 +233,12 @@ OncoGrid.prototype.toggleGridLines = function() {
   _self.mainGrid.toggleGridLines();
 };
 
+OncoGrid.prototype.toggleCrosshair = function() {
+  var _self = this;
+
+  _self.mainGrid.toggleCrosshair();
+};
+
 /**
  * Returns 1 if at least one mutation, 0 otherwise.
  */

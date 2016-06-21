@@ -85,4 +85,8 @@ function removeCleanDonors() {
   };
 
   grid.removeDonors(criteria);
-};
+}
+
+function toggleCrosshair() {
+  grid.toggleCrosshair();
+}

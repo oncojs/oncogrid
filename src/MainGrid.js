@@ -86,7 +86,8 @@ MainGrid.prototype.loadParams = function (params) {
   _self.histogramHeight = 100;
 
   _self.drawGridLines = false;
-  _self.crosshair = true;
+  _self.crosshair = false;
+
   _self.gridClick = params.gridClick;
 };
 
@@ -291,55 +292,66 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
   _self.verticalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'vertical-cross')
-      .attr('stroke', 'orange')
       .attr('y1', 0)
-      .attr('y2', _self.height);
+      .attr('y2', _self.height)
+      .attr('opacity', 0);
 
   _self.horizontalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'horizontal-cross')
-      .attr('stroke', 'black')
       .attr('x1', 0)
-      .attr('x2', _self.width);
+      .attr('x2', _self.width)
+      .attr('opacity', 0);
 
   _self.svg
       .on('mouseover', function () {
-        var coord = d3.mouse(this);
 
-        _self.verticalCross.attr('x1', coord[0]);
-        _self.verticalCross.attr('x2', coord[0]);
-        _self.horizontalCross.attr('y1', coord[1]);
-        _self.horizontalCross.attr('y2', d3.event.pageY);
+        if (_self.crosshair) {
+          var coord = d3.mouse(this);
 
-        var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-        var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+          _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
+          _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
+          _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
+          _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
 
-        _self.div.transition()
-            .duration(200)
-            .style('opacity', 0.9);
-        _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
-            .style('left', (d3.event.pageX + 10) + 'px')
-            .style('top', (d3.event.pageY - 28) + 'px');
+          var xIndex = _self.rangeToDomain(_self.x, coord[0]);
+          var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+
+          _self.div.transition()
+              .duration(200)
+              .style('opacity', 0.9);
+          _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
+              .style('left', (d3.event.pageX + 10) + 'px')
+              .style('top', (d3.event.pageY - 28) + 'px');
+        }
       })
       .on('mousemove', function () {
 
-        var coord = d3.mouse(this);
+        if (_self.crosshair) {
+          var coord = d3.mouse(this);
 
-        _self.verticalCross.attr('x1', coord[0]);
-        _self.verticalCross.attr('x2', coord[0]);
-        _self.horizontalCross.attr('y1', coord[1]);
-        _self.horizontalCross.attr('y2', coord[1]);
+          _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
+          _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
+          _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
+          _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
 
-        var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-        var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+          var xIndex = _self.rangeToDomain(_self.x, coord[0]);
+          var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
-        _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
-            .style('left', (d3.event.pageX + 10) + 'px')
-            .style('top', (d3.event.pageY - 28) + 'px');
+          _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
+              .style('left', (d3.event.pageX + 10) + 'px')
+              .style('top', (d3.event.pageY - 28) + 'px');
+        }
       })
       .on('mouseout', function () {
-        _self.div.transition()
-            .duration(500)
-            .style('opacity', 0);
+        if (_self.crosshair) {
+          _self.div.transition()
+              .duration(500)
+              .style('opacity', 0);
+
+
+          _self.verticalCross.attr('opacity', 0);
+          _self.horizontalCross.attr('opacity', 0);
+        }
       });
 };
 

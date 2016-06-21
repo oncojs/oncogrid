@@ -1,4 +1,8 @@
 #grid-div {
+    cursor: pointer;
+}
+
+#grid-div .crosshair-mode {
     cursor: crosshair;
 }
 
