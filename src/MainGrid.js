@@ -293,7 +293,7 @@ MainGrid.prototype.resize = function(width, height) {
   _self.width = width;
   _self.height = height;
 
-  d3.select('og-maingrid-svg')
+  d3.select('.og-maingrid-svg')
       .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
       .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2);
 

@@ -60,6 +60,7 @@ optional configuration. The full description of the `params` object is as follow
 ## API
 
 * `render()` - Renders an instantiate OncoGrid configured through the `params` argument in constructor.
+* `resize(width, height`) - Resizes and scales oncogrid to new desired width and height. 
 * `cluster()` - Sorts genes based on mutation count and then re-scores donors and resorts them as well.
 * `removeDonors(function)` - Removes all donors that evaluate true for the passed function.
 * `removeGenes(function)` - Removes all genes that evaluate true for the passed function.
