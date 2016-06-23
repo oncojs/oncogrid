@@ -29,7 +29,7 @@ OncoHistogram = function (params, s, rotated) {
   _self.rotated = rotated || false;
 
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
-  _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
+  _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
 
   _self.width = params.width || 500;
   _self.height = params.height || 500;
@@ -41,7 +41,7 @@ OncoHistogram = function (params, s, rotated) {
   _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 };
 
-OncoHistogram.prototype.render = function(x, div) {
+OncoHistogram.prototype.render = function (x, div) {
   var _self = this;
   _self.x = x;
   _self.div = div;
@@ -64,9 +64,9 @@ OncoHistogram.prototype.render = function(x, div) {
 
   var topCount = getLargestCount();
 
-  _self.histogram = _self.svg.append('g')
+  _self.container = _self.svg.append('g')
       .attr('class', _self.prefix + 'histogram')
-      .attr('width', function() {
+      .attr('width', function () {
         if (_self.rotated) {
           return _self.height;
         } else {
@@ -75,15 +75,16 @@ OncoHistogram.prototype.render = function(x, div) {
       })
       .attr('height', _self.histogramHeight)
       .style('margin-left', _self.margin.left + 'px')
-      .attr('transform', function() {
+      .attr('transform', function () {
         if (_self.rotated) {
-           return 'rotate(90)translate(0,-' +  (_self.width) + ')';
+          return 'rotate(90)translate(0,-' + (_self.width) + ')';
         } else {
           return '';
         }
-      })
-      .append('g')
-      .attr('transform', 'translate(0,-'+ (_self.histogramHeight + _self.margin.top/1.61803398875) + ')');
+      });
+
+  _self.histogram = _self.container.append('g')
+      .attr('transform', 'translate(0,-' + (_self.histogramHeight + _self.margin.top / 1.61803398875) + ')');
 
   _self.renderAxis(topCount);
 
@@ -91,7 +92,7 @@ OncoHistogram.prototype.render = function(x, div) {
       .data(_self.domain)
       .enter()
       .append('rect')
-      .on('mouseover', function(d) {
+      .on('mouseover', function (d) {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
@@ -99,22 +100,30 @@ OncoHistogram.prototype.render = function(x, div) {
             .style('left', (d3.event.pageX + 10) + 'px')
             .style('top', (d3.event.pageY - 28) + 'px');
       })
-      .on('mouseout', function() {
+      .on('mouseout', function () {
         _self.div.transition()
             .duration(500)
             .style('opacity', 0);
       })
       .on('click', _self.clickFunc)
       .transition()
-      .attr('class', function(d) { return _self.prefix + 'sortable-bar ' + d.id+'-bar'; })
+      .attr('class', function (d) {
+        return _self.prefix + 'sortable-bar ' + d.id + '-bar';
+      })
       .attr('width', _self.barWidth - 1)
-      .attr('height', function(d) { return _self.histogramHeight * d.count/topCount; })
-      .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); })
-      .attr('y', function(d) { return _self.histogramHeight - _self.histogramHeight * d.count/topCount; })
+      .attr('height', function (d) {
+        return _self.histogramHeight * d.count / topCount;
+      })
+      .attr('x', function (d) {
+        return _self.x(_self.getIndex(_self.domain, d.id));
+      })
+      .attr('y', function (d) {
+        return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
+      })
       .attr('fill', '#1693C0');
 };
 
-OncoHistogram.prototype.update = function(domain, x) {
+OncoHistogram.prototype.update = function (domain, x) {
   var _self = this;
   _self.x = x;
   _self.domain = domain;
@@ -123,17 +132,49 @@ OncoHistogram.prototype.update = function(domain, x) {
   _self.histogram.selectAll('rect')
       .transition()
       .attr('width', _self.barWidth - 1)
-      .attr('x', function(d) { return _self.x(_self.getIndex(_self.domain, d.id)); });
+      .attr('x', function (d) {
+        return _self.x(_self.getIndex(_self.domain, d.id));
+      });
+};
+
+OncoHistogram.prototype.resize = function (width, height) {
+  var _self = this;
+
+  _self.width = width;
+  _self.height = height;
+
+  _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
+
+  _self.container
+      .attr('width', function () {
+        if (_self.rotated) {
+          return _self.height;
+        } else {
+          return _self.width + _self.margin.left + _self.margin.right;
+        }
+      })
+      .attr('transform', function () {
+        if (_self.rotated) {
+          return 'rotate(90)translate(0,-' + (_self.width) + ')';
+        } else {
+          return '';
+        }
+      });
+
+  _self.histogram
+      .attr('transform', 'translate(0,-' + (_self.histogramHeight + _self.margin.top / 1.61803398875) + ')');
+
+  _self.bottomAxis.attr('x2', _self.histogramWidth + 10);
 };
 
 /**
  * Draws Axis for Histogram
  * @param topCount Maximum value
  */
-OncoHistogram.prototype.renderAxis = function(topCount) {
+OncoHistogram.prototype.renderAxis = function (topCount) {
   var _self = this;
 
-  _self.histogram.append('line')
+  _self.bottomAxis = _self.histogram.append('line')
       .attr('class', _self.prefix + 'histogram-axis')
       .attr('y1', _self.histogramHeight + 5)
       .attr('y2', _self.histogramHeight + 5)
@@ -154,8 +195,8 @@ OncoHistogram.prototype.renderAxis = function(topCount) {
       .text(topCount);
 
   // Round to a nice round number and then adjust position accordingly
-  var halfInt = parseInt(topCount/2);
-  var secondHeight = _self.histogramHeight - _self.histogramHeight / (topCount/halfInt);
+  var halfInt = parseInt(topCount / 2);
+  var secondHeight = _self.histogramHeight - _self.histogramHeight / (topCount / halfInt);
 
   _self.histogram.append('text')
       .attr('class', _self.prefix + 'label-text-font')
@@ -169,14 +210,14 @@ OncoHistogram.prototype.renderAxis = function(topCount) {
       .attr('class', _self.prefix + 'label-text-font')
       .attr('dy', '.32em')
       .attr('text-anchor', 'end')
-      .attr('transform', 'rotate(-90)translate('+ secondHeight/-2+',-25)')
+      .attr('transform', 'rotate(-90)translate(' + secondHeight / -2 + ',-25)')
       .text("Mutation freq.");
 };
 
 /**
  * Helper the gets the index of the current id.
  */
-OncoHistogram.prototype.getIndex = function(list, id) {
+OncoHistogram.prototype.getIndex = function (list, id) {
   for (var i = 0; i < list.length; i++) {
     var obj = list[i];
     if (obj.id === id) {
@@ -185,6 +226,12 @@ OncoHistogram.prototype.getIndex = function(list, id) {
   }
 
   return -1;
+};
+
+OncoHistogram.prototype.destroy = function() {
+  var _self = this;
+  _self.histogram.remove();
+  _self.container.remove();
 };
 
 module.exports = OncoHistogram;
@@ -300,7 +347,7 @@ MainGrid.prototype.init = function () {
       .append('g')
       .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
 
-  _self.svg.append('rect')
+  _self.background = _self.svg.append('rect')
       .attr('class', 'background')
       .attr('width', _self.width)
       .attr('height', _self.height);
@@ -476,6 +523,33 @@ MainGrid.prototype.computeCoordinates = function () {
       });
 
   _self.defineRowDragBehaviour();
+};
+
+MainGrid.prototype.resize = function(width, height) {
+  var _self = this;
+
+  _self.width = width;
+  _self.height = height;
+
+  d3.select('og-maingrid-svg')
+      .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
+      .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2);
+
+  _self.background
+      .attr('width', _self.width)
+      .attr('height', _self.height);
+
+  _self.cellWidth = _self.width / _self.numDonors;
+  _self.cellHeight = _self.height / _self.numGenes;
+  _self.computeCoordinates();
+
+  _self.donorHistogram.resize(width, height);
+  _self.donorTrack.resize(width, height);
+
+  _self.geneHistogram.resize(width, height);
+  _self.geneTrack.resize(height, width);
+
+  _self.update();
 };
 
 MainGrid.prototype.defineCrosshairBehaviour = function () {
@@ -882,6 +956,17 @@ OncoGrid.prototype.update = function(scope) {
 };
 
 /**
+ * Triggers a resize of OncoGrid to desired width and height.
+ */
+OncoGrid.prototype.resize = function(width, height) {
+  var _self = this;
+
+  _self.charts.forEach(function (chart) {
+    chart.resize(Number(width), Number(height));
+  });
+};
+
+/**
  * Sorts donors by score
  */
 OncoGrid.prototype.sortByScores = function() {
@@ -1212,7 +1297,7 @@ OncoTrack.prototype.init = function() {
     }
   }
 
-  _self.track = _self.svg.append('g')
+  _self.container = _self.svg.append('g')
       .attr('width', _self.width)
       .attr('height', _self.height)
       .attr('class', _self.prefix + 'track')
@@ -1222,11 +1307,11 @@ OncoTrack.prototype.init = function() {
         } else {
           return '';
         }
-      })
-      .append('g')
+      });
+  _self.track = _self.container.append('g')
       .attr('transform', 'translate(0,'+ (_self.translateDown + _self.margin.top/1.61803398875) + ')');
 
-  _self.track.append('rect')
+  _self.background = _self.track.append('rect')
       .attr('class', 'background')
       .attr('width', _self.width)
       .attr('height', _self.height);
@@ -1253,6 +1338,33 @@ OncoTrack.prototype.render = function(x) {
       .attr('height', _self.cellHeight)
       .attr('fill', _self.fillFunc)
       .attr('opacity', _self.opacityFunc);
+};
+
+OncoTrack.prototype.resize = function (width, height) {
+  var _self = this;
+
+  _self.width = width;
+  
+  _self.cellWidth = _self.width / _self.numDomain;
+
+  _self.height = _self.cellHeight * _self.availableTracks.length;
+
+  _self.translateDown =
+      (_self.rotated ? -1 * (_self.width + 150 + _self.availableTracks.length * _self.cellHeight) :
+          height) || 500;
+
+  _self.container
+      .attr('width', _self.width)
+      .attr('height', _self.height);
+
+  _self.track.attr('transform', 'translate(0,'+ (_self.translateDown + _self.margin.top/1.61803398875) + ')');
+
+  _self.background
+      .attr('width', _self.width)
+      .attr('height', _self.height);
+
+  _self.computeCoordinates();
+
 };
 
 /**

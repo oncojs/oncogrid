@@ -90,3 +90,10 @@ function removeCleanDonors() {
 function toggleCrosshair() {
   grid.toggleCrosshair();
 }
+
+function resize() {
+  var width = document.getElementById('width-resize').value;
+  var height = document.getElementById('height-resize').value;
+
+  grid.resize(width, height);
+}

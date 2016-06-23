@@ -109,7 +109,7 @@ MainGrid.prototype.init = function () {
       .append('g')
       .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
 
-  _self.svg.append('rect')
+  _self.background = _self.svg.append('rect')
       .attr('class', 'background')
       .attr('width', _self.width)
       .attr('height', _self.height);
@@ -285,6 +285,33 @@ MainGrid.prototype.computeCoordinates = function () {
       });
 
   _self.defineRowDragBehaviour();
+};
+
+MainGrid.prototype.resize = function(width, height) {
+  var _self = this;
+
+  _self.width = width;
+  _self.height = height;
+
+  d3.select('og-maingrid-svg')
+      .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
+      .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2);
+
+  _self.background
+      .attr('width', _self.width)
+      .attr('height', _self.height);
+
+  _self.cellWidth = _self.width / _self.numDonors;
+  _self.cellHeight = _self.height / _self.numGenes;
+  _self.computeCoordinates();
+
+  _self.donorHistogram.resize(width, height);
+  _self.donorTrack.resize(width, height);
+
+  _self.geneHistogram.resize(width, height);
+  _self.geneTrack.resize(height, width);
+
+  _self.update();
 };
 
 MainGrid.prototype.defineCrosshairBehaviour = function () {

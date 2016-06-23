@@ -101,6 +101,17 @@ OncoGrid.prototype.update = function(scope) {
 };
 
 /**
+ * Triggers a resize of OncoGrid to desired width and height.
+ */
+OncoGrid.prototype.resize = function(width, height) {
+  var _self = this;
+
+  _self.charts.forEach(function (chart) {
+    chart.resize(Number(width), Number(height));
+  });
+};
+
+/**
  * Sorts donors by score
  */
 OncoGrid.prototype.sortByScores = function() {
