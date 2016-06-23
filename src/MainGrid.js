@@ -309,7 +309,7 @@ MainGrid.prototype.resize = function(width, height) {
   _self.donorTrack.resize(width, height);
 
   _self.geneHistogram.resize(width, height);
-  _self.geneTrack.resize(height, width);
+  _self.geneTrack.resize(width, height);
 
   _self.update();
 };

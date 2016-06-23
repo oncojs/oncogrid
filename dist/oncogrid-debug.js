@@ -547,7 +547,7 @@ MainGrid.prototype.resize = function(width, height) {
   _self.donorTrack.resize(width, height);
 
   _self.geneHistogram.resize(width, height);
-  _self.geneTrack.resize(height, width);
+  _self.geneTrack.resize(width, height);
 
   _self.update();
 };
@@ -1343,14 +1343,14 @@ OncoTrack.prototype.render = function(x) {
 OncoTrack.prototype.resize = function (width, height) {
   var _self = this;
 
-  _self.width = width;
-  
+  _self.width = _self.rotated ? height : width;
+
   _self.cellWidth = _self.width / _self.numDomain;
 
   _self.height = _self.cellHeight * _self.availableTracks.length;
 
   _self.translateDown =
-      (_self.rotated ? -1 * (_self.width + 150 + _self.availableTracks.length * _self.cellHeight) :
+      (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
           height) || 500;
 
   _self.container
