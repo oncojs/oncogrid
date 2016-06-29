@@ -21,9 +21,10 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, func) {
+MainGrid = function (params, lookupTable, func) {
   var _self = this;
 
+  _self.lookupTable = lookupTable;
   _self.updateCallback = func;
   _self.loadParams(params);
   _self.init();
@@ -74,12 +75,6 @@ MainGrid.prototype.loadParams = function (params) {
 
   _self.cellWidth = _self.width / _self.donors.length;
   _self.cellHeight = _self.height / _self.genes.length;
-
-  if (_self.cellHeight < 10) {
-    _self.cellHeight = 10;
-    params.height = _self.numGenes * _self.minCellHeight;
-    _self.height = params.height;
-  }
 
   _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
   _self.heatMap = params.heatMap;
@@ -192,6 +187,15 @@ MainGrid.prototype.update = function () {
     _self.cellWidth = _self.width / _self.numDonors;
     _self.cellHeight = _self.height / _self.numGenes;
     _self.computeCoordinates();
+  } else {
+    console.log(_self.cellHeight);
+    _self.row.selectAll('text').attr('style', function() {
+      if (_self.cellHeight < 8) {
+        return 'display: none;';
+      } else {
+        return '';
+      }
+    });
   }
 
   _self.row
@@ -203,7 +207,7 @@ MainGrid.prototype.update = function () {
   _self.svg.selectAll('.' + _self.prefix + 'sortable-rect')
       .transition()
       .attr('width', _self.cellWidth)
-      .attr('height', _self.getHeight())
+      .attr('height', function(d) {return _self.getHeight(d);})
       .attr('y', function (d) {
         return _self.getY(d);
       })
@@ -280,6 +284,13 @@ MainGrid.prototype.computeCoordinates = function () {
       .attr('y', _self.cellHeight / 2)
       .attr('dy', '.32em')
       .attr('text-anchor', 'end')
+      .attr('style', function() {
+        if (_self.cellHeight < 8) {
+         return 'display: none;';
+        } else {
+          return '';
+        }
+      })
       .text(function (d, i) {
         return _self.genes[i].symbol;
       });
@@ -464,17 +475,17 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
 MainGrid.prototype.getY = function (d) {
   var _self = this;
 
-  var pseudo_genes = _self.genes.map(function (g) {
+  var pseudoGenes = _self.genes.map(function (g) {
     return g.id;
   });
 
   if (_self.heatMap === true) {
-    return _self.y(pseudo_genes.indexOf(d.geneId));
+    return _self.y(pseudoGenes.indexOf(d.geneId));
   }
 
-  var keys = Object.keys(_self.colorMap);
-  return _self.y(pseudo_genes.indexOf(d.geneId)) + (_self.cellHeight / keys.length) *
-      (keys.indexOf(d.consequence));
+  var obsArray = _self.lookupTable[d.donorId][d.geneId];
+  return _self.y(pseudoGenes.indexOf(d.geneId)) + (_self.cellHeight / obsArray.length) *
+      (obsArray.indexOf(d.id));
 };
 
 /**
@@ -509,13 +520,18 @@ MainGrid.prototype.getOpacity = function () {
  * Returns the height of an observation cell. This changes between heatmap and regular mode.
  * @returns {number}
  */
-MainGrid.prototype.getHeight = function () {
+MainGrid.prototype.getHeight = function (d) {
   var _self = this;
 
-  if (_self.heatMap === true) {
-    return _self.cellHeight;
+  if (typeof d !== 'undefined') {
+    if (_self.heatMap === true) {
+      return _self.cellHeight;
+    } else {
+      var count = _self.lookupTable[d.donorId][d.geneId].length;
+      return _self.cellHeight / count;
+    }
   } else {
-    return _self.cellHeight / Object.keys(_self.colorMap).length;
+    return 0;
   }
 };
 

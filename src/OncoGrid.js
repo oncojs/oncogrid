@@ -36,7 +36,7 @@ OncoGrid = function(params) {
   _self.computeScores();
   _self.sortByScores();
 
-  _self.mainGrid = new MainGrid(params, _self.update(_self));
+  _self.mainGrid = new MainGrid(params, _self.lookupTable, _self.update(_self));
 
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
