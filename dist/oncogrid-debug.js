@@ -314,6 +314,12 @@ MainGrid.prototype.loadParams = function (params) {
   _self.cellWidth = _self.width / _self.donors.length;
   _self.cellHeight = _self.height / _self.genes.length;
 
+  if (_self.cellHeight <  _self.minCellHeight) {
+    _self.cellHeight =  _self.minCellHeight;
+    params.height = _self.numGenes * _self.minCellHeight;
+    _self.height = params.height;
+  }
+
   _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
   _self.heatMap = params.heatMap;
   _self.histogramHeight = 100;
@@ -365,8 +371,8 @@ MainGrid.prototype.render = function () {
             .duration(200)
             .style('opacity', 0.9);
         _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId + '<br/>' + d.consequence)
-            .style('left', (d3.event.pageX + 10) + 'px')
-            .style('top', (d3.event.pageY - 28) + 'px');
+            .style('left', (d3.event.pageX + 15) + 'px')
+            .style('top', (d3.event.pageY + 30) + 'px');
       })
       .on('mouseout', function (d) {
         _self.div.transition()
@@ -404,10 +410,10 @@ MainGrid.prototype.render = function () {
       .attr('stroke-width', 2);
 
   _self.donorHistogram.render(_self.x, _self.div);
-  _self.donorTrack.render(_self.x);
+  _self.donorTrack.render(_self.x, _self.div);
 
   _self.geneHistogram.render(_self.y, _self.div);
-  _self.geneTrack.render(_self.y);
+  _self.geneTrack.render(_self.y, _self.div);
 
   _self.defineCrosshairBehaviour();
 };
@@ -426,9 +432,8 @@ MainGrid.prototype.update = function () {
     _self.cellHeight = _self.height / _self.numGenes;
     _self.computeCoordinates();
   } else {
-    console.log(_self.cellHeight);
     _self.row.selectAll('text').attr('style', function() {
-      if (_self.cellHeight < 8) {
+      if (_self.cellHeight < _self.minCellHeight) {
         return 'display: none;';
       } else {
         return '';
@@ -523,8 +528,8 @@ MainGrid.prototype.computeCoordinates = function () {
       .attr('dy', '.32em')
       .attr('text-anchor', 'end')
       .attr('style', function() {
-        if (_self.cellHeight < 8) {
-         return 'display: none;';
+        if (_self.cellHeight < _self.minCellHeight) {
+          return 'display: none;';
         } else {
           return '';
         }
@@ -542,7 +547,15 @@ MainGrid.prototype.resize = function(width, height) {
   _self.width = width;
   _self.height = height;
 
-  _self.verticalCross.attr('y2', height);
+  _self.cellWidth = _self.width / _self.numDonors;
+  _self.cellHeight = _self.height / _self.numGenes;
+
+  if (_self.cellHeight <  _self.minCellHeight) {
+    _self.cellHeight =  _self.minCellHeight;
+    _self.height = _self.numGenes * _self.minCellHeight;
+  }
+
+  _self.verticalCross.attr('y2', _self.height);
   _self.horizontalCross.attr('x2', width);
 
   d3.select('.og-maingrid-svg')
@@ -553,15 +566,13 @@ MainGrid.prototype.resize = function(width, height) {
       .attr('width', _self.width)
       .attr('height', _self.height);
 
-  _self.cellWidth = _self.width / _self.numDonors;
-  _self.cellHeight = _self.height / _self.numGenes;
   _self.computeCoordinates();
 
-  _self.donorHistogram.resize(width, height);
-  _self.donorTrack.resize(width, height);
+  _self.donorHistogram.resize(width, _self.height);
+  _self.donorTrack.resize(width, _self.height);
 
-  _self.geneHistogram.resize(width, height);
-  _self.geneTrack.resize(width, height);
+  _self.geneHistogram.resize(width, _self.height);
+  _self.geneTrack.resize(width, _self.height);
 
   _self.update();
 };
@@ -599,8 +610,8 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
               .duration(200)
               .style('opacity', 0.9);
           _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
-              .style('left', (d3.event.pageX + 10) + 'px')
-              .style('top', (d3.event.pageY - 28) + 'px');
+              .style('left', (d3.event.pageX + 15) + 'px')
+              .style('top', (d3.event.pageY + 30) + 'px');
         }
       })
       .on('mousemove', function () {
@@ -617,8 +628,8 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
           _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
-              .style('left', (d3.event.pageX + 10) + 'px')
-              .style('top', (d3.event.pageY - 28) + 'px');
+              .style('left', (d3.event.pageX + 15) + 'px')
+              .style('top', (d3.event.pageY + 30) + 'px');
         }
       })
       .on('mouseout', function () {
@@ -1277,6 +1288,8 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
   _self.svg = s;
   _self.rotated = rotated || false;
 
+  _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
+
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
@@ -1337,15 +1350,32 @@ OncoTrack.prototype.init = function() {
 
 };
 
-OncoTrack.prototype.render = function(x) {
+OncoTrack.prototype.render = function(x, div) {
   var _self = this;
 
   _self.x = x;
+  _self.div = div;
   _self.computeCoordinates();
 
   _self.track.selectAll('.' + _self.prefix + 'track')
       .data(_self.trackData).enter()
       .append('rect')
+      .on('mouseover', function (d) {
+        _self.div.transition()
+            .duration(200)
+            .style('opacity', 0.9);
+        _self.div.html(d.id)
+            .style('left', (d3.event.pageX + 15) + 'px')
+            .style('top', (d3.event.pageY + 30) + 'px');
+      })
+      .on('mouseout', function (d) {
+        _self.div.transition()
+            .duration(500)
+            .style('opacity', 0);
+      })
+      .on('click', function(d) {
+        _self.clickFunc(d);
+      })
       .transition()
       .attr('class', function(d) {
         return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +

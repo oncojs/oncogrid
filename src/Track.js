@@ -26,6 +26,8 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
   _self.svg = s;
   _self.rotated = rotated || false;
 
+  _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
+
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
@@ -86,15 +88,32 @@ OncoTrack.prototype.init = function() {
 
 };
 
-OncoTrack.prototype.render = function(x) {
+OncoTrack.prototype.render = function(x, div) {
   var _self = this;
 
   _self.x = x;
+  _self.div = div;
   _self.computeCoordinates();
 
   _self.track.selectAll('.' + _self.prefix + 'track')
       .data(_self.trackData).enter()
       .append('rect')
+      .on('mouseover', function (d) {
+        _self.div.transition()
+            .duration(200)
+            .style('opacity', 0.9);
+        _self.div.html(d.id)
+            .style('left', (d3.event.pageX + 15) + 'px')
+            .style('top', (d3.event.pageY + 30) + 'px');
+      })
+      .on('mouseout', function (d) {
+        _self.div.transition()
+            .duration(500)
+            .style('opacity', 0);
+      })
+      .on('click', function(d) {
+        _self.clickFunc(d);
+      })
       .transition()
       .attr('class', function(d) {
         return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +

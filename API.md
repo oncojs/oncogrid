@@ -50,6 +50,8 @@ optional configuration. The full description of the `params` object is as follow
   * `width` - `number` - Sets the width of the OncoGrid. `Default: 500`
   * `prefix` - `string` - String prefix to use for all css classes. `Default: 'og-'`
   * `gridClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the main grid.
+  * `donorClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the donor track grid.
+  * `geneClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the gene track grid.
   * `margin` - `object` - Object holding the settings for the margins: `Default: { top: 30, right: 100, bottom: 15, left: 80 }`
   * `heatMap` - `bool` - If true, initial render will be in heatMap mode.
   * `donorOpacityFunc` - `function` - Function to determine cell opacity for donor track data.
@@ -60,7 +62,7 @@ optional configuration. The full description of the `params` object is as follow
 ## API
 
 * `render()` - Renders an instantiate OncoGrid configured through the `params` argument in constructor.
-* `resize(width, height`) - Resizes and scales oncogrid to new desired width and height. 
+* `resize(width, height`) - Resizes and scales oncogrid to new desired width and height for the grid. 
 * `cluster()` - Sorts genes based on mutation count and then re-scores donors and resorts them as well.
 * `removeDonors(function)` - Removes all donors that evaluate true for the passed function.
 * `removeGenes(function)` - Removes all genes that evaluate true for the passed function.
