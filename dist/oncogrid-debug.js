@@ -289,7 +289,7 @@ MainGrid.prototype.loadParams = function (params) {
 
   _self.prefix = params.prefix || 'og-';
 
-  _self.minCellHeight = params.minCellHeight || 8;
+  _self.minCellHeight = params.minCellHeight || 10;
 
   _self.donors = params.donors || [];
   _self.genes = params.genes || [];
@@ -297,12 +297,12 @@ MainGrid.prototype.loadParams = function (params) {
   _self.element = params.element || 'body';
 
   _self.colorMap = params.colorMap || {
-        'missense_variant': '#ff825a',
+        'missense_variant': '#ff9b6c',
         'frameshift_variant': '#57dba4',
         'stop_gained': '#af57db',
-        'start_lost': '#af57db',
-        'stop_lost': '#ffe',
-        'initiator_codon_variant': '#af57db'
+        'start_lost': '#ff2323',
+        'stop_lost': '#d3ec00',
+        'initiator_codon_variant': '#5abaff'
       };
 
   _self.numDonors = _self.donors.length;
@@ -342,6 +342,7 @@ MainGrid.prototype.init = function () {
 
   _self.svg = d3.select(_self.element).append('svg')
       .attr('class', _self.prefix + 'maingrid-svg')
+      .attr('id', _self.prefix + 'maingrid-svg')
       .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
       .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2)
       .style('margin-left', _self.margin.left + 'px')
@@ -555,9 +556,6 @@ MainGrid.prototype.resize = function(width, height) {
     _self.height = _self.numGenes * _self.minCellHeight;
   }
 
-  _self.verticalCross.attr('y2', _self.height);
-  _self.horizontalCross.attr('x2', width);
-
   d3.select('.og-maingrid-svg')
       .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
       .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2);
@@ -575,21 +573,28 @@ MainGrid.prototype.resize = function(width, height) {
   _self.geneTrack.resize(width, _self.height);
 
   _self.update();
+
+  var boundingBox = _self.svg.node().getBBox();
+  _self.verticalCross.attr('y2', boundingBox.height);
+  _self.horizontalCross.attr('x2', boundingBox.width);
+
 };
 
 MainGrid.prototype.defineCrosshairBehaviour = function () {
   var _self = this;
 
+  var boundingBox = _self.svg.node().getBBox();
+
   _self.verticalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'vertical-cross')
       .attr('y1', 0)
-      .attr('y2', _self.height)
+      .attr('y2', boundingBox.height)
       .attr('opacity', 0);
 
   _self.horizontalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'horizontal-cross')
       .attr('x1', 0)
-      .attr('x2', _self.width)
+      .attr('x2', boundingBox.width)
       .attr('opacity', 0);
 
   _self.svg
@@ -606,10 +611,16 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           var xIndex = _self.rangeToDomain(_self.x, coord[0]);
           var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
+          var donorText = typeof _self.donors[xIndex] !== 'undefined' ?
+            'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
+
+          var geneText = typeof _self.genes[yIndex] !== 'undefined' ?
+              'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
+
           _self.div.transition()
               .duration(200)
               .style('opacity', 0.9);
-          _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
+          _self.div.html(donorText + geneText)
               .style('left', (d3.event.pageX + 15) + 'px')
               .style('top', (d3.event.pageY + 30) + 'px');
         }
@@ -627,7 +638,16 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           var xIndex = _self.rangeToDomain(_self.x, coord[0]);
           var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
-          _self.div.html('Donor: ' + _self.donors[xIndex].id + '</br>' + 'Gene: ' + _self.genes[yIndex].id)
+          var donorText = typeof _self.donors[xIndex] !== 'undefined' ?
+          'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
+
+          var geneText = typeof _self.genes[yIndex] !== 'undefined' ?
+          'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
+
+          _self.div.transition()
+              .duration(200)
+              .style('opacity', 0.9);
+          _self.div.html(donorText + geneText)
               .style('left', (d3.event.pageX + 15) + 'px')
               .style('top', (d3.event.pageY + 30) + 'px');
         }
@@ -759,7 +779,7 @@ MainGrid.prototype.getOpacity = function () {
   var _self = this;
 
   if (_self.heatMap === true) {
-    return 0.3;
+    return 0.2;
   } else {
     return 1;
   }
@@ -1499,7 +1519,7 @@ OncoTrack.prototype.computeCoordinates = function() {
   }
 
   _self.row.append('text')
-      .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
+      .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
       .transition()
       .attr('x', -6)
       .attr('y', _self.cellHeight / 2)

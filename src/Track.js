@@ -237,7 +237,7 @@ OncoTrack.prototype.computeCoordinates = function() {
   }
 
   _self.row.append('text')
-      .attr('class', _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font')
+      .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
       .transition()
       .attr('x', -6)
       .attr('y', _self.cellHeight / 2)

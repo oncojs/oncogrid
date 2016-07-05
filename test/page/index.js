@@ -1,11 +1,11 @@
 var donors = [
-  {"id": "DO1", "age_diagnosis": 49, "alive": true},
-  {"id": "DO2", "age_diagnosis": 62, "alive": false},
-  {"id": "DO3", "age_diagnosis": 1, "alive": true},
-  {"id": "DO4", "age_diagnosis": 59, "alive": true},
-  {"id": "DO5", "age_diagnosis": 12, "alive": true},
-  {"id": "DO6", "age_diagnosis": 32, "alive": true},
-  {"id": "DO7", "age_diagnosis": 80, "alive": true}
+  {"id": "DO1", "age_diagnosis": 49, "alive": true, "foobar": true},
+  {"id": "DO2", "age_diagnosis": 62, "alive": false, "foobar": true},
+  {"id": "DO3", "age_diagnosis": 1, "alive": true, "foobar": true},
+  {"id": "DO4", "age_diagnosis": 59, "alive": true, "foobar": true},
+  {"id": "DO5", "age_diagnosis": 12, "alive": true, "foobar": true},
+  {"id": "DO6", "age_diagnosis": 32, "alive": true, "foobar": true},
+  {"id": "DO7", "age_diagnosis": 80, "alive": true, "foobar": true}
 ];
 
 
@@ -55,7 +55,13 @@ var geneOpacity = function (d) {
 };
 
 var geneTracks = [
-  {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int'},
+  {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int', 'group': ''},
+];
+
+var donorTracks = [
+  {'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int', 'group': 'Clinical'},
+  {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool', 'group': 'Clinical'},
+  {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'group': 'DataType'}
 ];
 
 
@@ -68,8 +74,7 @@ var params = {
   width: 600,
   heatMap: true,
   trackHeight: 20,
-  donorTracks: [{'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int'},
-    {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool'}],
+  donorTracks: donorTracks,
   donorOpacityFunc: donorOpacity,
   donorFillFunc: donorFill,
   geneTracks: geneTracks,
