@@ -58,10 +58,28 @@ var geneTracks = [
   {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int', 'group': ''},
 ];
 
+var sortBool = function(field) {
+  return function(a, b) {
+    if (a[field] && !b[field]) {
+      return 1;
+    } else if (!a[field] && b[field]) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+};
+
+var sortInt = function(field) {
+  return function(a, b) {
+    return a[field] - b[field];
+  }
+};
+
 var donorTracks = [
-  {'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int', 'group': 'Clinical'},
-  {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool', 'group': 'Clinical'},
-  {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'group': 'DataType'}
+  {'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int', 'sort': sortInt},
+  {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool', 'sort': sortBool},
+  {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'sort': sortBool}
 ];
 
 

@@ -21,23 +21,25 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, func) {
+MainGrid = function (params, lookupTable, updateCallback) {
   var _self = this;
 
   _self.lookupTable = lookupTable;
-  _self.updateCallback = func;
+  _self.updateCallback = updateCallback;
   _self.loadParams(params);
   _self.init();
 
   // Histograms and tracks.
   _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
   _self.donorTrack =
-      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
+      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc,
+          params.donorFillFunc, updateCallback);
   _self.donorTrack.init();
 
   _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
   _self.geneTrack =
-      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc, params.donorFillFunc);
+      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc,
+          params.donorFillFunc, updateCallback);
   _self.geneTrack.init();
 
 };
@@ -133,7 +135,7 @@ MainGrid.prototype.render = function () {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
-        _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId + '<br/>' + d.consequence)
+        _self.div.html(d.id + '<br/>' + d.geneSymbol + '<br/>' + d.donorId + '<br/>' + d.consequence)
             .style('left', (d3.event.pageX + 15) + 'px')
             .style('top', (d3.event.pageY + 30) + 'px');
       })

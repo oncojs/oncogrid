@@ -259,23 +259,25 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, func) {
+MainGrid = function (params, lookupTable, updateCallback) {
   var _self = this;
 
   _self.lookupTable = lookupTable;
-  _self.updateCallback = func;
+  _self.updateCallback = updateCallback;
   _self.loadParams(params);
   _self.init();
 
   // Histograms and tracks.
   _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
   _self.donorTrack =
-      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc, params.donorFillFunc);
+      new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc,
+          params.donorFillFunc, updateCallback);
   _self.donorTrack.init();
 
   _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
   _self.geneTrack =
-      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc, params.donorFillFunc);
+      new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc,
+          params.donorFillFunc, updateCallback);
   _self.geneTrack.init();
 
 };
@@ -371,7 +373,7 @@ MainGrid.prototype.render = function () {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
-        _self.div.html(d.id + '<br/>' + d.geneId + '<br/>' + d.donorId + '<br/>' + d.consequence)
+        _self.div.html(d.id + '<br/>' + d.geneSymbol + '<br/>' + d.donorId + '<br/>' + d.consequence)
             .style('left', (d3.event.pageX + 15) + 'px')
             .style('top', (d3.event.pageY + 30) + 'px');
       })
@@ -779,7 +781,7 @@ MainGrid.prototype.getOpacity = function () {
   var _self = this;
 
   if (_self.heatMap === true) {
-    return 0.2;
+    return 0.25;
   } else {
     return 1;
   }
@@ -1300,13 +1302,14 @@ module.exports = OncoGrid;
 
 var OncoTrack;
 
-OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc) {
+OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback) {
   var _self = this;
 
   _self.prefix = params.prefix || 'og-';
 
   _self.svg = s;
   _self.rotated = rotated || false;
+  _self.updateCallback = updateCallback;
 
   _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
 
@@ -1342,6 +1345,7 @@ OncoTrack.prototype.init = function() {
     for (var j = 0; j < _self.availableTracks.length; j++) {
       _self.trackData.push({
         id: _self.domain[i].id,
+        displayId: _self.rotated ? _self.domain[i].symbol : _self.domain[i].id,
         value: _self.domain[i][_self.availableTracks[j].fieldName],
         fieldName: _self.availableTracks[j].fieldName,
         type: _self.availableTracks[j].type
@@ -1384,7 +1388,13 @@ OncoTrack.prototype.render = function(x, div) {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
-        _self.div.html(d.id)
+        _self.div.html(function() {
+          if (_self.rotated) {
+            return d.displayId + '<br>' + d.fieldName + ': ' + d.value;
+          } else {
+            return d.id + '<br>'  + d.fieldName + ': ' + d.value;
+          }
+        })
             .style('left', (d3.event.pageX + 15) + 'px')
             .style('top', (d3.event.pageY + 30) + 'px');
       })
@@ -1520,6 +1530,12 @@ OncoTrack.prototype.computeCoordinates = function() {
 
   _self.row.append('text')
       .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
+      .on('click', function(d) {
+        console.log(_self.domain);
+        _self.domain.sort(d.sort(d.fieldName));
+        _self.updateCallback(false);
+        console.log(_self.domain);
+      })
       .transition()
       .attr('x', -6)
       .attr('y', _self.cellHeight / 2)
