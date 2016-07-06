@@ -247,10 +247,8 @@ OncoTrack.prototype.computeCoordinates = function() {
   _self.row.append('text')
       .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
       .on('click', function(d) {
-        console.log(_self.domain);
         _self.domain.sort(d.sort(d.fieldName));
         _self.updateCallback(false);
-        console.log(_self.domain);
       })
       .transition()
       .attr('x', -6)

@@ -75,6 +75,9 @@ MainGrid.prototype.loadParams = function (params) {
   _self.width = params.width || 500;
   _self.height = params.height || 500;
 
+  _self.inputWidth = params.width || 500;
+  _self.inputHeight = params.height || 500;
+
   _self.cellWidth = _self.width / _self.donors.length;
   _self.cellHeight = _self.height / _self.genes.length;
 
@@ -362,10 +365,36 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
       .attr('opacity', 0);
 
   _self.svg
-      .on('mouseover', function () {
-
-        if (_self.crosshair) {
+      .on('mousedown', function() {
+        if (_self.crosshair && typeof _self.selectionRegion === 'undefined') {
+          d3.event.stopPropagation();
           var coord = d3.mouse(this);
+
+          _self.selectionRegion = _self.svg.append('rect')
+              .on('mousemove', function () {
+                var coord = d3.mouse(this);
+                _self.selectionRegion
+                    .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
+                    .attr('height', coord[1] - _self.selectionRegion.attr('y'));
+              })
+              .attr('x', coord[0])
+              .attr('y', coord[1])
+              .attr('fill', 'blue')
+              .attr('stroke', 'black')
+              .attr('stroke-width', '2')
+              .attr('opacity', 0.2);
+        }
+      })
+      .on('mouseover', function () {
+        if (_self.crosshair) {
+          d3.event.stopPropagation();
+          var coord = d3.mouse(this);
+
+          if (typeof _self.selectionRegion !== 'undefined') {
+            _self.selectionRegion
+                .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
+                .attr('height', coord[1] - _self.selectionRegion.attr('y'));
+          }
 
           _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
           _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
@@ -392,7 +421,14 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
       .on('mousemove', function () {
 
         if (_self.crosshair) {
+          d3.event.stopPropagation();
           var coord = d3.mouse(this);
+
+          if (typeof _self.selectionRegion !== 'undefined') {
+            _self.selectionRegion
+                .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
+                .attr('height', coord[1] - _self.selectionRegion.attr('y'));
+          }
 
           _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
           _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
@@ -409,7 +445,6 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
 
           _self.div.transition()
-              .duration(200)
               .style('opacity', 0.9);
           _self.div.html(donorText + geneText)
               .style('left', (d3.event.pageX + 15) + 'px')
@@ -418,6 +453,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
       })
       .on('mouseout', function () {
         if (_self.crosshair) {
+          d3.event.stopPropagation();
           _self.div.transition()
               .duration(500)
               .style('opacity', 0);
@@ -426,7 +462,61 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           _self.verticalCross.attr('opacity', 0);
           _self.horizontalCross.attr('opacity', 0);
         }
+      })
+      .on('mouseup', function() {
+        if (_self.crosshair && typeof _self.selectionRegion !== 'undefined') {
+          d3.event.stopPropagation();
+
+          var x1 = Number(_self.selectionRegion.attr('x'));
+          var x2 = x1 + Number(_self.selectionRegion.attr('width'));
+
+          var y1 = Number(_self.selectionRegion.attr('y'));
+          var y2 = y1 + Number(_self.selectionRegion.attr('height'));
+
+          var xStart = _self.rangeToDomain(_self.x, x1);
+          var xStop = _self.rangeToDomain(_self.x, x2);
+
+          var yStart = _self.rangeToDomain(_self.y, y1);
+          var yStop = _self.rangeToDomain(_self.y, y2);
+
+          _self.sliceDonors(xStart, xStop);
+          _self.sliceGenes(yStart, yStop);
+
+          _self.selectionRegion.remove();
+          delete _self.selectionRegion;
+
+          _self.updateCallback(true);
+          _self.resize(_self.inputWidth, _self.inputHeight);
+        }
       });
+};
+
+MainGrid.prototype.sliceGenes = function(start, stop) {
+  var _self = this;
+
+  for (var i = 0; i < _self.genes.length; i++) {
+    var gene = _self.genes[i];
+    if (i < start || i > stop) {
+      d3.selectAll('.' + gene.id + '-cell').remove();
+      d3.selectAll('.' + gene.id + '-bar').remove();
+      _self.genes.splice(i, 1);
+      i--;start--;stop--;
+    }
+  }
+};
+
+MainGrid.prototype.sliceDonors = function(start, stop) {
+  var _self = this;
+
+  for (var i = 0; i < _self.donors.length; i++) {
+    var donor = _self.donors[i];
+    if (i < start || i > stop) {
+      d3.selectAll('.' + donor.id + '-cell').remove();
+      d3.selectAll('.' + donor.id + '-bar').remove();
+      _self.donors.splice(i, 1);
+      i--;start--;stop--;
+    }
+  }
 };
 
 /**
