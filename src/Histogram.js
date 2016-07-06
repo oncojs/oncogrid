@@ -30,6 +30,8 @@ OncoHistogram = function (params, s, rotated) {
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
   _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
 
+  _self.clickFunc = _self.rotated ? params.geneHistogramClick : params.donorHistogramClick;
+
   _self.width = params.width || 500;
   _self.height = params.height || 500;
 
@@ -95,7 +97,13 @@ OncoHistogram.prototype.render = function (x, div) {
         _self.div.transition()
             .duration(200)
             .style('opacity', 0.9);
-        _self.div.html('ID: ' + d.id + '<br/> Count:' + d.count + '<br/>')
+        _self.div.html( function() {
+            if (_self.rotated) {
+                return  d.symbol + '<br/> Count:' + d.count + '<br/>';
+            } else {
+                return d.id + '<br/> Count:' + d.count + '<br/>';
+            }
+        })
             .style('left', (d3.event.pageX + 10) + 'px')
             .style('top', (d3.event.pageY - 28) + 'px');
       })
