@@ -114,6 +114,10 @@ function toggleCrosshair() {
   grid.toggleCrosshair();
 }
 
+function toggleGridLines() {
+  grid.toggleGridLines();
+}
+
 function resize() {
   var width = document.getElementById('width-resize').value;
   var height = document.getElementById('height-resize').value;

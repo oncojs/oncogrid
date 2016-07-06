@@ -486,7 +486,12 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           delete _self.selectionRegion;
 
           _self.updateCallback(true);
-          _self.resize(_self.inputWidth, _self.inputHeight);
+          if (!_self.fullscreen) {
+            // Todo: Fix this dirty hack
+            _self.toggleGridLines();
+            _self.resize(_self.inputWidth, _self.inputHeight);
+            _self.toggleGridLines();
+          }
         }
       });
 };

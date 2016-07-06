@@ -173,8 +173,8 @@ OncoTrack.prototype.update = function(domain, x) {
 
   if (_self.domain.length !== _self.numDomain) {
     _self.numDomain = _self.domain.length;
-    _self.computeCoordinates();
     _self.cellWidth  = _self.width / _self.numDomain;
+    _self.computeCoordinates();
   }
 
   _self.track.selectAll('.' + _self.prefix + 'track-data')

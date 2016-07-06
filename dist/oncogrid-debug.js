@@ -724,7 +724,12 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           delete _self.selectionRegion;
 
           _self.updateCallback(true);
-          _self.resize(_self.inputWidth, _self.inputHeight);
+          if (!_self.fullscreen) {
+            // Todo: Fix this dirty hack
+            _self.toggleGridLines();
+            _self.resize(_self.inputWidth, _self.inputHeight);
+            _self.toggleGridLines();
+          }
         }
       });
 };
@@ -1020,6 +1025,7 @@ var OncoGrid;
 
 OncoGrid = function(params) {
   var _self = this;
+  _self.params = params;
 
   _self.donors = params.donors || [];
   _self.genes = params.genes || [];
@@ -1100,12 +1106,18 @@ OncoGrid.prototype.update = function(scope) {
 /**
  * Triggers a resize of OncoGrid to desired width and height.
  */
-OncoGrid.prototype.resize = function(width, height) {
+OncoGrid.prototype.resize = function(width, height, fullscreen) {
   var _self = this;
 
+  // DIRTY HACK WARNING!!!
+  // TODO: Fix track resizing so I don't need to do this.
+  _self.toggleGridLines();
+  _self.fullscreen = fullscreen;
   _self.charts.forEach(function (chart) {
+    chart.fullscreen = fullscreen;
     chart.resize(Number(width), Number(height));
   });
+  _self.toggleGridLines();
 };
 
 /**
@@ -1143,6 +1155,7 @@ OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
  */
 OncoGrid.prototype.cluster = function() {
   var _self = this;
+  
   _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
@@ -1547,8 +1560,8 @@ OncoTrack.prototype.update = function(domain, x) {
 
   if (_self.domain.length !== _self.numDomain) {
     _self.numDomain = _self.domain.length;
-    _self.computeCoordinates();
     _self.cellWidth  = _self.width / _self.numDomain;
+    _self.computeCoordinates();
   }
 
   _self.track.selectAll('.' + _self.prefix + 'track-data')
