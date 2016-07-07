@@ -132,19 +132,19 @@ var dataAndConfig = function () {
     });
 
     it('Donor Histogram bucket for DO1 should be maximum height.', function() {
-      expect(d3.select(element).selectAll('.og-histogram').select('.DO1-bar').attr('height')).to.be.equal('100');
+      expect(d3.select(element).selectAll('.og-histogram').select('.DO1-bar').attr('height')).to.be.equal('80');
     });
 
     it('Donor Histogram bucket for DO3 should be half of maximum.', function() {
-      expect(d3.select(element).selectAll('.og-histogram').select('.DO3-bar').attr('height')).to.be.equal('50');
+      expect(d3.select(element).selectAll('.og-histogram').select('.DO3-bar').attr('height')).to.be.equal('40');
     });
 
     it('Gene Histogram bucket for ENSG00000141510 should be half of maximum.', function() {
-      expect(d3.select(element).selectAll('.og-histogram').select('.ENSG00000141510-bar').attr('height')).to.be.equal('100');
+      expect(d3.select(element).selectAll('.og-histogram').select('.ENSG00000141510-bar').attr('height')).to.be.equal('80');
     });
 
     it('Gene Histogram bucket for ENSG00000157764 should be half of maximum.', function() {
-      expect(d3.select(element).selectAll('.og-histogram').select('.ENSG00000157764-bar').attr('height')).to.be.equal('100');
+      expect(d3.select(element).selectAll('.og-histogram').select('.ENSG00000157764-bar').attr('height')).to.be.equal('80');
     });
 
 

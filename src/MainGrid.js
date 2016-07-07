@@ -500,6 +500,8 @@ MainGrid.prototype.finishSelection = function() {
     _self.selectionRegion.remove();
     delete _self.selectionRegion;
 
+    // The order here is really import, first resize then update.
+    // Otherwise weird things happen with grids.
     if (!_self.fullscreen) {
       _self.resize(_self.inputWidth, _self.inputHeight);
     }

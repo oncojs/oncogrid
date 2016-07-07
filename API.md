@@ -49,6 +49,10 @@ optional configuration. The full description of the `params` object is as follow
   * `height` - `number` - Sets the height of the OncoGrid. `Default: 500`
   * `width` - `number` - Sets the width of the OncoGrid. `Default: 500`
   * `prefix` - `string` - String prefix to use for all css classes. `Default: 'og-'`
+  * `donorTracks` - `Array` - An array of objects describing the tracks to be displayed for donors.
+  * `donorOpacityFunc` - `function` - Function describing how to compute the opacity of the a donor track cell.
+  * `geneTracks` - `Array` - An array of objects describing the tracks to be displayed for genes.
+  * `geneOpacityFunc` - `function` - Function describing how to compute the opacity of the a gene track cell.
   * `gridClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the main grid.
   * `donorClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the donor track grid.
   * `geneClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the gene track grid.
@@ -57,6 +61,52 @@ optional configuration. The full description of the `params` object is as follow
   * `donorOpacityFunc` - `function` - Function to determine cell opacity for donor track data.
   * `geneOpacityFunc` - `function` - Function to determine cell opacity for gene track data.
   * `colorMap` - `object` - A mapping from consequence type to colour.
+
+### Track Definitions
+
+Example:
+```javascript
+
+// How we determine the opacity of a donor track cell.
+var donorOpacity = function (d) {
+    if (d.type === 'int') {
+      return d.value / 100;
+    } else if (d.type === 'vital') {
+      return 1;
+    } else if (d.type === 'sex') {
+      return 1;
+    } else if (d.type === 'bool') {
+      return d.value ? 1 : 0;
+    } else {
+      return 0;
+}
+};
+
+// How we will sort the data when an int track is clicked.
+var sortInt = function (field) {
+    return function (a, b) {
+      return b[field] - a[field];
+    };
+};
+
+var donorTracks = [
+    { 'name': 'PCAWG', 'fieldName': 'pcawg', 'type': 'bool', 'sort': sortBool},
+    { 'name': 'Age at Diagnosis', 'fieldName': 'age', 'type': 'int', 'sort': sortInt},
+    { 'name': 'Vital Status', 'fieldName': 'vitalStatus', 'type': 'vital', 'sort': sortByString},
+    { 'name': 'Sex', 'fieldName': 'sex', 'type': 'sex', 'sort': sortByString},
+    { 'name': 'CNSM Exists', 'fieldName': 'cnsmExists', 'type': 'bool', 'sort': sortBool},
+    { 'name': 'STSM Exists', 'fieldName': 'stsmExists', 'type': 'bool', 'sort': sortBool},
+    { 'name': 'SGV Exists', 'fieldName': 'sgvExists', 'type': 'bool', 'sort': sortBool},
+    { 'name': 'METH-A Exists', 'fieldName': 'methArrayExists', 'type': 'bool', 'sort': sortBool}
+];
+```
+
+The definition of a track object is as follows:
+* `name` - string - The name and label for the track
+* `fieldName` - string - The field of the donor/gene object to read
+* `type` - string - The type of the track data, not used by OncoGrid internally, but allows user to group behaviour
+for styling and the opacity function passed in for the tracks.
+* `sort` - function - The function responsible for sorting
 
 
 ## API
