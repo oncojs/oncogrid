@@ -2,7 +2,7 @@
 
 Javascript library for visualizing OncoGrids and related tracks
 
-![](oncogrid.png)
+![](oncogrid.gif)
 
 ## Usage
 See: [API](API.md)
