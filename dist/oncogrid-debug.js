@@ -100,9 +100,9 @@ OncoHistogram.prototype.render = function (x, div) {
             .style('opacity', 0.9);
         _self.div.html( function() {
             if (_self.rotated) {
-                return  d.symbol + '<br/> Count:' + d.count + '<br/>'
+                return  d.symbol + '<br/> Count:' + d.count + '<br/>';
             } else {
-                return d.id + '<br/> Count:' + d.count + '<br/>'
+                return d.id + '<br/> Count:' + d.count + '<br/>';
             }
         })
             .style('left', (d3.event.pageX + 10) + 'px')
@@ -611,26 +611,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
       .attr('opacity', 0);
 
   _self.svg
-      .on('mousedown', function() {
-        if (_self.crosshair && typeof _self.selectionRegion === 'undefined') {
-          d3.event.stopPropagation();
-          var coord = d3.mouse(this);
-
-          _self.selectionRegion = _self.svg.append('rect')
-              .on('mousemove', function () {
-                var coord = d3.mouse(this);
-                _self.selectionRegion
-                    .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
-                    .attr('height', coord[1] - _self.selectionRegion.attr('y'));
-              })
-              .attr('x', coord[0])
-              .attr('y', coord[1])
-              .attr('fill', 'blue')
-              .attr('stroke', 'black')
-              .attr('stroke-width', '2')
-              .attr('opacity', 0.2);
-        }
-      })
+      .on('mousedown', function() { _self.startSelection(this);})
       .on('mouseover', function () {
         if (_self.crosshair) {
           d3.event.stopPropagation();
@@ -709,39 +690,74 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
           _self.horizontalCross.attr('opacity', 0);
         }
       })
-      .on('mouseup', function() {
-        if (_self.crosshair && typeof _self.selectionRegion !== 'undefined') {
-          d3.event.stopPropagation();
-
-          var x1 = Number(_self.selectionRegion.attr('x'));
-          var x2 = x1 + Number(_self.selectionRegion.attr('width'));
-
-          var y1 = Number(_self.selectionRegion.attr('y'));
-          var y2 = y1 + Number(_self.selectionRegion.attr('height'));
-
-          var xStart = _self.rangeToDomain(_self.x, x1);
-          var xStop = _self.rangeToDomain(_self.x, x2);
-
-          var yStart = _self.rangeToDomain(_self.y, y1);
-          var yStop = _self.rangeToDomain(_self.y, y2);
-
-          _self.sliceDonors(xStart, xStop);
-          _self.sliceGenes(yStart, yStop);
-
-          _self.selectionRegion.remove();
-          delete _self.selectionRegion;
-
-          _self.updateCallback(true);
-          if (!_self.fullscreen) {
-            // Todo: Fix this dirty hack
-            _self.toggleGridLines();
-            _self.resize(_self.inputWidth, _self.inputHeight);
-            _self.toggleGridLines();
-          }
-        }
-      });
+      .on('mouseup', function() { _self.finishSelection();});
 };
 
+/**
+ * Event behavior when pressing down on the mouse to make a selection
+ */
+MainGrid.prototype.startSelection = function(e) {
+  var _self = this;
+
+  if (_self.crosshair && typeof _self.selectionRegion === 'undefined') {
+    d3.event.stopPropagation();
+    var coord = d3.mouse(e);
+
+    _self.selectionRegion = _self.svg.append('rect')
+        .on('mousemove', function () {
+          var coord = d3.mouse(e);
+          _self.selectionRegion
+              .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
+              .attr('height', coord[1] - _self.selectionRegion.attr('y'));
+        })
+        .attr('x', coord[0])
+        .attr('y', coord[1])
+        .attr('fill', 'blue')
+        .attr('stroke', 'black')
+        .attr('stroke-width', '2')
+        .attr('opacity', 0.2);
+  }
+};
+
+/**
+ * Event behavior when releasing mouse when finishing with a selection
+ */
+MainGrid.prototype.finishSelection = function() {
+  var _self = this;
+
+  if (_self.crosshair && typeof _self.selectionRegion !== 'undefined') {
+    d3.event.stopPropagation();
+
+    var x1 = Number(_self.selectionRegion.attr('x'));
+    var x2 = x1 + Number(_self.selectionRegion.attr('width'));
+
+    var y1 = Number(_self.selectionRegion.attr('y'));
+    var y2 = y1 + Number(_self.selectionRegion.attr('height'));
+
+    var xStart = _self.rangeToDomain(_self.x, x1);
+    var xStop = _self.rangeToDomain(_self.x, x2);
+
+    var yStart = _self.rangeToDomain(_self.y, y1);
+    var yStop = _self.rangeToDomain(_self.y, y2);
+
+    _self.sliceDonors(xStart, xStop);
+    _self.sliceGenes(yStart, yStop);
+
+    _self.selectionRegion.remove();
+    delete _self.selectionRegion;
+
+    if (!_self.fullscreen) {
+      _self.resize(_self.inputWidth, _self.inputHeight);
+    }
+    _self.updateCallback(true);
+  }
+};
+
+/**
+ * Used when resizing grid
+ * @param start - start index of the selection
+ * @param stop - end index of the selection
+ */
 MainGrid.prototype.sliceGenes = function(start, stop) {
   var _self = this;
 
@@ -756,6 +772,11 @@ MainGrid.prototype.sliceGenes = function(start, stop) {
   }
 };
 
+/**
+ * Used when resizing grid
+ * @param start - start index of the selection
+ * @param stop - end index of the selection
+ */
 MainGrid.prototype.sliceDonors = function(start, stop) {
   var _self = this;
 
@@ -1567,6 +1588,7 @@ OncoTrack.prototype.update = function(domain, x) {
   _self.x = x;
 
   if (_self.domain.length !== _self.numDomain) {
+    console.log('lol!');
     _self.numDomain = _self.domain.length;
     _self.cellWidth  = _self.width / _self.numDomain;
     _self.computeCoordinates();
