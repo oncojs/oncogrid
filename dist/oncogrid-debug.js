@@ -1722,7 +1722,7 @@ OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCa
   _self.length = 0;
 
   _self.updateCallback = updateCallback;
-  _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
+  _self.clickFunc = params.clickFunc;
 
   _self.clickFunc = params.clickFunc;
   _self.opacityFunc = opacityFunc;
@@ -1737,7 +1737,7 @@ OncoTrackGroup.prototype.addTrack = function (track) {
   var _self = this;
 
   _self.length = _self.tracks.push(track);
-  _self.height += _self.cellHeight * _self.tracks.length;
+  _self.height += _self.cellHeight;
 };
 
 OncoTrackGroup.prototype.refreshData = function () {
