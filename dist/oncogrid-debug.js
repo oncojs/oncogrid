@@ -746,6 +746,8 @@ MainGrid.prototype.finishSelection = function() {
     _self.selectionRegion.remove();
     delete _self.selectionRegion;
 
+    // The order here is really import, first resize then update.
+    // Otherwise weird things happen with grids.
     if (!_self.fullscreen) {
       _self.resize(_self.inputWidth, _self.inputHeight);
     }
@@ -1588,7 +1590,6 @@ OncoTrack.prototype.update = function(domain, x) {
   _self.x = x;
 
   if (_self.domain.length !== _self.numDomain) {
-    console.log('lol!');
     _self.numDomain = _self.domain.length;
     _self.cellWidth  = _self.width / _self.numDomain;
     _self.computeCoordinates();

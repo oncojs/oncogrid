@@ -2,7 +2,7 @@
 
 Javascript library for visualizing OncoGrids and related tracks
 
-![](oncogrid.gif)
+![](images/oncogrid.gif)
 
 ## Usage
 See: [API](API.md)
@@ -35,3 +35,9 @@ To build the minified source:
 ```
 $ gulp
 ```
+
+#### Developed At
+![](images/oicr_bio.jpg)
+
+#### Developed With
+![](images/icon_WebStorm.png)

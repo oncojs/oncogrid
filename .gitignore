@@ -9,6 +9,8 @@ components/
 unit.xml
 e2e.xml
 bower_components/
+.idea/
+.vscode/
 
 # *nix temporary files
 *~
