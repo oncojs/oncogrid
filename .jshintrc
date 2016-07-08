@@ -1,4 +1,5 @@
 {
   "globalstrict"  : true,
-  "browserify": true
+  "browserify": true,
+  "predef": [ "d3" ]
 }

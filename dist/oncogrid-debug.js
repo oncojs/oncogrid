@@ -1434,13 +1434,15 @@ module.exports = OncoGrid;
  */
 'use strict';
 
+var OncoTrackGroup = require('./TrackGroup');
+
 var OncoTrack;
 
-OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback) {
+OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback) {
   var _self = this;
 
+  _self.params = params;
   _self.prefix = params.prefix || 'og-';
-
   _self.svg = s;
   _self.rotated = rotated || false;
   _self.updateCallback = updateCallback;
@@ -1460,17 +1462,39 @@ OncoTrack = function(params, s, rotated, tracks, opacityFunc, fillFunc, updateCa
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
 
+  _self.parseGroups();
+
   // TODO: This is awful, needs fixing and cleaning.
   _self.translateDown =
-      (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
-          params.height) || 500;
-
-  _self.height = _self.cellHeight * _self.availableTracks.length;
+    (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
+      params.height) || 500;
 
   _self.drawGridLines = false;
 };
 
-OncoTrack.prototype.init = function() {
+OncoTrack.prototype.parseGroups = function () {
+  var _self = this;
+
+  _self.groupMap = {}; // Nice for lookups and existence checks
+  _self.groups = []; // Nice for direct iteration
+  _self.availableTracks.forEach(function (track) {
+    var group = track.group || 'Tracks';
+    if (_self.groupMap.hasOwnProperty(group)) {
+      _self.groupMap[group].addTrack(track);
+    } else {
+      var trackGroup = new OncoTrackGroup({
+        cellHeight: _self.cellHeight,
+        width: _self.width,
+        clickFunc: _self.clickFunc,
+      }, _self.domain, group, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
+      trackGroup.addTrack(track);
+      _self.groupMap[group] = trackGroup;
+      _self.groups.push(trackGroup);
+    }
+  });
+};
+
+OncoTrack.prototype.init = function () {
   var _self = this;
 
   _self.trackData = [];
@@ -1487,70 +1511,43 @@ OncoTrack.prototype.init = function() {
     }
   }
 
+  _self.height = 0;
+  for (var name in _self.groupMap) {
+    if (_self.groupMap.hasOwnProperty(name)) {
+      var group = _self.groupMap[name];
+      _self.height += group.height + 25;
+    }
+  }
+
   _self.container = _self.svg.append('g')
-      .attr('width', _self.width)
-      .attr('height', _self.height)
-      .attr('class', _self.prefix + 'track')
-      .attr('transform', function() {
-        if (_self.rotated) {
-          return 'rotate(90)';
-        } else {
-          return '';
-        }
-      });
-  _self.track = _self.container.append('g')
-      .attr('transform', 'translate(0,'+ (_self.translateDown + _self.margin.top/1.61803398875) + ')');
+    .attr('width', _self.width)
+    .attr('height', _self.height)
+    .attr('class', _self.prefix + 'track')
+    .attr('transform', function () {
+      if (_self.rotated) {
+        return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+      } else {
+        return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+      }
+    });
 
-  _self.background = _self.track.append('rect')
-      .attr('class', 'background')
-      .attr('width', _self.width)
-      .attr('height', _self.height);
-
+  var curTransDown = 0;
+  for (var k = 0; k < _self.groups.length; k++) {
+    var g = _self.groups[k];
+    var trackContainer = _self.container.append('g')
+      .attr('transform', 'translate(0,' + curTransDown + ')');
+    g.init(trackContainer);
+    curTransDown += g.height;
+  }
 };
 
-OncoTrack.prototype.render = function(x, div) {
+OncoTrack.prototype.render = function (x, div) {
   var _self = this;
 
-  _self.x = x;
-  _self.div = div;
-  _self.computeCoordinates();
-
-  _self.track.selectAll('.' + _self.prefix + 'track')
-      .data(_self.trackData).enter()
-      .append('rect')
-      .on('mouseover', function (d) {
-        _self.div.transition()
-            .duration(200)
-            .style('opacity', 0.9);
-        _self.div.html(function() {
-          if (_self.rotated) {
-            return d.displayId + '<br>' + d.fieldName + ': ' + d.value;
-          } else {
-            return d.id + '<br>'  + d.fieldName + ': ' + d.value;
-          }
-        })
-            .style('left', (d3.event.pageX + 15) + 'px')
-            .style('top', (d3.event.pageY + 30) + 'px');
-      })
-      .on('mouseout', function (d) {
-        _self.div.transition()
-            .duration(500)
-            .style('opacity', 0);
-      })
-      .on('click', function(d) {
-        _self.clickFunc(d);
-      })
-      .transition()
-      .attr('class', function(d) {
-        return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
-            ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
-      })
-      .attr('x', function(d) { return _self.getX(d); })
-      .attr('y', function(d) { return _self.getY(d); })
-      .attr('width', _self.cellWidth)
-      .attr('height', _self.cellHeight)
-      .attr('fill', _self.fillFunc)
-      .attr('opacity', _self.opacityFunc);
+  for (var i = 0; i < _self.groups.length; i++) {
+    var g = _self.groups[i];
+    g.render(x,div);
+  }
 };
 
 OncoTrack.prototype.resize = function (width, height) {
@@ -1563,18 +1560,18 @@ OncoTrack.prototype.resize = function (width, height) {
   _self.height = _self.cellHeight * _self.availableTracks.length;
 
   _self.translateDown =
-      (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
-          height) || 500;
+    (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
+      height) || 500;
 
   _self.container
-      .attr('width', _self.width)
-      .attr('height', _self.height);
+    .attr('width', _self.width)
+    .attr('height', _self.height);
 
-  _self.track.attr('transform', 'translate(0,'+ (_self.translateDown + _self.margin.top/1.61803398875) + ')');
+  _self.track.attr('transform', 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')');
 
   _self.background
-      .attr('width', _self.width)
-      .attr('height', _self.height);
+    .attr('width', _self.width)
+    .attr('height', _self.height);
 
   _self.computeCoordinates();
 
@@ -1583,7 +1580,7 @@ OncoTrack.prototype.resize = function (width, height) {
 /**
  * Updates the rendering of the tracks.
  */
-OncoTrack.prototype.update = function(domain, x) {
+OncoTrack.prototype.update = function (domain, x) {
   var _self = this;
 
   _self.domain = domain;
@@ -1591,30 +1588,30 @@ OncoTrack.prototype.update = function(domain, x) {
 
   if (_self.domain.length !== _self.numDomain) {
     _self.numDomain = _self.domain.length;
-    _self.cellWidth  = _self.width / _self.numDomain;
+    _self.cellWidth = _self.width / _self.numDomain;
     _self.computeCoordinates();
   }
 
   _self.track.selectAll('.' + _self.prefix + 'track-data')
-      .transition()
-      .attr('x', function(d) { return _self.getX(d); })
-      .attr('width', _self.cellWidth);
+    .transition()
+    .attr('x', function (d) { return _self.getX(d); })
+    .attr('width', _self.cellWidth);
 };
 
-OncoTrack.prototype.getX = function(obj) {
+OncoTrack.prototype.getX = function (obj) {
   var _self = this;
 
-  var index = _self.domain.map(function(d) {
+  var index = _self.domain.map(function (d) {
     return d.id;
   });
 
   return _self.x(index.indexOf(obj.id));
 };
 
-OncoTrack.prototype.getY = function(obj) {
+OncoTrack.prototype.getY = function (obj) {
   var _self = this;
 
-  var index = _self.availableTracks.map(function(d) {
+  var index = _self.availableTracks.map(function (d) {
     return d.fieldName;
   });
 
@@ -1624,7 +1621,7 @@ OncoTrack.prototype.getY = function(obj) {
 /**
  * Updates coordinate system
  */
-OncoTrack.prototype.computeCoordinates = function() {
+OncoTrack.prototype.computeCoordinates = function () {
   var _self = this;
 
   if (typeof _self.column !== 'undefined') {
@@ -1632,53 +1629,53 @@ OncoTrack.prototype.computeCoordinates = function() {
   }
 
   _self.column = _self.track.selectAll('.' + _self.prefix + 'column')
-      .data(_self.domain)
-      .enter().append('g')
-      .attr('class', _self.prefix + 'column')
-      .attr('donor', function(d) { return d.id; })
-      .attr('transform', function(d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
+    .data(_self.domain)
+    .enter().append('g')
+    .attr('class', _self.prefix + 'column')
+    .attr('donor', function (d) { return d.id; })
+    .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
   if (_self.drawGridLines) {
     _self.column.append('line')
-        .attr('x1', -_self.height);
+      .attr('x1', -_self.height);
   }
 
   _self.y = d3.scale.ordinal()
-      .domain(d3.range(_self.availableTracks.length))
-      .rangeBands([0, _self.height]);
+    .domain(d3.range(_self.availableTracks.length))
+    .rangeBands([0, _self.height]);
 
   if (typeof _self.row !== 'undefined') {
     _self.row.remove();
   }
 
   _self.row = _self.track.selectAll('.' + _self.prefix + 'row')
-      .data(_self.availableTracks)
-      .enter().append('g')
-      .attr('class', _self.prefix + 'row')
-      .attr('transform', function(d, i) { return 'translate(0,' + _self.y(i) + ')'; });
+    .data(_self.availableTracks)
+    .enter().append('g')
+    .attr('class', _self.prefix + 'row')
+    .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
   if (_self.drawGridLines) {
     _self.row.append('line')
-        .attr('x2', _self.width);
+      .attr('x2', _self.width);
   }
 
   _self.row.append('text')
-      .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
-      .on('click', function(d) {
-        _self.domain.sort(d.sort(d.fieldName));
-        _self.updateCallback(false);
-      })
-      .transition()
-      .attr('x', -6)
-      .attr('y', _self.cellHeight / 2)
-      .attr('dy', '.32em')
-      .attr('text-anchor', 'end')
-      .text(function(d, i) {
-        return _self.availableTracks[i].name;
-      });
+    .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
+    .on('click', function (d) {
+      _self.domain.sort(d.sort(d.fieldName));
+      _self.updateCallback(false);
+    })
+    .transition()
+    .attr('x', -6)
+    .attr('y', _self.cellHeight / 2)
+    .attr('dy', '.32em')
+    .attr('text-anchor', 'end')
+    .text(function (d, i) {
+      return _self.availableTracks[i].name;
+    });
 };
 
-OncoTrack.prototype.toggleGridLines = function() {
+OncoTrack.prototype.toggleGridLines = function () {
   var _self = this;
 
   if (_self.drawGridLines) {
@@ -1691,7 +1688,215 @@ OncoTrack.prototype.toggleGridLines = function() {
 };
 
 module.exports = OncoTrack;
-},{}],5:[function(require,module,exports){
+},{"./TrackGroup":5}],5:[function(require,module,exports){
+/*
+* Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+*
+* This program and the accompanying materials are made available under the terms of the GNU Public
+* License v3.0. You should have received a copy of the GNU General Public License along with this
+* program. If not, see <http://www.gnu.org/licenses/>.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+* FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+* CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+* WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+'use strict';
+
+var OncoTrackGroup;
+
+OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCallback) {
+  var _self = this;
+
+  _self.prefix = params.prefix || 'og-';
+
+  _self.name = name;
+  _self.cellHeight = params.cellHeight || 20;
+  _self.height = 0;
+  _self.width = params.width;
+  _self.tracks = [];
+  _self.length = 0;
+
+  _self.updateCallback = updateCallback;
+  _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
+
+  _self.clickFunc = params.clickFunc;
+  _self.opacityFunc = opacityFunc;
+  _self.fillFunc = fillFunc;
+
+  _self.domain = domain;
+
+  _self.trackData = [];
+};
+
+OncoTrackGroup.prototype.addTrack = function (track) {
+  var _self = this;
+
+  _self.length = _self.tracks.push(track);
+  _self.height += _self.cellHeight * _self.tracks.length;
+};
+
+OncoTrackGroup.prototype.refreshData = function () {
+  var _self = this;
+
+  for (var i = 0; i < _self.domain.length; i++) {
+    for (var j = 0; j < _self.tracks.length; j++) {
+      _self.trackData.push({
+        id: _self.domain[i].id,
+        displayId: _self.rotated ? _self.domain[i].symbol : _self.domain[i].id,
+        value: _self.domain[i][_self.tracks[j].fieldName],
+        fieldName: _self.tracks[j].fieldName,
+        type: _self.tracks[j].type
+      });
+    }
+  }
+};
+
+OncoTrackGroup.prototype.init = function (container) {
+  var _self = this;
+
+  _self.container = container;
+
+  _self.background = _self.container.append('rect')
+    .attr('class', 'background')
+    .attr('width', _self.width)
+    .attr('height', _self.height);
+  
+  _self.refreshData();
+
+};
+
+OncoTrackGroup.prototype.render = function (x, div) {
+  var _self = this;
+
+  _self.x = x;
+  _self.div = div;
+  _self.computeCoordinates();
+
+  _self.cellWidth = _self.width / _self.domain.length;
+
+  window.console.log(_self.trackData);
+  _self.container.selectAll('.' + _self.prefix + 'track')
+    .data(_self.trackData).enter()
+    .append('rect')
+    .on('mouseover', function (d) {
+      _self.div.transition()
+        .duration(200)
+        .style('opacity', 0.9);
+      _self.div.html(function () {
+        if (_self.rotated) {
+          return d.displayId + '<br>' + d.fieldName + ': ' + d.value;
+        } else {
+          return d.id + '<br>' + d.fieldName + ': ' + d.value;
+        }
+      })
+        .style('left', (d3.event.pageX + 15) + 'px')
+        .style('top', (d3.event.pageY + 30) + 'px');
+    })
+    .on('mouseout', function (d) {
+      _self.div.transition()
+        .duration(500)
+        .style('opacity', 0);
+    })
+    .on('click', function (d) {
+      _self.clickFunc(d);
+    })
+    .transition()
+    .attr('class', function (d) {
+      return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
+        ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+    })
+    .attr('x', function (d) { return _self.getX(d); })
+    .attr('y', function (d) { return _self.getY(d); })
+    .attr('width', _self.cellWidth)
+    .attr('height', _self.cellHeight)
+    .attr('fill', _self.fillFunc)
+    .attr('opacity', _self.opacityFunc);
+};
+
+/**
+ * Updates coordinate system
+ */
+OncoTrackGroup.prototype.computeCoordinates = function () {
+  var _self = this;
+
+  if (typeof _self.column !== 'undefined') {
+    _self.column.remove();
+  }
+
+  _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
+    .data(_self.domain)
+    .enter().append('g')
+    .attr('class', _self.prefix + 'column')
+    .attr('donor', function (d) { return d.id; })
+    .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
+
+  if (_self.drawGridLines) {
+    _self.column.append('line')
+      .attr('x1', -_self.height);
+  }
+
+  _self.y = d3.scale.ordinal()
+    .domain(d3.range(_self.tracks.length))
+    .rangeBands([0, _self.height]);
+
+  if (typeof _self.row !== 'undefined') {
+    _self.row.remove();
+  }
+
+  _self.row = _self.container.selectAll('.' + _self.prefix + 'row')
+    .data(_self.tracks)
+    .enter().append('g')
+    .attr('class', _self.prefix + 'row')
+    .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
+
+  if (_self.drawGridLines) {
+    _self.row.append('line')
+      .attr('x2', _self.width);
+  }
+
+  _self.row.append('text')
+    .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
+    .on('click', function (d) {
+      _self.domain.sort(d.sort(d.fieldName));
+      _self.updateCallback(false);
+    })
+    .transition()
+    .attr('x', -6)
+    .attr('y', _self.cellHeight / 2)
+    .attr('dy', '.32em')
+    .attr('text-anchor', 'end')
+    .text(function (d, i) {
+      return _self.tracks[i].name;
+    });
+};
+
+OncoTrackGroup.prototype.getX = function (obj) {
+  var _self = this;
+
+  var index = _self.domain.map(function (d) {
+    return d.id;
+  });
+
+  return _self.x(index.indexOf(obj.id));
+};
+
+OncoTrackGroup.prototype.getY = function (obj) {
+  var _self = this;
+
+  var index = _self.tracks.map(function (d) {
+    return d.fieldName;
+  });
+
+  return _self.y(index.indexOf(obj.fieldName));
+};
+
+module.exports = OncoTrackGroup;
+},{}],6:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
@@ -1712,4 +1917,4 @@ module.exports = OncoTrack;
 "use strict";
 
 window.OncoGrid = require('./OncoGrid');
-},{"./OncoGrid":3}]},{},[5])
+},{"./OncoGrid":3}]},{},[6])
