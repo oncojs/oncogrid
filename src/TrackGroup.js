@@ -43,6 +43,9 @@ OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCa
   _self.trackData = [];
 };
 
+/**
+ * Method for adding a track to the track group. 
+ */
 OncoTrackGroup.prototype.addTrack = function (track) {
   var _self = this;
 
@@ -50,6 +53,9 @@ OncoTrackGroup.prototype.addTrack = function (track) {
   _self.height += _self.cellHeight;
 };
 
+/**
+ * Refreshes the data after adding a new track.
+ */
 OncoTrackGroup.prototype.refreshData = function () {
   var _self = this;
 
@@ -66,10 +72,21 @@ OncoTrackGroup.prototype.refreshData = function () {
   }
 };
 
+/**
+ * Initializes the container for the track groups. 
+ */
 OncoTrackGroup.prototype.init = function (container) {
   var _self = this;
 
   _self.container = container;
+
+  _self.label = _self.container.append('text')
+    .attr('x', -6)
+    .attr('y', -7)
+    .attr('dy', '.32em')
+    .attr('text-anchor', 'end')
+    .attr('class', _self.prefix + 'track-group-label')
+    .text(_self.name);
 
   _self.background = _self.container.append('rect')
     .attr('class', 'background')
@@ -80,6 +97,9 @@ OncoTrackGroup.prototype.init = function (container) {
 
 };
 
+/**
+ * Renders the track group. Takes the x axis range, and the div for tooltips. 
+ */
 OncoTrackGroup.prototype.render = function (x, div) {
   var _self = this;
 
@@ -89,7 +109,6 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
   _self.cellWidth = _self.width / _self.domain.length;
 
-  window.console.log(_self.trackData);
   _self.container.selectAll('.' + _self.prefix + 'track')
     .data(_self.trackData).enter()
     .append('rect')
@@ -128,6 +147,9 @@ OncoTrackGroup.prototype.render = function (x, div) {
     .attr('opacity', _self.opacityFunc);
 };
 
+/** 
+ * Updates the track group rendering based on the given domain and range for axis. 
+ */
 OncoTrackGroup.prototype.update = function(domain, x) {
   var _self = this;
 
@@ -147,6 +169,9 @@ OncoTrackGroup.prototype.update = function(domain, x) {
 
 };
 
+/**
+ * Resizes to the given width. 
+ */
 OncoTrackGroup.prototype.resize = function (width) {
   var _self = this;
 

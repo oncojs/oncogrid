@@ -36,7 +36,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
   _self.width = (_self.rotated ? params.height : params.width) || 500;
 
-  _self.cellHeight = params.trackHeight || 20;
+  _self.cellHeight = params.trackHeight || 10;
   _self.numDomain = _self.domain.length;
   _self.cellWidth = _self.width / _self.numDomain;
 
@@ -54,6 +54,9 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.drawGridLines = false;
 };
 
+/**
+ * Parses track groups out of input.
+ */
 OncoTrack.prototype.parseGroups = function () {
   var _self = this;
 
@@ -76,6 +79,10 @@ OncoTrack.prototype.parseGroups = function () {
   });
 };
 
+/**
+ * Initializes the track group data and places conainer for each group in spaced
+ * intervals. 
+ */
 OncoTrack.prototype.init = function () {
   var _self = this;
 
@@ -123,6 +130,7 @@ OncoTrack.prototype.init = function () {
   }
 };
 
+/** Calls render on all track groups */
 OncoTrack.prototype.render = function (x, div) {
   var _self = this;
 
@@ -132,6 +140,7 @@ OncoTrack.prototype.render = function (x, div) {
   }
 };
 
+/** Resizes all the track groups */
 OncoTrack.prototype.resize = function (width, height) {
   var _self = this;
 
@@ -161,7 +170,6 @@ OncoTrack.prototype.resize = function (width, height) {
     g.resize(_self.width);
   }
 
-  _self.computeCoordinates();
 };
 
 /**
@@ -179,33 +187,6 @@ OncoTrack.prototype.update = function (domain, x) {
     g.update(domain, x);
   }
 
-};
-
-OncoTrack.prototype.getX = function (obj) {
-  var _self = this;
-
-  var index = _self.domain.map(function (d) {
-    return d.id;
-  });
-
-  return _self.x(index.indexOf(obj.id));
-};
-
-OncoTrack.prototype.getY = function (obj) {
-  var _self = this;
-
-  var index = _self.availableTracks.map(function (d) {
-    return d.fieldName;
-  });
-
-  return _self.y(index.indexOf(obj.fieldName));
-};
-
-/**
- * Updates coordinate system
- */
-OncoTrack.prototype.computeCoordinates = function () {
-  var _self = this;
 };
 
 OncoTrack.prototype.toggleGridLines = function () {

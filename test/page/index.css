@@ -65,6 +65,10 @@
 #grid-div .og-label-text-font {
     font-size: 0.5rem;
 }
+
+#grid-div .og-track-group-label {
+    font-size: 0.8em;
+}
     
 #grid-div .og-sortable-rect {
 
