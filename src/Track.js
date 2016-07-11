@@ -119,7 +119,7 @@ OncoTrack.prototype.init = function () {
     var trackContainer = _self.container.append('g')
       .attr('transform', 'translate(0,' + curTransDown + ')');
     g.init(trackContainer);
-    curTransDown += g.height;
+    curTransDown += Number(g.height) + 20;
   }
 };
 
@@ -128,7 +128,7 @@ OncoTrack.prototype.render = function (x, div) {
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.render(x,div);
+    g.render(x, div);
   }
 };
 
@@ -136,9 +136,6 @@ OncoTrack.prototype.resize = function (width, height) {
   var _self = this;
 
   _self.width = _self.rotated ? height : width;
-
-  _self.cellWidth = _self.width / _self.numDomain;
-
   _self.height = _self.cellHeight * _self.availableTracks.length;
 
   _self.translateDown =
@@ -147,16 +144,24 @@ OncoTrack.prototype.resize = function (width, height) {
 
   _self.container
     .attr('width', _self.width)
-    .attr('height', _self.height);
+    .attr('height', _self.height)
+    .attr('transform', function () {
+      if (_self.rotated) {
+        return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+      } else {
+        return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+      }
+    });
 
-  _self.track.attr('transform', 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')');
-
-  _self.background
-    .attr('width', _self.width)
-    .attr('height', _self.height);
+  var curTransDown = 0;
+  for (var k = 0; k < _self.groups.length; k++) {
+    var g = _self.groups[k];
+    g.container.attr('transform', 'translate(0,' + curTransDown + ')');
+    curTransDown += Number(g.height) + 20;
+    g.resize(_self.width);
+  }
 
   _self.computeCoordinates();
-
 };
 
 /**
@@ -168,16 +173,12 @@ OncoTrack.prototype.update = function (domain, x) {
   _self.domain = domain;
   _self.x = x;
 
-  if (_self.domain.length !== _self.numDomain) {
-    _self.numDomain = _self.domain.length;
-    _self.cellWidth = _self.width / _self.numDomain;
-    _self.computeCoordinates();
+
+  for (var i = 0; i < _self.groups.length; i++) {
+    var g = _self.groups[i];
+    g.update(domain, x);
   }
 
-  _self.track.selectAll('.' + _self.prefix + 'track-data')
-    .transition()
-    .attr('x', function (d) { return _self.getX(d); })
-    .attr('width', _self.cellWidth);
 };
 
 OncoTrack.prototype.getX = function (obj) {
@@ -205,56 +206,6 @@ OncoTrack.prototype.getY = function (obj) {
  */
 OncoTrack.prototype.computeCoordinates = function () {
   var _self = this;
-
-  if (typeof _self.column !== 'undefined') {
-    _self.column.remove();
-  }
-
-  _self.column = _self.track.selectAll('.' + _self.prefix + 'column')
-    .data(_self.domain)
-    .enter().append('g')
-    .attr('class', _self.prefix + 'column')
-    .attr('donor', function (d) { return d.id; })
-    .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
-
-  if (_self.drawGridLines) {
-    _self.column.append('line')
-      .attr('x1', -_self.height);
-  }
-
-  _self.y = d3.scale.ordinal()
-    .domain(d3.range(_self.availableTracks.length))
-    .rangeBands([0, _self.height]);
-
-  if (typeof _self.row !== 'undefined') {
-    _self.row.remove();
-  }
-
-  _self.row = _self.track.selectAll('.' + _self.prefix + 'row')
-    .data(_self.availableTracks)
-    .enter().append('g')
-    .attr('class', _self.prefix + 'row')
-    .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
-
-  if (_self.drawGridLines) {
-    _self.row.append('line')
-      .attr('x2', _self.width);
-  }
-
-  _self.row.append('text')
-    .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
-    .on('click', function (d) {
-      _self.domain.sort(d.sort(d.fieldName));
-      _self.updateCallback(false);
-    })
-    .transition()
-    .attr('x', -6)
-    .attr('y', _self.cellHeight / 2)
-    .attr('dy', '.32em')
-    .attr('text-anchor', 'end')
-    .text(function (d, i) {
-      return _self.availableTracks[i].name;
-    });
 };
 
 OncoTrack.prototype.toggleGridLines = function () {

@@ -127,6 +127,41 @@ OncoTrackGroup.prototype.render = function (x, div) {
     .attr('opacity', _self.opacityFunc);
 };
 
+OncoTrackGroup.prototype.update = function(domain, x) {
+  var _self = this;
+
+  _self.domain = domain;
+  _self.x = x;
+
+  if (_self.domain.length !== _self.numDomain) {
+    _self.numDomain = _self.domain.length;
+    _self.cellWidth = _self.width / _self.numDomain;
+    _self.computeCoordinates();
+  }
+
+  _self.container.selectAll('.' + _self.prefix + 'track-data')
+  .transition()
+  .attr('x', function (d) { return _self.getX(d); })
+  .attr('width', _self.cellWidth);
+
+};
+
+OncoTrackGroup.prototype.resize = function (width) {
+  var _self = this;
+
+  _self.width = width;
+  _self.height = _self.cellHeight * _self.tracks.length;
+
+  _self.cellWidth = _self.width / _self.domain.length;
+
+  _self.background
+    .attr('class', 'background')
+    .attr('width', _self.width)
+    .attr('height', _self.height);
+
+  _self.computeCoordinates();
+};
+
 /**
  * Updates coordinate system
  */
