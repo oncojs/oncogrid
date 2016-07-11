@@ -172,10 +172,11 @@ OncoTrackGroup.prototype.update = function(domain, x) {
 /**
  * Resizes to the given width. 
  */
-OncoTrackGroup.prototype.resize = function (width) {
+OncoTrackGroup.prototype.resize = function (width, x) {
   var _self = this;
 
   _self.width = width;
+  _self.x = x;
   _self.height = _self.cellHeight * _self.tracks.length;
 
   _self.cellWidth = _self.width / _self.domain.length;

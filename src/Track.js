@@ -141,7 +141,7 @@ OncoTrack.prototype.render = function (x, div) {
 };
 
 /** Resizes all the track groups */
-OncoTrack.prototype.resize = function (width, height) {
+OncoTrack.prototype.resize = function (width, height, x) {
   var _self = this;
 
   _self.width = _self.rotated ? height : width;
@@ -167,7 +167,7 @@ OncoTrack.prototype.resize = function (width, height) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + curTransDown + ')');
     curTransDown += Number(g.height) + 20;
-    g.resize(_self.width);
+    g.resize(_self.width, x);
   }
 
 };

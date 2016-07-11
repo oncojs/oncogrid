@@ -580,10 +580,10 @@ MainGrid.prototype.resize = function(width, height) {
   _self.computeCoordinates();
 
   _self.donorHistogram.resize(width, _self.height);
-  _self.donorTrack.resize(width, _self.height);
+  _self.donorTrack.resize(width, _self.height, _self.x);
 
   _self.geneHistogram.resize(width, _self.height);
-  _self.geneTrack.resize(width, _self.height);
+  _self.geneTrack.resize(width, _self.height, _self.y);
 
   _self.update();
 
@@ -1140,15 +1140,11 @@ OncoGrid.prototype.update = function(scope) {
 OncoGrid.prototype.resize = function(width, height, fullscreen) {
   var _self = this;
 
-  // DIRTY HACK WARNING!!!
-  // TODO: Fix track resizing so I don't need to do this.
-  _self.toggleGridLines();
   _self.fullscreen = fullscreen;
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
     chart.resize(Number(width), Number(height));
   });
-  _self.toggleGridLines();
 };
 
 /**
@@ -1472,6 +1468,9 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.drawGridLines = false;
 };
 
+/**
+ * Parses track groups out of input.
+ */
 OncoTrack.prototype.parseGroups = function () {
   var _self = this;
 
@@ -1494,6 +1493,10 @@ OncoTrack.prototype.parseGroups = function () {
   });
 };
 
+/**
+ * Initializes the track group data and places conainer for each group in spaced
+ * intervals. 
+ */
 OncoTrack.prototype.init = function () {
   var _self = this;
 
@@ -1541,6 +1544,7 @@ OncoTrack.prototype.init = function () {
   }
 };
 
+/** Calls render on all track groups */
 OncoTrack.prototype.render = function (x, div) {
   var _self = this;
 
@@ -1550,7 +1554,8 @@ OncoTrack.prototype.render = function (x, div) {
   }
 };
 
-OncoTrack.prototype.resize = function (width, height) {
+/** Resizes all the track groups */
+OncoTrack.prototype.resize = function (width, height, x) {
   var _self = this;
 
   _self.width = _self.rotated ? height : width;
@@ -1576,7 +1581,7 @@ OncoTrack.prototype.resize = function (width, height) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + curTransDown + ')');
     curTransDown += Number(g.height) + 20;
-    g.resize(_self.width);
+    g.resize(_self.width, x);
   }
 
 };
@@ -1783,10 +1788,11 @@ OncoTrackGroup.prototype.update = function(domain, x) {
 /**
  * Resizes to the given width. 
  */
-OncoTrackGroup.prototype.resize = function (width) {
+OncoTrackGroup.prototype.resize = function (width, x) {
   var _self = this;
 
   _self.width = width;
+  _self.x = x;
   _self.height = _self.cellHeight * _self.tracks.length;
 
   _self.cellWidth = _self.width / _self.domain.length;
