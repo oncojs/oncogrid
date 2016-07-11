@@ -36,6 +36,7 @@ OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCa
   _self.clickFunc = params.clickFunc;
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
+  _self.drawGridLines = params.drawGridLines || false;
 
   _self.domain = domain;
 
@@ -237,6 +238,18 @@ OncoTrackGroup.prototype.getY = function (obj) {
   });
 
   return _self.y(index.indexOf(obj.fieldName));
+};
+
+OncoTrackGroup.prototype.toggleGridLines = function () {
+  var _self = this;
+
+  if (_self.drawGridLines) {
+    _self.drawGridLines = false;
+  } else {
+    _self.drawGridLines = true;
+  }
+
+  _self.computeCoordinates();
 };
 
 module.exports = OncoTrackGroup;

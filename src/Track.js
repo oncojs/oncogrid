@@ -211,13 +211,10 @@ OncoTrack.prototype.computeCoordinates = function () {
 OncoTrack.prototype.toggleGridLines = function () {
   var _self = this;
 
-  if (_self.drawGridLines) {
-    _self.drawGridLines = false;
-  } else {
-    _self.drawGridLines = true;
+  for (var i = 0; i < _self.groups.length; i++) {
+    var g = _self.groups[i];
+    g.toggleGridLines();
   }
-
-  _self.computeCoordinates();
 };
 
 module.exports = OncoTrack;
