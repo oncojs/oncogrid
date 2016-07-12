@@ -107,15 +107,11 @@ OncoGrid.prototype.update = function(scope) {
 OncoGrid.prototype.resize = function(width, height, fullscreen) {
   var _self = this;
 
-  // DIRTY HACK WARNING!!!
-  // TODO: Fix track resizing so I don't need to do this.
-  _self.toggleGridLines();
   _self.fullscreen = fullscreen;
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
     chart.resize(Number(width), Number(height));
   });
-  _self.toggleGridLines();
 };
 
 /**

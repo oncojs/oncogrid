@@ -334,10 +334,10 @@ MainGrid.prototype.resize = function(width, height) {
   _self.computeCoordinates();
 
   _self.donorHistogram.resize(width, _self.height);
-  _self.donorTrack.resize(width, _self.height);
+  _self.donorTrack.resize(width, _self.height, _self.x);
 
   _self.geneHistogram.resize(width, _self.height);
-  _self.geneTrack.resize(width, _self.height);
+  _self.geneTrack.resize(width, _self.height, _self.y);
 
   _self.update();
 

@@ -1,3 +1,5 @@
+"use strict";
+
 var donors = [
   {"id": "DO1", "age_diagnosis": 49, "alive": true, "foobar": true},
   {"id": "DO2", "age_diagnosis": 62, "alive": false, "foobar": true},
@@ -50,12 +52,11 @@ var donorFill = function (d) {
 };
 
 var geneOpacity = function (d) {
-  console.log(d);
   return d.value / 40;
 };
 
 var geneTracks = [
-  {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int', 'group': ''},
+  {'name': 'Total Donors Affected', 'fieldName': 'totalDonors', 'type': 'int', 'group': 'ICGC'},
 ];
 
 var sortBool = function(field) {
@@ -77,9 +78,9 @@ var sortInt = function(field) {
 };
 
 var donorTracks = [
-  {'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'type': 'int', 'sort': sortInt},
-  {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool', 'sort': sortBool},
-  {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'sort': sortBool}
+  {'name': 'Age at Diagnosis', 'fieldName': 'age_diagnosis', 'group':'Clinical', 'type': 'int', 'sort': sortInt},
+  {'name': 'Alive', 'fieldName': 'alive', 'type': 'bool', 'group':'Clinical','sort': sortBool},
+  {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'group':'Data', 'sort': sortBool}
 ];
 
 
