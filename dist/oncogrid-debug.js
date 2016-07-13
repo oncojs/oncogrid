@@ -562,7 +562,7 @@ MainGrid.prototype.resize = function(width, height) {
   _self.height = height;
 
   _self.cellWidth = _self.width / _self.donors.length;
-  _self.cellHeight = _self.height / _self.donors.length;
+  _self.cellHeight = _self.height / _self.genes.length;
 
   if (_self.cellHeight <  _self.minCellHeight) {
     _self.cellHeight =  _self.minCellHeight;
