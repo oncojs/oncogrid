@@ -566,7 +566,7 @@ MainGrid.prototype.resize = function(width, height) {
 
     if (_self.cellHeight <  _self.minCellHeight) {
         _self.cellHeight =  _self.minCellHeight;
-        _self.height = _self.numGenes * _self.minCellHeight;
+        _self.height = _self.genes.length * _self.minCellHeight;
     }
 
     d3.select('.og-maingrid-svg')
