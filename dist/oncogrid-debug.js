@@ -1061,6 +1061,9 @@ OncoGrid = function(params) {
   _self.genes = params.genes || [];
   _self.observations = params.observations || [];
 
+  _self.inputWidth = params.width || 500;
+  _self.inputHeight = params.height || 500;
+
   _self.createLookupTable();
   _self.computeDonorCounts();
   _self.computeGeneCounts();
@@ -1215,6 +1218,7 @@ OncoGrid.prototype.removeDonors = function(func) {
 
   _self.computeGeneScores();
   _self.update(_self)();
+  _self.resize(_self.inputWidth, _self.inputHeight, false);
 };
 
 /**
@@ -1239,6 +1243,7 @@ OncoGrid.prototype.removeGenes = function(func) {
   }
 
   _self.update(_self)();
+  _self.resize(_self.inputWidth, _self.inputHeight, false);
 };
 
 /**
