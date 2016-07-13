@@ -465,7 +465,7 @@ MainGrid.prototype.startSelection = function(e) {
             })
             .attr('x', coord[0])
             .attr('y', coord[1])
-            .attr('fill', 'blue')
+            .attr('class', _self.prefix + 'selection-region')
             .attr('stroke', 'black')
             .attr('stroke-width', '2')
             .attr('opacity', 0.2);
