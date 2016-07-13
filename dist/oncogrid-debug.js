@@ -1393,7 +1393,7 @@ OncoGrid.prototype.sortScore = function(a, b) {
   } else if (a.score > b.score) {
     return -1;
   } else {
-    return 0;
+    return a.id >= b.id ? 1: -1
   }
 };
 
