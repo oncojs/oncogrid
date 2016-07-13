@@ -43,6 +43,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.availableTracks = tracks || [];
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
+  _self.drawGridLines = params.grid || false;
 
   _self.parseGroups();
 
@@ -50,8 +51,6 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.translateDown =
     (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
       params.height) || 500;
-
-  _self.drawGridLines = false;
 };
 
 /**
@@ -71,7 +70,9 @@ OncoTrack.prototype.parseGroups = function () {
         cellHeight: _self.cellHeight,
         width: _self.width,
         clickFunc: _self.clickFunc,
-      }, _self.domain, group, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
+        grid: _self.drawGridLines,
+        domain: _self.domain
+      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
       _self.groups.push(trackGroup);

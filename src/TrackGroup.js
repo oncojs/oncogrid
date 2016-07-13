@@ -18,7 +18,7 @@
 
 var OncoTrackGroup;
 
-OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCallback) {
+OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback) {
   var _self = this;
 
   _self.prefix = params.prefix || 'og-';
@@ -30,15 +30,16 @@ OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCa
   _self.tracks = [];
   _self.length = 0;
 
+  _self.rotated = rotated;
   _self.updateCallback = updateCallback;
   _self.clickFunc = params.clickFunc;
 
   _self.clickFunc = params.clickFunc;
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
-  _self.drawGridLines = params.drawGridLines || false;
 
-  _self.domain = domain;
+  _self.drawGridLines = params.grid || false;
+  _self.domain = params.domain;
 
   _self.trackData = [];
 };

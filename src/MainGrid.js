@@ -91,7 +91,7 @@ MainGrid.prototype.loadParams = function (params) {
   _self.heatMap = params.heatMap;
   _self.histogramHeight = 100;
 
-  _self.drawGridLines = false;
+  _self.drawGridLines = params.grid || false;
   _self.crosshair = false;
 
   _self.gridClick = params.gridClick;
@@ -350,18 +350,16 @@ MainGrid.prototype.resize = function(width, height) {
 MainGrid.prototype.defineCrosshairBehaviour = function () {
   var _self = this;
 
-  var boundingBox = _self.svg.node().getBBox();
-
   _self.verticalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'vertical-cross')
-      .attr('y1', 0)
-      .attr('y2', boundingBox.height)
+      .attr('y1', -_self.histogramHeight)
+      .attr('y2', _self.height + _self.donorTrack.height)
       .attr('opacity', 0);
 
   _self.horizontalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'horizontal-cross')
       .attr('x1', 0)
-      .attr('x2', boundingBox.width)
+      .attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height)
       .attr('opacity', 0);
 
   _self.svg

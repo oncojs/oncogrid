@@ -337,7 +337,7 @@ MainGrid.prototype.loadParams = function (params) {
   _self.heatMap = params.heatMap;
   _self.histogramHeight = 100;
 
-  _self.drawGridLines = false;
+  _self.drawGridLines = params.grid || false;
   _self.crosshair = false;
 
   _self.gridClick = params.gridClick;
@@ -596,18 +596,16 @@ MainGrid.prototype.resize = function(width, height) {
 MainGrid.prototype.defineCrosshairBehaviour = function () {
   var _self = this;
 
-  var boundingBox = _self.svg.node().getBBox();
-
   _self.verticalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'vertical-cross')
-      .attr('y1', 0)
-      .attr('y2', boundingBox.height)
+      .attr('y1', -_self.histogramHeight)
+      .attr('y2', _self.height + _self.donorTrack.height)
       .attr('opacity', 0);
 
   _self.horizontalCross = _self.svg.append('line')
       .attr('class', _self.prefix + 'horizontal-cross')
       .attr('x1', 0)
-      .attr('x2', boundingBox.width)
+      .attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height)
       .attr('opacity', 0);
 
   _self.svg
@@ -1457,6 +1455,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.availableTracks = tracks || [];
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
+  _self.drawGridLines = params.grid || false;
 
   _self.parseGroups();
 
@@ -1464,8 +1463,6 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.translateDown =
     (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
       params.height) || 500;
-
-  _self.drawGridLines = false;
 };
 
 /**
@@ -1485,7 +1482,9 @@ OncoTrack.prototype.parseGroups = function () {
         cellHeight: _self.cellHeight,
         width: _self.width,
         clickFunc: _self.clickFunc,
-      }, _self.domain, group, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
+        grid: _self.drawGridLines,
+        domain: _self.domain
+      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
       _self.groups.push(trackGroup);
@@ -1634,7 +1633,7 @@ module.exports = OncoTrack;
 
 var OncoTrackGroup;
 
-OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCallback) {
+OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback) {
   var _self = this;
 
   _self.prefix = params.prefix || 'og-';
@@ -1646,15 +1645,16 @@ OncoTrackGroup = function (params, domain, name, opacityFunc, fillFunc, updateCa
   _self.tracks = [];
   _self.length = 0;
 
+  _self.rotated = rotated;
   _self.updateCallback = updateCallback;
   _self.clickFunc = params.clickFunc;
 
   _self.clickFunc = params.clickFunc;
   _self.opacityFunc = opacityFunc;
   _self.fillFunc = fillFunc;
-  _self.drawGridLines = params.drawGridLines || false;
 
-  _self.domain = domain;
+  _self.drawGridLines = params.grid || false;
+  _self.domain = params.domain;
 
   _self.trackData = [];
 };
