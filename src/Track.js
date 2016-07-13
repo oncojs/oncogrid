@@ -49,8 +49,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
 
   // TODO: This is awful, needs fixing and cleaning.
   _self.translateDown =
-    (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
-      params.height) || 500;
+      (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
+          params.height) || 500;
 };
 
 /**
@@ -82,7 +82,7 @@ OncoTrack.prototype.parseGroups = function () {
 
 /**
  * Initializes the track group data and places conainer for each group in spaced
- * intervals. 
+ * intervals.
  */
 OncoTrack.prototype.init = function () {
   var _self = this;
@@ -110,22 +110,22 @@ OncoTrack.prototype.init = function () {
   }
 
   _self.container = _self.svg.append('g')
-    .attr('width', _self.width)
-    .attr('height', _self.height)
-    .attr('class', _self.prefix + 'track')
-    .attr('transform', function () {
-      if (_self.rotated) {
-        return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-      } else {
-        return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-      }
-    });
+      .attr('width', _self.width)
+      .attr('height', _self.height)
+      .attr('class', _self.prefix + 'track')
+      .attr('transform', function () {
+        if (_self.rotated) {
+          return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+        } else {
+          return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+        }
+      });
 
   var curTransDown = 0;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     var trackContainer = _self.container.append('g')
-      .attr('transform', 'translate(0,' + curTransDown + ')');
+        .attr('transform', 'translate(0,' + curTransDown + ')');
     g.init(trackContainer);
     curTransDown += Number(g.height) + 20;
   }
@@ -149,19 +149,19 @@ OncoTrack.prototype.resize = function (width, height, x) {
   _self.height = _self.cellHeight * _self.availableTracks.length;
 
   _self.translateDown =
-    (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
-      height) || 500;
+      (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
+          height) || 500;
 
   _self.container
-    .attr('width', _self.width)
-    .attr('height', _self.height)
-    .attr('transform', function () {
-      if (_self.rotated) {
-        return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-      } else {
-        return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-      }
-    });
+      .attr('width', _self.width)
+      .attr('height', _self.height)
+      .attr('transform', function () {
+        if (_self.rotated) {
+          return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+        } else {
+          return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
+        }
+      });
 
   var curTransDown = 0;
   for (var k = 0; k < _self.groups.length; k++) {
