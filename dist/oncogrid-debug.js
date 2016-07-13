@@ -630,10 +630,10 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
                 var xIndex = _self.rangeToDomain(_self.x, coord[0]);
                 var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
-                var donorText = typeof _self.donors[xIndex] !== 'undefined' ?
+                var donorText = typeof _self.donors[xIndex] !== 'undefined' && coord[0] <= _self.width ?
                 'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
 
-                var geneText = typeof _self.genes[yIndex] !== 'undefined' ?
+                var geneText = typeof _self.genes[yIndex] !== 'undefined' && coord[1] <= _self.height  ?
                 'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
 
                 _self.div.transition()
@@ -664,10 +664,10 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
                 var xIndex = _self.rangeToDomain(_self.x, coord[0]);
                 var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
-                var donorText = typeof _self.donors[xIndex] !== 'undefined' ?
+                var donorText = typeof _self.donors[xIndex] !== 'undefined' && coord[0] <= _self.width ?
                 'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
 
-                var geneText = typeof _self.genes[yIndex] !== 'undefined' ?
+                var geneText = typeof _self.genes[yIndex] !== 'undefined' && coord[1] <= _self.height  ?
                 'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
 
                 _self.div.transition()
