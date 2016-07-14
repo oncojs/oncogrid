@@ -29,6 +29,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.rotated = rotated || false;
   _self.updateCallback = updateCallback;
 
+  _self.trackLegends = params.trackLegends || {};
+
   _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
 
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
@@ -71,7 +73,8 @@ OncoTrack.prototype.parseGroups = function () {
         width: _self.width,
         clickFunc: _self.clickFunc,
         grid: _self.drawGridLines,
-        domain: _self.domain
+        domain: _self.domain,
+        trackLegend: _self.trackLegends[group] || ''
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;

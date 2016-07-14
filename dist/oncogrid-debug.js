@@ -1447,6 +1447,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.rotated = rotated || false;
   _self.updateCallback = updateCallback;
 
+  _self.trackLegends = params.trackLegends || {};
+
   _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
 
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
@@ -1489,7 +1491,8 @@ OncoTrack.prototype.parseGroups = function () {
         width: _self.width,
         clickFunc: _self.clickFunc,
         grid: _self.drawGridLines,
-        domain: _self.domain
+        domain: _self.domain,
+        trackLegend: _self.trackLegends[group] || ''
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
@@ -1653,7 +1656,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
 
     _self.rotated = rotated;
     _self.updateCallback = updateCallback;
-    _self.clickFunc = params.clickFunc;
+    _self.trackLegend = params.trackLegend;
 
     _self.clickFunc = params.clickFunc;
     _self.opacityFunc = opacityFunc;
@@ -1757,7 +1760,6 @@ OncoTrackGroup.prototype.render = function (x, div) {
         .on('click', function (d) {
             _self.clickFunc(d);
         })
-        .transition()
         .attr('class', function (d) {
             return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
                 ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
@@ -1768,6 +1770,23 @@ OncoTrackGroup.prototype.render = function (x, div) {
         .attr('height', _self.cellHeight)
         .attr('fill', _self.fillFunc)
         .attr('opacity', _self.opacityFunc);
+
+    _self.label
+        .on('mouseover', function () {
+            _self.div.transition()
+                .duration(200)
+                .style('opacity', 0.9);
+            _self.div
+                .html(function () {return _self.trackLegend})
+                .style('left', (d3.event.pageX + 15) + 'px')
+                .style('top', (d3.event.pageY + 30) + 'px');
+        })
+        .on('mouseout', function() {
+            _self.div.transition()
+                .duration(500)
+                .style('opacity', 0);
+        });
+
 };
 
 /**
