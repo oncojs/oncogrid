@@ -66,6 +66,7 @@ OncoTrackGroup.prototype.refreshData = function () {
                 id: _self.domain[i].id,
                 displayId: _self.rotated ? _self.domain[i].symbol : _self.domain[i].id,
                 value: _self.domain[i][_self.tracks[j].fieldName],
+                displayName: _self.tracks[j].name,
                 fieldName: _self.tracks[j].fieldName,
                 type: _self.tracks[j].type
             });
@@ -119,9 +120,9 @@ OncoTrackGroup.prototype.render = function (x, div) {
                 .style('opacity', 0.9);
             _self.div.html(function () {
                 if (_self.rotated) {
-                    return d.displayId + '<br>' + d.fieldName + ': ' + d.value;
+                    return d.displayId + '<br>' + d.displayName + ': ' + d.value;
                 } else {
-                    return d.id + '<br>' + d.fieldName + ': ' + d.value;
+                    return d.id + '<br>' + d.displayName + ': ' + d.value;
                 }
             })
                 .style('left', (d3.event.pageX + 15) + 'px')
