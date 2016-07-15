@@ -130,7 +130,7 @@ OncoTrack.prototype.init = function () {
     var trackContainer = _self.container.append('g')
         .attr('transform', 'translate(0,' + curTransDown + ')');
     g.init(trackContainer);
-    curTransDown += Number(g.height) + 20;
+    curTransDown += Number(g.height) + 25;
   }
 };
 
@@ -149,7 +149,8 @@ OncoTrack.prototype.resize = function (width, height, x) {
   var _self = this;
 
   _self.width = _self.rotated ? height : width;
-  _self.height = _self.cellHeight * _self.availableTracks.length;
+  _self.height = _self.cellHeight * _self.availableTracks.length +
+      25 * _self.availableTracks.length;
 
   _self.translateDown =
       (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
