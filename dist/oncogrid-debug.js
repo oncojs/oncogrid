@@ -1588,7 +1588,7 @@ OncoTrack.prototype.resize = function (width, height, x) {
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + curTransDown + ')');
-    curTransDown += Number(g.height) + 20;
+    curTransDown += Number(g.height) + 25;
     g.resize(_self.width, x);
   }
 
