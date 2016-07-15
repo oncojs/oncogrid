@@ -6,7 +6,7 @@ var rename = require('gulp-rename');
 var jshint = require('gulp-jshint');
 
 // Change this to the location you would like to deploy to.
-var copyDir = '/Users/dandric/Documents/workspace/dcc-portal/dcc-portal-ui/app/vendor/scripts/oncogrid';
+var copyDir = '<path_to_dest>/oncogrid';
 
 gulp.task('default', function() {
   gulp.src(['src/index.js'])
