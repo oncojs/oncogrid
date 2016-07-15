@@ -114,7 +114,6 @@ OncoHistogram.prototype.render = function (x, div) {
                 .style('opacity', 0);
         })
         .on('click', _self.clickFunc)
-        .transition()
         .attr('class', function (d) {
             return _self.prefix + 'sortable-bar ' + d.id + '-bar';
         })
@@ -398,7 +397,6 @@ MainGrid.prototype.render = function () {
                 _self.gridClick(d);
             }
         })
-        .transition()
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect ' + d.donorId + '-cell ' + d.geneId + '-cell';
         })
@@ -536,7 +534,6 @@ MainGrid.prototype.computeCoordinates = function () {
         .attr('class', function (g) {
             return g.id + '-label ' + _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font';
         })
-        .transition()
         .attr('x', -8)
         .attr('y', _self.cellHeight / 2)
         .attr('dy', '.32em')

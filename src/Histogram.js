@@ -113,7 +113,6 @@ OncoHistogram.prototype.render = function (x, div) {
                 .style('opacity', 0);
         })
         .on('click', _self.clickFunc)
-        .transition()
         .attr('class', function (d) {
             return _self.prefix + 'sortable-bar ' + d.id + '-bar';
         })
