@@ -556,38 +556,22 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     });
     drag.on('drag', function (d) {
         var trans = d3.event.dy;
-        var dragged = _self.genes.indexOf(d);
         var selection = d3.select(this);
 
         selection.attr('transform', function () {
             var transform = d3.transform(d3.select(this).attr('transform'));
             return 'translate( 0, ' + (parseInt(transform.translate[1]) + trans) + ')';
         });
-
-        var newY = d3.transform(d3.select(this).attr('transform')).translate[1];
-
-        _self.row.each(function (f) {
-            var curGeneIndex = _self.genes.indexOf(f);
-            var curGene, yCoord;
-            if (trans > 0 && curGeneIndex > dragged) {
-                yCoord = d3.transform(d3.select(this).attr('transform')).translate[1];
-                if (newY > yCoord) {
-                    curGene = _self.genes[dragged];
-                    _self.genes[dragged] = _self.genes[curGeneIndex];
-                    _self.genes[curGeneIndex] = curGene;
-                }
-            } else if (trans < 0 && curGeneIndex < dragged) {
-                yCoord = d3.transform(d3.select(this).attr('transform')).translate[1];
-                if (newY < yCoord) {
-                    curGene = _self.genes[dragged];
-                    _self.genes[dragged] = _self.genes[curGeneIndex];
-                    _self.genes[curGeneIndex] = curGene;
-                }
-            }
-        });
     });
 
-    drag.on('dragend', function () {
+    drag.on('dragend', function (d) {
+        var coord = d3.mouse(_self.svg.node());
+        var dragged = _self.genes.indexOf(d);
+        var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+
+        _self.genes.splice(dragged, 1);
+        _self.genes.splice(yIndex, 0, d);
+
         _self.updateCallback(true);
     });
 
