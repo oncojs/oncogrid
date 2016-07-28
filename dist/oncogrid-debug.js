@@ -376,6 +376,7 @@ MainGrid.prototype.render = function () {
 
     _self.computeCoordinates();
 
+
     _self.svg.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
@@ -387,7 +388,7 @@ MainGrid.prototype.render = function () {
                 .style('left', (d3.event.pageX + 15) + 'px')
                 .style('top', (d3.event.pageY + 30) + 'px');
         })
-        .on('mouseout', function (d) {
+        .on('mouseout', function () {
             _self.div.transition()
                 .duration(500)
                 .style('opacity', 0);
@@ -799,7 +800,7 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     drag.on('dragstart', function () {
         d3.event.sourceEvent.stopPropagation(); // silence other listeners
     });
-    drag.on('drag', function (d) {
+    drag.on('drag', function () {
         var trans = d3.event.dy;
         var selection = d3.select(this);
 
@@ -939,11 +940,7 @@ MainGrid.prototype.toggleHeatmap = function () {
 MainGrid.prototype.toggleGridLines = function () {
     var _self = this;
 
-    if (_self.drawGridLines) {
-        _self.drawGridLines = false;
-    } else {
-        _self.drawGridLines = true;
-    }
+    _self.drawGridLines = !_self.drawGridLines;
 
     _self.geneTrack.toggleGridLines();
     _self.donorTrack.toggleGridLines();
@@ -953,13 +950,7 @@ MainGrid.prototype.toggleGridLines = function () {
 
 MainGrid.prototype.toggleCrosshair = function () {
     var _self = this;
-
-    if (_self.crosshair) {
-        _self.crosshair = false;
-    } else {
-        _self.crosshair = true;
-    }
-
+    _self.crosshair = !_self.crosshair;
 };
 
 /**
@@ -1092,8 +1083,10 @@ OncoGrid.prototype.createLookupTable = function () {
 OncoGrid.prototype.render = function() {
   var _self = this;
 
-  _self.charts.forEach(function(chart) {
-      chart.render();
+  setTimeout(function () {
+    _self.charts.forEach(function(chart) {
+        chart.render();
+    });
   });
 };
 
@@ -1717,41 +1710,47 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
     _self.cellWidth = _self.width / _self.domain.length;
 
-    _self.container.selectAll('.' + _self.prefix + 'track')
-        .data(_self.trackData).enter()
-        .append('rect')
-        .on('mouseover', function (d) {
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-            _self.div.html(function () {
-                if (_self.rotated) {
-                    return d.displayId + '<br>' + d.displayName + ': ' + d.value;
-                } else {
-                    return d.id + '<br>' + d.displayName + ': ' + d.value;
-                }
+    setTimeout(function() {
+        _self.container.selectAll('.' + _self.prefix + 'track')
+            .data(_self.trackData).enter()
+            .append('rect')
+            .on('mouseover', function (d) {
+                _self.div.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                _self.div.html(function () {
+                    if (_self.rotated) {
+                        return d.displayId + '<br>' + d.displayName + ': ' + d.value;
+                    } else {
+                        return d.id + '<br>' + d.displayName + ': ' + d.value;
+                    }
+                })
+                    .style('left', (d3.event.pageX + 15) + 'px')
+                    .style('top', (d3.event.pageY + 30) + 'px');
             })
-                .style('left', (d3.event.pageX + 15) + 'px')
-                .style('top', (d3.event.pageY + 30) + 'px');
-        })
-        .on('mouseout', function (d) {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
-        })
-        .on('click', function (d) {
-            _self.clickFunc(d);
-        })
-        .attr('class', function (d) {
-            return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
-                ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
-        })
-        .attr('x', function (d) { return _self.getX(d); })
-        .attr('y', function (d) { return _self.getY(d); })
-        .attr('width', _self.cellWidth)
-        .attr('height', _self.cellHeight)
-        .attr('fill', _self.fillFunc)
-        .attr('opacity', _self.opacityFunc);
+            .on('mouseout', function () {
+                _self.div.transition()
+                    .duration(500)
+                    .style('opacity', 0);
+            })
+            .on('click', function (d) {
+                _self.clickFunc(d);
+            })
+            .attr('class', function (d) {
+                return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
+                    ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+            })
+            .attr('x', function (d) {
+                return _self.getX(d);
+            })
+            .attr('y', function (d) {
+                return _self.getY(d);
+            })
+            .attr('width', _self.cellWidth)
+            .attr('height', _self.cellHeight)
+            .attr('fill', _self.fillFunc)
+            .attr('opacity', _self.opacityFunc);
+    });
 
     _self.label
         .on('mouseover', function () {
@@ -1892,13 +1891,7 @@ OncoTrackGroup.prototype.getY = function (obj) {
 
 OncoTrackGroup.prototype.toggleGridLines = function () {
     var _self = this;
-
-    if (_self.drawGridLines) {
-        _self.drawGridLines = false;
-    } else {
-        _self.drawGridLines = true;
-    }
-
+    _self.drawGridLines = !_self.drawGridLines;
     _self.computeCoordinates();
 };
 

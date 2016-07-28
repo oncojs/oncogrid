@@ -79,8 +79,10 @@ OncoGrid.prototype.createLookupTable = function () {
 OncoGrid.prototype.render = function() {
   var _self = this;
 
-  _self.charts.forEach(function(chart) {
-      chart.render();
+  setTimeout(function () {
+    _self.charts.forEach(function(chart) {
+        chart.render();
+    });
   });
 };
 

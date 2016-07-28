@@ -131,6 +131,7 @@ MainGrid.prototype.render = function () {
 
     _self.computeCoordinates();
 
+
     _self.svg.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
@@ -142,7 +143,7 @@ MainGrid.prototype.render = function () {
                 .style('left', (d3.event.pageX + 15) + 'px')
                 .style('top', (d3.event.pageY + 30) + 'px');
         })
-        .on('mouseout', function (d) {
+        .on('mouseout', function () {
             _self.div.transition()
                 .duration(500)
                 .style('opacity', 0);
@@ -554,7 +555,7 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     drag.on('dragstart', function () {
         d3.event.sourceEvent.stopPropagation(); // silence other listeners
     });
-    drag.on('drag', function (d) {
+    drag.on('drag', function () {
         var trans = d3.event.dy;
         var selection = d3.select(this);
 
@@ -694,11 +695,7 @@ MainGrid.prototype.toggleHeatmap = function () {
 MainGrid.prototype.toggleGridLines = function () {
     var _self = this;
 
-    if (_self.drawGridLines) {
-        _self.drawGridLines = false;
-    } else {
-        _self.drawGridLines = true;
-    }
+    _self.drawGridLines = !_self.drawGridLines;
 
     _self.geneTrack.toggleGridLines();
     _self.donorTrack.toggleGridLines();
@@ -708,13 +705,7 @@ MainGrid.prototype.toggleGridLines = function () {
 
 MainGrid.prototype.toggleCrosshair = function () {
     var _self = this;
-
-    if (_self.crosshair) {
-        _self.crosshair = false;
-    } else {
-        _self.crosshair = true;
-    }
-
+    _self.crosshair = !_self.crosshair;
 };
 
 /**
