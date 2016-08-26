@@ -30,6 +30,9 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     _self.tracks = [];
     _self.length = 0;
 
+    _self.nullSentinel =  params.nullSentinel || -777;
+
+
     _self.rotated = rotated;
     _self.updateCallback = updateCallback;
     _self.trackLegend = params.trackLegend;
@@ -121,9 +124,11 @@ OncoTrackGroup.prototype.render = function (x, div) {
                     .style('opacity', 0.9);
                 _self.div.html(function () {
                     if (_self.rotated) {
-                        return d.displayId + '<br>' + d.displayName + ': ' + d.value;
+                        return d.displayId + '<br>' + d.displayName + ': ' +
+                            (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
                     } else {
-                        return d.id + '<br>' + d.displayName + ': ' + d.value;
+                        return d.id + '<br>' + d.displayName + ': ' +
+                            (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
                     }
                 })
                     .style('left', (d3.event.pageX + 15) + 'px')

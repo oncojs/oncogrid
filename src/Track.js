@@ -47,6 +47,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.fillFunc = fillFunc;
   _self.drawGridLines = params.grid || false;
 
+  _self.nullSentinel = params.nullSentinel || -777;
+
   _self.parseGroups();
 
   // TODO: This is awful, needs fixing and cleaning.
@@ -73,6 +75,7 @@ OncoTrack.prototype.parseGroups = function () {
         width: _self.width,
         clickFunc: _self.clickFunc,
         grid: _self.drawGridLines,
+        nullSentinel: _self.nullSentinel,
         domain: _self.domain,
         trackLegend: _self.trackLegends[group] || ''
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
@@ -84,7 +87,7 @@ OncoTrack.prototype.parseGroups = function () {
 };
 
 /**
- * Initializes the track group data and places conainer for each group in spaced
+ * Initializes the track group data and places container for each group in spaced
  * intervals.
  */
 OncoTrack.prototype.init = function () {
