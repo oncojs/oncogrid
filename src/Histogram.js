@@ -116,7 +116,7 @@ OncoHistogram.prototype.render = function (x, div) {
         .attr('class', function (d) {
             return _self.prefix + 'sortable-bar ' + d.id + '-bar';
         })
-        .attr('width', _self.barWidth - 1)
+        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {
             return _self.histogramHeight * d.count / topCount;
         })
@@ -137,7 +137,7 @@ OncoHistogram.prototype.update = function (domain, x) {
 
     _self.histogram.selectAll('rect')
         .transition()
-        .attr('width', _self.barWidth - 1)
+        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('x', function (d) {
             return _self.x(_self.getIndex(_self.domain, d.id));
         });
