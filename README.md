@@ -2,6 +2,8 @@
 
 Javascript library for visualizing OncoGrids and related tracks
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1758b67e21bc4622a80c00f4fcb59f48)](https://www.codacy.com/app/icgc-dcc/oncogrid?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=icgc/oncogrid&amp;utm_campaign=Badge_Grade)
+
 ![](images/oncogrid.gif)
 
 ## Usage
