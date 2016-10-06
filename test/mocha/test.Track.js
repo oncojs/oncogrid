@@ -1,3 +1,4 @@
+/*global chai*/
 var expect = chai.expect;
 
 var destroyTester = function (grid) {

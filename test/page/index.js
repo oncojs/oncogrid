@@ -68,13 +68,13 @@ var sortBool = function(field) {
     } else {
       return 0;
     }
-  }
+  };
 };
 
 var sortInt = function(field) {
   return function(a, b) {
     return a[field] - b[field];
-  }
+  };
 };
 
 var donorTracks = [
