@@ -1,7 +1,7 @@
 {
-  "name": "OncoGrid",
+  "name": "oncogrid",
   "description": "OncoGrid Visualization for ICGC",
-  "version": "3.8.21.x",
+  "version": "1.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -20,5 +20,6 @@
   },
   "engines": {
     "node": ">=0.8.0"
-  }
+  },
+  "main": "src/OncoGrid.js"
 }
