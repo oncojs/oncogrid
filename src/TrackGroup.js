@@ -164,7 +164,7 @@ OncoTrackGroup.prototype.render = function (x, div) {
                 .duration(200)
                 .style('opacity', 0.9);
             _self.div
-                .html(function () {return _self.trackLegend})
+                .html(function () {return _self.trackLegend;})
                 .style('left', (d3.event.pageX + 15) + 'px')
                 .style('top', (d3.event.pageY + 30) + 'px');
         })

@@ -363,23 +363,16 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
         .attr('opacity', 0);
 
     _self.svg
-        .on('mousedown', function() { _self.startSelection(this);})
+        .on('mousedown', function() {_self.startSelection(this);})
         .on('mouseover', function () {
             if (_self.crosshair) {
                 d3.event.stopPropagation();
                 var coord = d3.mouse(this);
 
-                if (typeof _self.selectionRegion !== 'undefined') {
-                    _self.selectionRegion
-                        .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
-                        .attr('height', coord[1] - _self.selectionRegion.attr('y'));
-                }
-
                 _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
                 _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
                 _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
                 _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
-
 
                 var xIndex = _self.rangeToDomain(_self.x, coord[0]);
                 var yIndex = _self.rangeToDomain(_self.y, coord[1]);
@@ -399,21 +392,19 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             }
         })
         .on('mousemove', function () {
-
             if (_self.crosshair) {
                 d3.event.stopPropagation();
                 var coord = d3.mouse(this);
-
-                if (typeof _self.selectionRegion !== 'undefined') {
-                    _self.selectionRegion
-                        .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
-                        .attr('height', coord[1] - _self.selectionRegion.attr('y'));
-                }
 
                 _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
                 _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
                 _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
                 _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
+
+
+                if (typeof _self.selectionRegion !== 'undefined') {
+                    _self.changeSelection(coord);
+                }
 
                 var xIndex = _self.rangeToDomain(_self.x, coord[0]);
                 var yIndex = _self.rangeToDomain(_self.y, coord[1]);
@@ -443,7 +434,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
                 _self.horizontalCross.attr('opacity', 0);
             }
         })
-        .on('mouseup', function() { _self.finishSelection();});
+        .on('mouseup', function() {_self.finishSelection();});
 };
 
 /**
@@ -457,19 +448,50 @@ MainGrid.prototype.startSelection = function(e) {
         var coord = d3.mouse(e);
 
         _self.selectionRegion = _self.svg.append('rect')
-            .on('mousemove', function () {
-                var coord = d3.mouse(e);
-                _self.selectionRegion
-                    .attr('width',  coord[0] - _self.selectionRegion.attr('x'))
-                    .attr('height', coord[1] - _self.selectionRegion.attr('y'));
-            })
             .attr('x', coord[0])
             .attr('y', coord[1])
+            .attr('width', 1)
+            .attr('height', 1)
             .attr('class', _self.prefix + 'selection-region')
             .attr('stroke', 'black')
             .attr('stroke-width', '2')
             .attr('opacity', 0.2);
     }
+};
+
+/**
+ * Event behavior as you drag selected region around
+ */
+MainGrid.prototype.changeSelection = function(coord) {
+    var _self = this;
+
+    var rect = {
+        x: parseInt(_self.selectionRegion.attr('x'), 10),
+        y: parseInt(_self.selectionRegion.attr('y'), 10),
+        width: parseInt(_self.selectionRegion.attr('width'), 10),
+        height: parseInt(_self.selectionRegion.attr('height'), 10)
+    };
+
+    var move = {
+        x : coord[0] - Number(_self.selectionRegion.attr('x')),
+        y : coord[1] - Number(_self.selectionRegion.attr('y'))
+    };
+
+    if( move.x < 1 || (move.x*2<rect.width)) {
+        rect.x = coord[0];
+        rect.width -= move.x;
+    } else {
+        rect.width = move.x;
+    }
+
+    if( move.y < 1 || (move.y*2<rect.height)) {
+        rect.y = coord[1];
+        rect.height -= move.y;
+    } else {
+        rect.height = move.y;
+    }
+
+    _self.selectionRegion.attr(rect);
 };
 
 /**
