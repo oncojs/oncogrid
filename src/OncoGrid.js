@@ -43,6 +43,10 @@ OncoGrid = function(params) {
 
   _self.mainGrid = new MainGrid(params, _self.lookupTable, _self.update(_self));
 
+  _self.heatMapMode = _self.mainGrid.heatMap;
+  _self.drawGridLines = _self.mainGrid.drawGridLines;
+  _self.crosshairMode = _self.mainGrid.crosshair;
+
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
 };
@@ -247,19 +251,19 @@ OncoGrid.prototype.sortGenes= function(func) {
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
-  _self.mainGrid.toggleHeatmap();
+  _self.heatMapMode = _self.mainGrid.toggleHeatmap();
 };
 
 OncoGrid.prototype.toggleGridLines = function() {
   var _self = this;
 
-  _self.mainGrid.toggleGridLines();
+  _self.drawGridLines = _self.mainGrid.toggleGridLines();
 };
 
 OncoGrid.prototype.toggleCrosshair = function() {
   var _self = this;
 
-  _self.mainGrid.toggleCrosshair();
+  _self.crosshairMode = _self.mainGrid.toggleCrosshair();
 };
 
 /**

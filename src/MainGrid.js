@@ -713,6 +713,8 @@ MainGrid.prototype.toggleHeatmap = function () {
         .attr('opacity', function (d) {
             return _self.getOpacity(d);
         });
+
+    return _self.heatMap;
 };
 
 MainGrid.prototype.toggleGridLines = function () {
@@ -724,11 +726,15 @@ MainGrid.prototype.toggleGridLines = function () {
     _self.donorTrack.toggleGridLines();
 
     _self.computeCoordinates();
+
+    return _self.drawGridLines;
 };
 
 MainGrid.prototype.toggleCrosshair = function () {
     var _self = this;
     _self.crosshair = !_self.crosshair;
+
+    return _self.crosshair;
 };
 
 /**
