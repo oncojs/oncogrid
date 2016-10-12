@@ -16,6 +16,7 @@
  */
 /*global d3*/
 'use strict';
+var Mustache = require('mustache');
 
 var OncoHistogram = require('./Histogram');
 var OncoTrack = require('./Track');
@@ -96,6 +97,15 @@ MainGrid.prototype.loadParams = function (params) {
     _self.crosshair = false;
 
     _self.gridClick = params.gridClick;
+    var templates = params.templates || {};
+    _self.templates = {
+        mainGrid: templates.mainGrid || '{{#observation}}' +
+                '{{observation.id}}<br>{{observation.geneSymbol}}<br>' +
+                '{{observation.donorId}}<br>{{observation.consequence}}<br>{{/observation}}',
+
+        mainGridCrosshair: templates.mainGridCrosshair || '{{#donor}}Donor: {{donor.id}}<br>{{/donor}}' +
+                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}',
+    };
 };
 
 /**
@@ -137,12 +147,26 @@ MainGrid.prototype.render = function () {
         .data(_self.observations).enter()
         .append('rect')
         .on('mouseover', function (d) {
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-            _self.div.html(d.id + '<br/>' + d.geneSymbol + '<br/>' + d.donorId + '<br/>' + d.consequence)
-                .style('left', (d3.event.pageX + 15) + 'px')
-                .style('top', (d3.event.pageY + 30) + 'px');
+            var coord = d3.mouse(this);
+
+            var xIndex = _self.rangeToDomain(_self.x, coord[0]);
+            var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+            var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
+
+            var html = Mustache.render(template || '', {
+                observation: d,
+                donor: _self.donors[xIndex],
+                gene: _self.genes[yIndex],
+            });
+
+            if(html) {
+                _self.div.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                _self.div.html(html)
+                    .style('left', (d3.event.pageX + 15) + 'px')
+                    .style('top', (d3.event.pageY + 30) + 'px');
+            }
         })
         .on('mouseout', function () {
             _self.div.transition()
@@ -350,86 +374,41 @@ MainGrid.prototype.resize = function(width, height) {
 MainGrid.prototype.defineCrosshairBehaviour = function () {
     var _self = this;
 
+    var moveCrossHair = function(eventType, target) {
+        if (_self.crosshair) {
+            var coord = d3.mouse(target);
+
+            _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
+            _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
+            _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
+            _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
+
+            if (eventType === 'mousemove' && typeof _self.selectionRegion !== 'undefined') {
+                _self.changeSelection(coord);
+            }
+        }
+    };
+
     _self.verticalCross = _self.svg.append('line')
         .attr('class', _self.prefix + 'vertical-cross')
         .attr('y1', -_self.histogramHeight)
         .attr('y2', _self.height + _self.donorTrack.height)
-        .attr('opacity', 0);
+        .attr('opacity', 0)
+        .attr('style', 'pointer-events: none');
 
     _self.horizontalCross = _self.svg.append('line')
         .attr('class', _self.prefix + 'horizontal-cross')
         .attr('x1', 0)
         .attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height)
-        .attr('opacity', 0);
+        .attr('opacity', 0)
+        .attr('style', 'pointer-events: none');
 
     _self.svg
         .on('mousedown', function() {_self.startSelection(this);})
-        .on('mouseover', function () {
-            if (_self.crosshair) {
-                d3.event.stopPropagation();
-                var coord = d3.mouse(this);
-
-                _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
-                _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
-                _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
-                _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
-
-                var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-                var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-
-                var donorText = typeof _self.donors[xIndex] !== 'undefined' && coord[0] <= _self.width ?
-                'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
-
-                var geneText = typeof _self.genes[yIndex] !== 'undefined' && coord[1] <= _self.height  ?
-                'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
-
-                _self.div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-                _self.div.html(donorText + geneText)
-                    .style('left', (d3.event.pageX + 15) + 'px')
-                    .style('top', (d3.event.pageY + 30) + 'px');
-            }
-        })
-        .on('mousemove', function () {
-            if (_self.crosshair) {
-                d3.event.stopPropagation();
-                var coord = d3.mouse(this);
-
-                _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
-                _self.verticalCross.attr('x2', coord[0]).attr('opacity', 1);
-                _self.horizontalCross.attr('y1', coord[1]).attr('opacity', 1);
-                _self.horizontalCross.attr('y2', coord[1]).attr('opacity', 1);
-
-
-                if (typeof _self.selectionRegion !== 'undefined') {
-                    _self.changeSelection(coord);
-                }
-
-                var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-                var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-
-                var donorText = typeof _self.donors[xIndex] !== 'undefined' && coord[0] <= _self.width ?
-                'Donor: ' + _self.donors[xIndex].id + '</br>' : '';
-
-                var geneText = typeof _self.genes[yIndex] !== 'undefined' && coord[1] <= _self.height  ?
-                'Gene: ' + _self.genes[yIndex].symbol + '</br>' : '';
-
-                _self.div.transition()
-                    .style('opacity', 0.9);
-                _self.div.html(donorText + geneText)
-                    .style('left', (d3.event.pageX + 15) + 'px')
-                    .style('top', (d3.event.pageY + 30) + 'px');
-            }
-        })
+        .on('mouseover', function() { moveCrossHair('mouseover', this); })
+        .on('mousemove', function() { moveCrossHair('mousemove', this); })
         .on('mouseout', function () {
             if (_self.crosshair) {
-                d3.event.stopPropagation();
-                _self.div.transition()
-                    .duration(500)
-                    .style('opacity', 0);
-
-
                 _self.verticalCross.attr('opacity', 0);
                 _self.horizontalCross.attr('opacity', 0);
             }

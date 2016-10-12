@@ -21,5 +21,8 @@
   "engines": {
     "node": ">=0.8.0"
   },
-  "main": "src/OncoGrid.js"
+  "main": "src/OncoGrid.js",
+  "dependencies": {
+    "mustache": "^2.2.1"
+  }
 }
