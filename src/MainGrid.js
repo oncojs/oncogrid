@@ -41,7 +41,7 @@ MainGrid = function (params, lookupTable, updateCallback) {
     _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
     _self.geneTrack =
         new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc,
-            params.donorFillFunc, updateCallback);
+            params.geneFillFunc, updateCallback);
     _self.geneTrack.init();
 
 };

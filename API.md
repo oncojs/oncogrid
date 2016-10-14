@@ -58,9 +58,10 @@ optional configuration. The full description of the `params` object is as follow
   * `geneClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the gene track grid.
   * `margin` - `object` - Object holding the settings for the margins: `Default: { top: 30, right: 100, bottom: 15, left: 80 }`
   * `heatMap` - `bool` - If true, initial render will be in heatMap mode.
-  * `donorOpacityFunc` - `function` - Function to determine cell opacity for donor track data.
-  * `geneOpacityFunc` - `function` - Function to determine cell opacity for gene track data.
+  * `donorFillFunc` - `function` - Function to determine cell fill color for donor track data.
+  * `geneFillFunc` - `function` - Function to determine cell fill color for gene track data.
   * `colorMap` - `object` - A mapping from consequence type to colour.
+  * `templates` - `object` - An array of string to use as templates. Supported fields are `mainGridCrosshair` and `mainGrid`.
 
 ### Track Definitions
 
