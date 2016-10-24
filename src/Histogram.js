@@ -115,7 +115,7 @@ OncoHistogram.prototype.render = function (x, div) {
         })
         .on('click', _self.clickFunc)
         .attr('class', function (d) {
-            return _self.prefix + 'sortable-bar ' + d.id + '-bar';
+            return _self.prefix + 'sortable-bar ' + _self.prefix + d.id + '-bar';
         })
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {

@@ -179,7 +179,7 @@ MainGrid.prototype.render = function () {
             }
         })
         .attr('class', function (d) {
-            return _self.prefix + 'sortable-rect ' + d.donorId + '-cell ' + d.geneId + '-cell';
+            return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
             return d.consequence;
@@ -313,7 +313,7 @@ MainGrid.prototype.computeCoordinates = function () {
 
     _self.row.append('text')
         .attr('class', function (g) {
-            return g.id + '-label ' + _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font';
+            return _self.prefix + g.id + '-label ' + _self.prefix + 'gene-label ' + _self.prefix + 'label-text-font';
         })
         .attr('x', -8)
         .attr('y', _self.cellHeight / 2)
@@ -520,8 +520,8 @@ MainGrid.prototype.sliceGenes = function(start, stop) {
     for (var i = 0; i < _self.genes.length; i++) {
         var gene = _self.genes[i];
         if (i < start || i > stop) {
-            d3.selectAll('.' + gene.id + '-cell').remove();
-            d3.selectAll('.' + gene.id + '-bar').remove();
+            d3.selectAll('.' + _self.prefix + gene.id + '-cell').remove();
+            d3.selectAll('.' + _self.prefix + gene.id + '-bar').remove();
             _self.genes.splice(i, 1);
             i--;start--;stop--;
         }
@@ -539,8 +539,8 @@ MainGrid.prototype.sliceDonors = function(start, stop) {
     for (var i = 0; i < _self.donors.length; i++) {
         var donor = _self.donors[i];
         if (i < start || i > stop) {
-            d3.selectAll('.' + donor.id + '-cell').remove();
-            d3.selectAll('.' + donor.id + '-bar').remove();
+            d3.selectAll('.' + _self.prefix + donor.id + '-cell').remove();
+            d3.selectAll('.' + _self.prefix + donor.id + '-bar').remove();
             _self.donors.splice(i, 1);
             i--;start--;stop--;
         }
@@ -739,8 +739,8 @@ MainGrid.prototype.removeGene = function (i) {
 
     var gene = _self.genes[i];
     if (gene) {
-        d3.selectAll('.' + gene.id + '-cell').remove();
-        d3.selectAll('.' + gene.id + '-bar').remove();
+        d3.selectAll('.' + _self.prefix + gene.id + '-cell').remove();
+        d3.selectAll('.' + _self.prefix + gene.id + '-bar').remove();
         _self.genes.splice(i, 1);
     }
 

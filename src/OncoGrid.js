@@ -176,8 +176,8 @@ OncoGrid.prototype.removeDonors = function(func) {
     var donor = _self.donors[i];
     if (func(donor)) {
       removedList.push(donor.id);
-      d3.selectAll('.' + donor.id + '-cell').remove();
-      d3.selectAll('.' + donor.id + '-bar').remove();
+      d3.selectAll('.' + _self.prefix + donor.id + '-cell').remove();
+      d3.selectAll('.' + _self.prefix + donor.id + '-bar').remove();
       _self.donors.splice(i, 1);
       i--;
     }
@@ -210,8 +210,8 @@ OncoGrid.prototype.removeGenes = function(func) {
     var gene = _self.genes[i];
     if (func(gene)) {
       removedList.push(gene.id);
-      d3.selectAll('.' + gene.id + '-cell').remove();
-      d3.selectAll('.' + gene.id + '-bar').remove();
+      d3.selectAll('.' + _self.prefix + gene.id + '-cell').remove();
+      d3.selectAll('.' + _self.prefix + gene.id + '-bar').remove();
       _self.genes.splice(i, 1);
       i--;
     }
