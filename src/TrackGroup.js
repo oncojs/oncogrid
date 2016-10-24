@@ -144,8 +144,10 @@ OncoTrackGroup.prototype.render = function (x, div) {
                 _self.clickFunc(d);
             })
             .attr('class', function (d) {
-                return _self.prefix + 'track-data' + ' ' + _self.prefix + 'track-' + d.fieldName +
-                    ' ' + _self.prefix + 'track-' + d.value + ' ' + d.id + '-cell';
+                return _self.prefix + 'track-data ' + 
+                    _self.prefix + 'track-' + d.fieldName + ' ' +
+                    _self.prefix + 'track-' + d.value + ' ' + 
+                    _self.prefix + d.id + '-cell';
             })
             .attr('x', function (d) {
                 return _self.getX(d);
