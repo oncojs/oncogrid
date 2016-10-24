@@ -22,6 +22,11 @@ var OncoHistogram;
 OncoHistogram = function (params, s, rotated) {
     var _self = this;
 
+    _self.lineWidthOffset = 10;
+    _self.lineHeightOffset = 5;
+    _self.padding = 20;
+    _self.centerText = -6;
+
     _self.prefix = params.prefix || 'og-';
 
     _self.observations = params.observations;
@@ -41,6 +46,8 @@ OncoHistogram = function (params, s, rotated) {
 
     _self.numDomain = _self.domain.length;
     _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
+
+    _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
 };
 
 OncoHistogram.prototype.render = function (x, div) {
@@ -86,7 +93,7 @@ OncoHistogram.prototype.render = function (x, div) {
         });
 
     _self.histogram = _self.container.append('g')
-        .attr('transform', 'translate(0,-' + (_self.histogramHeight + _self.margin.top / 1.61803398875) + ')');
+        .attr('transform', 'translate(0,-' + (_self.totalHeight + _self.centerText) + ')');
 
     _self.renderAxis(topCount);
 
@@ -169,7 +176,7 @@ OncoHistogram.prototype.resize = function (width, height) {
         });
 
     _self.histogram
-        .attr('transform', 'translate(0,-' + (_self.histogramHeight + _self.margin.top / 1.61803398875) + ')');
+        .attr('transform', 'translate(0,-' + (_self.totalHeight + _self.centerText) + ')');
 
     _self.bottomAxis.attr('x2', _self.histogramWidth + 10);
 };
@@ -183,20 +190,21 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
 
     _self.bottomAxis = _self.histogram.append('line')
         .attr('class', _self.prefix + 'histogram-axis')
-        .attr('y1', _self.histogramHeight + 5)
-        .attr('y2', _self.histogramHeight + 5)
-        .attr('x2', _self.histogramWidth + 10)
-        .attr('transform', 'translate(-5,0)');
+        .attr('y1', _self.histogramHeight + _self.lineHeightOffset)
+        .attr('y2', _self.histogramHeight + _self.lineHeightOffset)
+        .attr('x2', _self.histogramWidth + _self.lineWidthOffset)
+
+        .attr('transform', 'translate(-' + _self.lineHeightOffset + ',0)');
 
     _self.histogram.append('line')
         .attr('class', _self.prefix + 'histogram-axis')
         .attr('y1', 0)
-        .attr('y2', _self.histogramHeight + 5)
-        .attr('transform', 'translate(-5,0)');
+        .attr('y2', _self.histogramHeight + _self.lineHeightOffset)
+        .attr('transform', 'translate(-' + _self.lineHeightOffset + ',0)');
 
     _self.histogram.append('text')
         .attr('class', _self.prefix + 'label-text-font')
-        .attr('x', -6)
+        .attr('x', _self.centerText)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
         .text(topCount);
@@ -207,18 +215,23 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
 
     _self.histogram.append('text')
         .attr('class', _self.prefix + 'label-text-font')
-        .attr('x', -6)
+        .attr('x', _self.centerText)
         .attr('y', secondHeight)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
         .text(halfInt);
 
-    _self.histogram.append('text')
+    var label = _self.histogram.append('text')
         .attr('class', _self.prefix + 'label-text-font')
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
-        .attr('transform', 'rotate(-90)translate(' + secondHeight / -2 + ',-25)')
         .text("Mutation freq.");
+
+    label.each(function() {
+        var width = this.getBBox().width;
+        
+        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')')
+    });
 };
 
 /**

@@ -32,16 +32,18 @@ MainGrid = function (params, lookupTable, updateCallback) {
     _self.init();
 
     // Histograms and tracks.
-    _self.donorHistogram = new OncoHistogram(params, _self.svg, false);
+    _self.donorHistogram = new OncoHistogram(params, _self.container, false);
+    _self.histogramHeight = _self.donorHistogram.totalHeight;
+
     _self.donorTrack =
-        new OncoTrack(params, _self.svg, false, params.donorTracks, params.donorOpacityFunc,
-            params.donorFillFunc, updateCallback);
+        new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
+            params.donorFillFunc, updateCallback, _self.height);
     _self.donorTrack.init();
 
-    _self.geneHistogram = new OncoHistogram(params, _self.svg, true);
+    _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
-        new OncoTrack(params, _self.svg, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback);
+        new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
+            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight);
     _self.geneTrack.init();
 
 };
@@ -52,7 +54,8 @@ MainGrid = function (params, lookupTable, updateCallback) {
  */
 MainGrid.prototype.loadParams = function (params) {
     var _self = this;
-
+    _self.scaleToFit = typeof params.scaleToFit === 'boolean' ? params.scaleToFit : true;
+    _self.leftTextWidth = params.leftTextWidth || 80;
     _self.prefix = params.prefix || 'og-';
 
     _self.minCellHeight = params.minCellHeight || 10;
@@ -91,7 +94,6 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
     _self.heatMap = params.heatMap;
-    _self.histogramHeight = 100;
 
     _self.drawGridLines = params.grid || false;
     _self.crosshair = false;
@@ -121,13 +123,12 @@ MainGrid.prototype.init = function () {
     _self.svg = d3.select(_self.element).append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
         .attr('id', _self.prefix + 'maingrid-svg')
-        .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
-        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2)
-        .style('margin-left', _self.margin.left + 'px')
-        .append('g')
-        .attr('transform', 'translate(' + _self.margin.left + ',' + (_self.margin.top + _self.histogramHeight) + ')');
+        .attr('width', '100%');
 
-    _self.background = _self.svg.append('rect')
+    _self.container = _self.svg
+        .append('g');
+
+    _self.background = _self.container.append('rect')
         .attr('class', 'background')
         .attr('width', _self.width)
         .attr('height', _self.height);
@@ -143,7 +144,7 @@ MainGrid.prototype.render = function () {
     _self.computeCoordinates();
 
 
-    _self.svg.selectAll('.' + _self.prefix + 'maingrid-svg')
+    _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
         .on('mouseover', function (d) {
@@ -209,6 +210,8 @@ MainGrid.prototype.render = function () {
     _self.geneTrack.render(_self.y, _self.div);
 
     _self.defineCrosshairBehaviour();
+
+    _self.resizeSvg();
 };
 
 /**
@@ -240,7 +243,7 @@ MainGrid.prototype.update = function () {
             return 'translate( 0, ' + _self.y(_self.genes.indexOf(d)) + ')';
         });
 
-    _self.svg.selectAll('.' + _self.prefix + 'sortable-rect')
+    _self.container.selectAll('.' + _self.prefix + 'sortable-rect')
         .transition()
         .attr('width', _self.cellWidth)
         .attr('height', function(d) {return _self.getHeight(d);})
@@ -273,7 +276,7 @@ MainGrid.prototype.computeCoordinates = function () {
         _self.column.remove();
     }
 
-    _self.column = _self.svg.selectAll('.' + _self.prefix + 'donor-column')
+    _self.column = _self.container.selectAll('.' + _self.prefix + 'donor-column')
         .data(_self.donors)
         .enter().append('g')
         .attr('class', _self.prefix + 'donor-column')
@@ -298,7 +301,7 @@ MainGrid.prototype.computeCoordinates = function () {
         _self.row.remove();
     }
 
-    _self.row = _self.svg.selectAll('.' + _self.prefix + 'gene-row')
+    _self.row = _self.container.selectAll('.' + _self.prefix + 'gene-row')
         .data(_self.genes)
         .enter().append('g')
         .attr('class', _self.prefix + 'gene-row')
@@ -347,9 +350,7 @@ MainGrid.prototype.resize = function(width, height) {
         _self.height = _self.genes.length * _self.minCellHeight;
     }
 
-    d3.select('.og-maingrid-svg')
-        .attr('width', _self.width + _self.margin.left + _self.margin.right + _self.histogramHeight * 2)
-        .attr('height', _self.height + _self.margin.top + _self.margin.bottom + _self.histogramHeight * 2);
+    _self.resizeSvg();
 
     _self.background
         .attr('width', _self.width)
@@ -365,10 +366,28 @@ MainGrid.prototype.resize = function(width, height) {
 
     _self.update();
 
-    var boundingBox = _self.svg.node().getBBox();
+    var boundingBox = _self.container.node().getBBox();
     _self.verticalCross.attr('y2', boundingBox.height);
     _self.horizontalCross.attr('x2', boundingBox.width);
 
+};
+
+MainGrid.prototype.resizeSvg = function() {
+    var _self = this;
+    var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight + _self.geneTrack.height + _self.margin.right;
+    var height = _self.margin.top + _self.histogramHeight + _self.height + _self.donorTrack.height + _self.margin.bottom;
+    
+    if(_self.scaleToFit) {
+        _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
+    } else {
+        _self.svg.attr('width', width).attr('height', height);
+    }
+
+    _self.container
+        .attr('transform', 'translate(' +
+            (_self.margin.left + _self.leftTextWidth) + ',' + 
+            (_self.margin.top + _self.histogramHeight) +
+        ')');
 };
 
 MainGrid.prototype.defineCrosshairBehaviour = function () {
@@ -389,21 +408,21 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
         }
     };
 
-    _self.verticalCross = _self.svg.append('line')
+    _self.verticalCross = _self.container.append('line')
         .attr('class', _self.prefix + 'vertical-cross')
         .attr('y1', -_self.histogramHeight)
         .attr('y2', _self.height + _self.donorTrack.height)
         .attr('opacity', 0)
         .attr('style', 'pointer-events: none');
 
-    _self.horizontalCross = _self.svg.append('line')
+    _self.horizontalCross = _self.container.append('line')
         .attr('class', _self.prefix + 'horizontal-cross')
         .attr('x1', 0)
         .attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height)
         .attr('opacity', 0)
         .attr('style', 'pointer-events: none');
 
-    _self.svg
+    _self.container
         .on('mousedown', function() {_self.startSelection(this);})
         .on('mouseover', function() { moveCrossHair('mouseover', this); })
         .on('mousemove', function() { moveCrossHair('mousemove', this); })
@@ -426,7 +445,7 @@ MainGrid.prototype.startSelection = function(e) {
         d3.event.stopPropagation();
         var coord = d3.mouse(e);
 
-        _self.selectionRegion = _self.svg.append('rect')
+        _self.selectionRegion = _self.container.append('rect')
             .attr('x', coord[0])
             .attr('y', coord[1])
             .attr('width', 1)
@@ -568,7 +587,7 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     });
 
     drag.on('dragend', function (d) {
-        var coord = d3.mouse(_self.svg.node());
+        var coord = d3.mouse(_self.container.node());
         var dragged = _self.genes.indexOf(d);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 

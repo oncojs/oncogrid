@@ -21,9 +21,10 @@ var OncoTrackGroup = require('./TrackGroup');
 
 var OncoTrack;
 
-OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback) {
+OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset) {
   var _self = this;
-
+  _self.padding = 20;
+  _self.offset = offset;
   _self.params = params;
   _self.prefix = params.prefix || 'og-';
   _self.svg = s;
@@ -51,11 +52,6 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.nullSentinel = params.nullSentinel || -777;
 
   _self.parseGroups();
-
-  // TODO: This is awful, needs fixing and cleaning.
-  _self.translateDown =
-      (_self.rotated ? -1 * (params.width + 150 + _self.availableTracks.length * _self.cellHeight) :
-          params.height) || 500;
 };
 
 /**
@@ -98,30 +94,37 @@ OncoTrack.prototype.init = function () {
   for (var name in _self.groupMap) {
     if (_self.groupMap.hasOwnProperty(name)) {
       var group = _self.groupMap[name];
-      _self.height += group.height + 25;
+      _self.height += group.height + _self.padding;
     }
   }
+
+  var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
 
   _self.container = _self.svg.append('g')
       .attr('width', _self.width)
       .attr('height', _self.height)
       .attr('class', _self.prefix + 'track')
       .attr('transform', function () {
-        if (_self.rotated) {
-          return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-        } else {
-          return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-        }
+        return (_self.rotated ? 'rotate(90)' : '') + 'translate(0,' + translateDown + ')'
       });
 
   var curTransDown = 0;
+  var labelHeight = 0;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     var trackContainer = _self.container.append('g')
         .attr('transform', 'translate(0,' + curTransDown + ')');
     g.init(trackContainer);
-    curTransDown += Number(g.height) + 25;
+    curTransDown += Number(g.height) + _self.padding;
+
+    if(_self.rotated) {
+      g.label.each(function() {
+        labelHeight = Math.max(labelHeight, this.getBBox().height);
+      });
+    }
   }
+
+  _self.height += labelHeight;
 };
 
 /** Calls render on all track groups */
@@ -139,32 +142,37 @@ OncoTrack.prototype.resize = function (width, height, x) {
   var _self = this;
 
   _self.width = _self.rotated ? height : width;
-  _self.height = _self.cellHeight * _self.availableTracks.length +
-      25 * _self.availableTracks.length;
+  _self.height = 0;
+  
+  for (var name in _self.groupMap) {
+    if (_self.groupMap.hasOwnProperty(name)) {
+      var group = _self.groupMap[name];
+      _self.height += group.height + _self.padding;
+    }
+  }
 
-  _self.translateDown =
-      (_self.rotated ? -1 * (width + 150 + _self.availableTracks.length * _self.cellHeight) :
-          height) || 500;
+  var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
 
   _self.container
       .attr('width', _self.width)
       .attr('height', _self.height)
       .attr('transform', function () {
-        if (_self.rotated) {
-          return 'rotate(90)translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-        } else {
-          return 'translate(0,' + (_self.translateDown + _self.margin.top / 1.61803398875) + ')';
-        }
+        return (_self.rotated ? 'rotate(90)' : '') + 'translate(0,' + translateDown + ')'
       });
 
   var curTransDown = 0;
+  var labelHeight = 10;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + curTransDown + ')');
-    curTransDown += Number(g.height) + 25;
+    curTransDown += Number(g.height) + _self.padding;
     g.resize(_self.width, x);
+    g.label.each(function() {
+      labelHeight = Math.max(labelHeight, this.getBBox().height);
+    });
   }
 
+  _self.height += labelHeight;
 };
 
 /**
