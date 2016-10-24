@@ -94,20 +94,6 @@ OncoTrack.prototype.parseGroups = function () {
 OncoTrack.prototype.init = function () {
   var _self = this;
 
-  _self.trackData = [];
-
-  for (var i = 0; i < _self.domain.length; i++) {
-    for (var j = 0; j < _self.availableTracks.length; j++) {
-      _self.trackData.push({
-        id: _self.domain[i].id,
-        displayId: _self.rotated ? _self.domain[i].symbol : _self.domain[i].id,
-        value: _self.domain[i][_self.availableTracks[j].fieldName],
-        fieldName: _self.availableTracks[j].fieldName,
-        type: _self.availableTracks[j].type
-      });
-    }
-  }
-
   _self.height = 0;
   for (var name in _self.groupMap) {
     if (_self.groupMap.hasOwnProperty(name)) {
