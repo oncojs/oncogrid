@@ -138,9 +138,10 @@ OncoTrack.prototype.render = function (x, div) {
 };
 
 /** Resizes all the track groups */
-OncoTrack.prototype.resize = function (width, height, x) {
+OncoTrack.prototype.resize = function (width, height, x, offset) {
   var _self = this;
 
+  _self.offset = offset || _self.offset;
   _self.width = _self.rotated ? height : width;
   _self.height = 0;
   
