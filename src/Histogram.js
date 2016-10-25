@@ -22,8 +22,9 @@ var OncoHistogram;
 OncoHistogram = function (params, s, rotated) {
     var _self = this;
 
-    _self.lineWidthOffset = 10;
-    _self.lineHeightOffset = 5;
+    var histogramBorderPadding = params.histogramBorderPadding || {};
+    _self.lineWidthOffset = histogramBorderPadding.left || 10;
+    _self.lineHeightOffset = histogramBorderPadding.bottom || 5;
     _self.padding = 20;
     _self.centerText = -6;
 
