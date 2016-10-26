@@ -62,6 +62,9 @@ optional configuration. The full description of the `params` object is as follow
   * `geneFillFunc` - `function` - Function to determine cell fill color for gene track data.
   * `colorMap` - `object` - A mapping from consequence type to colour.
   * `templates` - `object` - An array of string to use as templates. Supported fields are `mainGridCrosshair` and `mainGrid`.
+  * `histogramBorderPadding` - `object` - Object holding the settings for the space between border and histogram: `Default: { bottom: 5, left: 10 }`
+  * `scaleToFit` - `bool` - If true, the grid will scale to fit parent container: `Default: true`
+  * `leftTextWidth` - `number` - The width to set for the text on the left of the grid(should be set to the max text length): `Default: 80`
 
 ### Track Definitions
 
