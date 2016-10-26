@@ -65,6 +65,8 @@ optional configuration. The full description of the `params` object is as follow
   * `histogramBorderPadding` - `object` - Object holding the settings for the space between border and histogram: `Default: { bottom: 5, left: 10 }`
   * `scaleToFit` - `bool` - If true, the grid will scale to fit parent container: `Default: true`
   * `leftTextWidth` - `number` - The width to set for the text on the left of the grid(should be set to the max text length): `Default: 80`
+  * `expandableGroups` - `array` - An array of strings to identify which groups can have tracks added and removed from them.
+  * `addTrackFunc` - `function` - For groups in the `expandableGroups` array, this function will be called when adding tracks. It is passed the array of collapsed tracks and a callback. tracks passed to the callback will be added.
 
 ### Track Definitions
 
@@ -111,6 +113,8 @@ The definition of a track object is as follows:
 * `type` - string - The type of the track data, not used by OncoGrid internally, but allows user to group behaviour
 for styling and the opacity function passed in for the tracks.
 * `sort` - function - The function responsible for sorting
+* `group` - string - the name of the group the track belongs to.
+* `collapsed` - bool - if true, and the track group is in the `expandableGroups` array, then the track by default will not be shown.
 
 
 ## API
