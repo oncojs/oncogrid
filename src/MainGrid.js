@@ -364,7 +364,6 @@ MainGrid.prototype.resize = function(width, height) {
     _self.geneTrack.resize(width, _self.height, _self.y, _self.width + _self.histogramHeight);
 
     _self.resizeSvg();
-
     _self.update();
 
     var boundingBox = _self.container.node().getBBox();

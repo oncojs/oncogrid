@@ -112,7 +112,6 @@ OncoTrack.prototype.init = function () {
     }
   }
 
-
   var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
 
   _self.container
@@ -143,7 +142,6 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
   _self.offset = offset || _self.offset;
   _self.width = _self.rotated ? height : width;
   _self.height = 0;
-
   var labelHeight = 0;
   
   for (var k = 0; k < _self.groups.length; k++) {
@@ -151,7 +149,6 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
     g.container.attr('transform', 'translate(0,' + _self.height + ')');
     g.resize(_self.width, x);
     _self.height += Number(g.totalHeight) + _self.padding;
-
 
     if(_self.rotated) {
       g.label.each(function() {
@@ -181,12 +178,10 @@ OncoTrack.prototype.update = function (domain, x) {
   _self.domain = domain;
   _self.x = x;
 
-
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
     g.update(domain, x);
   }
-
 };
 
 OncoTrack.prototype.toggleGridLines = function () {

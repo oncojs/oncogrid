@@ -59,7 +59,6 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
  */
 OncoTrackGroup.prototype.addTrack = function (tracks) {
     var _self = this;
-
     tracks = Array.isArray(tracks) ? tracks : [tracks];
 
     for(var i = 0, track; i < tracks.length; i++) {
@@ -82,7 +81,6 @@ OncoTrackGroup.prototype.addTrack = function (tracks) {
 
     _self.length = _self.tracks.length;
     _self.height = _self.cellHeight * _self.length;
-    
 
     if(_self.rendered) {
         _self.refreshData();
@@ -153,7 +151,6 @@ OncoTrackGroup.prototype.init = function (container) {
     _self.refreshData();
 
     _self.totalHeight = _self.height + (_self.collapsedTracks.length ? _self.cellHeight : 0);
-
 };
 
 /**
