@@ -23,11 +23,12 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, updateCallback) {
+MainGrid = function (params, lookupTable, updateCallback, resizeCallback) {
     var _self = this;
 
     _self.lookupTable = lookupTable;
     _self.updateCallback = updateCallback;
+    _self.resizeCallback = resizeCallback;
     _self.loadParams(params);
     _self.init();
 
@@ -37,13 +38,13 @@ MainGrid = function (params, lookupTable, updateCallback) {
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
-            params.donorFillFunc, updateCallback, _self.height);
+            params.donorFillFunc, updateCallback, _self.height, _self.resizeCallback);
     _self.donorTrack.init();
 
     _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
         new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight);
+            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback);
     _self.geneTrack.init();
 
 };
@@ -350,8 +351,6 @@ MainGrid.prototype.resize = function(width, height) {
         _self.height = _self.genes.length * _self.minCellHeight;
     }
 
-    _self.resizeSvg();
-
     _self.background
         .attr('width', _self.width)
         .attr('height', _self.height);
@@ -364,6 +363,7 @@ MainGrid.prototype.resize = function(width, height) {
     _self.geneHistogram.resize(width, _self.height);
     _self.geneTrack.resize(width, _self.height, _self.y, _self.width + _self.histogramHeight);
 
+    _self.resizeSvg();
     _self.update();
 
     var boundingBox = _self.container.node().getBBox();

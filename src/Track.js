@@ -21,7 +21,7 @@ var OncoTrackGroup = require('./TrackGroup');
 
 var OncoTrack;
 
-OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset) {
+OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback) {
   var _self = this;
   _self.padding = 20;
   _self.offset = offset;
@@ -30,6 +30,9 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.svg = s;
   _self.rotated = rotated || false;
   _self.updateCallback = updateCallback;
+  _self.resizeCallback = resizeCallback;
+  _self.expandableGroups = params.expandableGroups;
+  _self.addTrackFunc = params.addTrackFunc;
 
   _self.trackLegends = params.trackLegends || {};
 
@@ -74,8 +77,10 @@ OncoTrack.prototype.parseGroups = function () {
         grid: _self.drawGridLines,
         nullSentinel: _self.nullSentinel,
         domain: _self.domain,
-        trackLegend: _self.trackLegends[group] || ''
-      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback);
+        trackLegend: _self.trackLegends[group] || '',
+        expandable: _self.expandableGroups.indexOf(group) >= 0,
+        addTrackFunc: _self.addTrackFunc,
+      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
       _self.groups.push(trackGroup);
@@ -89,33 +94,16 @@ OncoTrack.prototype.parseGroups = function () {
  */
 OncoTrack.prototype.init = function () {
   var _self = this;
+  _self.container = _self.svg.append('g');
 
-  _self.height = 0;
-  for (var name in _self.groupMap) {
-    if (_self.groupMap.hasOwnProperty(name)) {
-      var group = _self.groupMap[name];
-      _self.height += group.height + _self.padding;
-    }
-  }
-
-  var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
-
-  _self.container = _self.svg.append('g')
-      .attr('width', _self.width)
-      .attr('height', _self.height)
-      .attr('class', _self.prefix + 'track')
-      .attr('transform', function () {
-        return (_self.rotated ? 'rotate(90)' : '') + 'translate(0,' + translateDown + ')'
-      });
-
-  var curTransDown = 0;
   var labelHeight = 0;
+  _self.height = 0;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     var trackContainer = _self.container.append('g')
-        .attr('transform', 'translate(0,' + curTransDown + ')');
+        .attr('transform', 'translate(0,' + _self.height + ')');
     g.init(trackContainer);
-    curTransDown += Number(g.height) + _self.padding;
+    _self.height += Number(g.totalHeight) + _self.padding;
 
     if(_self.rotated) {
       g.label.each(function() {
@@ -123,6 +111,16 @@ OncoTrack.prototype.init = function () {
       });
     }
   }
+
+  var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
+
+  _self.container
+      .attr('width', _self.width)
+      .attr('height', _self.height)
+      .attr('class', _self.prefix + 'track')
+      .attr('transform', function () {
+        return (_self.rotated ? 'rotate(90)' : '') + 'translate(0,' + translateDown + ')'
+      });
 
   _self.height += labelHeight;
 };
@@ -144,11 +142,18 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
   _self.offset = offset || _self.offset;
   _self.width = _self.rotated ? height : width;
   _self.height = 0;
+  var labelHeight = 0;
   
-  for (var name in _self.groupMap) {
-    if (_self.groupMap.hasOwnProperty(name)) {
-      var group = _self.groupMap[name];
-      _self.height += group.height + _self.padding;
+  for (var k = 0; k < _self.groups.length; k++) {
+    var g = _self.groups[k];
+    g.container.attr('transform', 'translate(0,' + _self.height + ')');
+    g.resize(_self.width, x);
+    _self.height += Number(g.totalHeight) + _self.padding;
+
+    if(_self.rotated) {
+      g.label.each(function() {
+        labelHeight = Math.max(labelHeight, this.getBBox().height);
+      });
     }
   }
 
@@ -160,18 +165,6 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
       .attr('transform', function () {
         return (_self.rotated ? 'rotate(90)' : '') + 'translate(0,' + translateDown + ')'
       });
-
-  var curTransDown = 0;
-  var labelHeight = 10;
-  for (var k = 0; k < _self.groups.length; k++) {
-    var g = _self.groups[k];
-    g.container.attr('transform', 'translate(0,' + curTransDown + ')');
-    curTransDown += Number(g.height) + _self.padding;
-    g.resize(_self.width, x);
-    g.label.each(function() {
-      labelHeight = Math.max(labelHeight, this.getBBox().height);
-    });
-  }
 
   _self.height += labelHeight;
 };
@@ -185,12 +178,10 @@ OncoTrack.prototype.update = function (domain, x) {
   _self.domain = domain;
   _self.x = x;
 
-
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
     g.update(domain, x);
   }
-
 };
 
 OncoTrack.prototype.toggleGridLines = function () {
