@@ -41,7 +41,9 @@ OncoGrid = function(params) {
   _self.computeScores();
   _self.sortByScores();
 
-  _self.mainGrid = new MainGrid(params, _self.lookupTable, _self.update(_self));
+  _self.mainGrid = new MainGrid(params, _self.lookupTable, _self.update(_self), function() {
+    _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
+  });
 
   _self.heatMapMode = _self.mainGrid.heatMap;
   _self.drawGridLines = _self.mainGrid.drawGridLines;
