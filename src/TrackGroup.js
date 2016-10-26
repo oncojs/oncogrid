@@ -80,13 +80,13 @@ OncoTrackGroup.prototype.addTrack = function (tracks) {
 
     _self.tracks = _.uniq(_self.tracks, 'fieldName');
 
-    _self.height = _self.cellHeight * _self.tracks.length;
     _self.length = _self.tracks.length;
+    _self.height = _self.cellHeight * _self.length;
+    
 
     if(_self.rendered) {
         _self.refreshData();
         _self.resizeCallback();
-        _self.renderData();
     }
 };
 
@@ -102,7 +102,6 @@ OncoTrackGroup.prototype.removeTrack = function(i) {
 
     _self.refreshData();
     _self.resizeCallback();
-    _self.renderData();
 };
 
 /**
@@ -110,13 +109,13 @@ OncoTrackGroup.prototype.removeTrack = function(i) {
  */
 OncoTrackGroup.prototype.refreshData = function () {
     var _self = this;
-   
-    _self.trackData.length = 0;
+
+    _self.trackData = [];
     for (var i = 0, domain; i < _self.domain.length; i++) {
         domain = _self.domain[i];
 
-        for (var j = 0, track; j < _self.tracks.length; j++) {
-            track = _self.tracks[j];
+        for (var j = 0, track; j < _self.length; j++) {
+            track = _self.tracks[j]; 
 
             _self.trackData.push({
                 id: domain.id,
@@ -219,7 +218,7 @@ OncoTrackGroup.prototype.resize = function (width, x) {
 
     _self.width = width;
     _self.x = x;
-    _self.height = _self.cellHeight * _self.tracks.length;
+    _self.height = _self.cellHeight * _self.length;
     if(_self.collapsedTracks.length) _self.totalHeight = _self.height + _self.cellHeight;
 
     _self.cellWidth = _self.width / _self.domain.length;
@@ -232,6 +231,8 @@ OncoTrackGroup.prototype.resize = function (width, x) {
     _self.computeCoordinates();
 
     _self.totalHeight = _self.height + (_self.collapsedTracks.length ? _self.cellHeight : 0);
+
+    _self.renderData();
 };
 
 /**
@@ -257,7 +258,7 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
     }
 
     _self.y = d3.scale.ordinal()
-        .domain(d3.range(_self.tracks.length))
+        .domain(d3.range(_self.length))
         .rangeBands([0, _self.height]);
 
     if (typeof _self.row !== 'undefined') {
@@ -285,7 +286,7 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
                 });
         }
 
-        add.attr('y', (_self.cellHeight * 1.5) + _self.y(_self.tracks.length - 1))
+        add.attr('y', (_self.cellHeight / 2) + (_self.length && _self.cellHeight + _self.y(_self.length - 1)))
     } else {
         add.remove();
     }
@@ -358,53 +359,49 @@ OncoTrackGroup.prototype.toggleGridLines = function () {
 OncoTrackGroup.prototype.renderData = function(x, div) {
     var _self = this;
 
-    setTimeout(function() {
-        _self.container.selectAll('.' + _self.prefix + 'track-data').remove();
-        _self.container.selectAll('.' + _self.prefix + 'track-data')
-            .data(_self.trackData)
-            .enter()
-            .append('rect')
-            .on('mouseover', function (d) {
-                _self.div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-                _self.div.html(function () {
-                    if (_self.rotated) {
-                        return d.displayId + '<br>' + d.displayName + ': ' +
-                            (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
-                    } else {
-                        return d.id + '<br>' + d.displayName + ': ' +
-                            (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
-                    }
-                })
-                    .style('left', (d3.event.pageX + 15) + 'px')
-                    .style('top', (d3.event.pageY + 30) + 'px');
+    var selection = _self.container.selectAll('.' + _self.prefix + 'track-data')
+        .data(_self.trackData);
+
+    selection.enter()
+        .append('rect')
+
+    selection
+        .attr('x', function (d) { return _self.getX(d); })
+        .attr('y', function (d) { return _self.getY(d); })
+        .attr('width', _self.cellWidth)
+        .attr('height', _self.cellHeight)
+        .attr('fill', _self.fillFunc)
+        .attr('opacity', _self.opacityFunc)
+        .attr('class', function (d) {
+            return _self.prefix + 'track-data ' + 
+                _self.prefix + 'track-' + d.fieldName + ' ' +
+                _self.prefix + 'track-' + d.value + ' ' + 
+                _self.prefix + d.id + '-cell';
+        })
+        .on('click', function (d) { _self.clickFunc(d); })
+        .on('mouseover', function (d) {
+            _self.div.transition()
+                .duration(200)
+                .style('opacity', 0.9);
+            _self.div.html(function () {
+                if (_self.rotated) {
+                    return d.displayId + '<br>' + d.displayName + ': ' +
+                        (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
+                } else {
+                    return d.id + '<br>' + d.displayName + ': ' +
+                        (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
+                }
             })
-            .on('mouseout', function () {
-                _self.div.transition()
-                    .duration(500)
-                    .style('opacity', 0);
-            })
-            .on('click', function (d) {
-                _self.clickFunc(d);
-            })
-            .attr('class', function (d) {
-                return _self.prefix + 'track-data ' + 
-                    _self.prefix + 'track-' + d.fieldName + ' ' +
-                    _self.prefix + 'track-' + d.value + ' ' + 
-                    _self.prefix + d.id + '-cell';
-            })
-            .attr('x', function (d) {
-                return _self.getX(d);
-            })
-            .attr('y', function (d) {
-                return _self.getY(d);
-            })
-            .attr('width', _self.cellWidth)
-            .attr('height', _self.cellHeight)
-            .attr('fill', _self.fillFunc)
-            .attr('opacity', _self.opacityFunc);
-    });
+                .style('left', (d3.event.pageX + 15) + 'px')
+                .style('top', (d3.event.pageY + 30) + 'px');
+        })
+        .on('mouseout', function () {
+            _self.div.transition()
+                .duration(500)
+                .style('opacity', 0);
+        });
+
+    selection.exit().remove();
 };
 
 module.exports = OncoTrackGroup;
