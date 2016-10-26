@@ -241,64 +241,49 @@ OncoTrackGroup.prototype.resize = function (width, x) {
 OncoTrackGroup.prototype.computeCoordinates = function () {
     var _self = this;
 
-    if (typeof _self.column !== 'undefined') {
-        _self.column.remove();
-    }
-
-    _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
-        .data(_self.domain)
-        .enter().append('g')
-        .attr('class', _self.prefix + 'column')
-        .attr('donor', function (d) { return d.id; })
-        .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
-
-    if (_self.drawGridLines) {
-        _self.column.append('line')
-            .attr('x1', -_self.height);
-    }
-
     _self.y = d3.scale.ordinal()
         .domain(d3.range(_self.length))
         .rangeBands([0, _self.height]);
 
-    if (typeof _self.row !== 'undefined') {
-        _self.row.remove();
-    }
+    // append columns
+    _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
+        .data(_self.domain);
 
-    _self.row = _self.container.selectAll('.' + _self.prefix + 'row')
-        .data(_self.tracks)
-        .enter().append('g')
-        .attr('class', _self.prefix + 'row')
-        .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
-    
+    var enteringColumns = _self.column.enter()
+        .append('g');
 
-    var add = _self.container.selectAll('.' + _self.prefix + 'add-track');
-    if(_self.collapsedTracks.length && _self.expandable) {
-        if(add.empty()) {
-            add = _self.container.append('text')
-                .text('+')
-                .attr('class', '' + _self.prefix + 'add-track')
-                .attr('x', -6)
-                .attr('dy', '.32em')
-                .attr('text-anchor', 'end')
-                .on('click', function() {
-                    _self.addTrackFunc(_self.collapsedTracks.slice(), _self.addTrack.bind(_self))
-                });
-        }
+    var updatingColumns = _self.column
+        .attr('class', _self.prefix + 'column')
+        .attr('donor', function (d) { return d.id; })
+        .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
-        add.attr('y', (_self.cellHeight / 2) + (_self.length && _self.cellHeight + _self.y(_self.length - 1)))
-    } else {
-        add.remove();
-    }
-
-
+    var columnLines = _self.column.selectAll('.' + _self.prefix + 'column-line');
 
     if (_self.drawGridLines) {
-        _self.row.append('line')
-            .attr('x2', _self.width);
+        enteringColumns
+            .append('line')
+            .attr('class', _self.prefix + 'column-line')
+
+        updatingColumns
+            .selectAll('.' + _self.prefix + 'column-line')
+            .attr('x1', -_self.height);
+    } else {
+        updatingColumns
+            .selectAll('.' + _self.prefix + 'column-line')
+            .remove();
     }
 
-    var labels = _self.row.append('text')
+    _self.column.exit().remove();
+
+    // append rows
+    _self.row = _self.container.selectAll('.' + _self.prefix + 'row')
+        .data(_self.tracks);
+
+    var enteringRows = _self.row.enter()
+        .append('g');
+
+    enteringRows
+        .append('text')
         .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
         .on('click', function (d) {
             _self.domain.sort(d.sort(d.fieldName));
@@ -309,24 +294,71 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
         .attr('y', _self.cellHeight / 2)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
-        .text(function (d, i) {
-            return _self.tracks[i].name;
-        });
+
+    var updatingRows = _self.row
+        .attr('class', _self.prefix + 'row')
+        .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
+
+    var labels = updatingRows.selectAll('.' + _self.prefix + 'track-label')
+        .text(function (d) { return d.name; });
 
     if(_self.expandable) {
-        var removeTrack = _self.row.append('text')
+        enteringRows
+            .append('text')
             .attr('class', 'remove-track')
+            .text('-')
+            .attr('y', _self.cellHeight / 2)
+            .attr('dy', '.32em')
             .on('click', function(d, i) { _self.removeTrack(i); });
 
-        setTimeout(function() {
-            var textLengths = [];
-            labels.each(function() { textLengths.push(this.getComputedTextLength()); });
-            removeTrack
-                .attr('x', function(d, i) { return -(textLengths[i] + 12 + this.getComputedTextLength()) })
-                .text('-')
-                .attr('y', _self.cellHeight / 2)
-                .attr('dy', '.32em');
+         setTimeout(function() {
+            var textLengths = {};
+            labels.each(function(d) {
+                textLengths[d.name] = this.getComputedTextLength();
+            });
+
+            updatingRows.selectAll('.' + 'remove-track')
+                .attr('x', function(d) { return -(textLengths[d.name] + 12 + this.getComputedTextLength()) });
         })
+    } else {
+        updatingRows.selectAll('.' + 'remove-track').remove();
+    }
+
+    if (_self.drawGridLines) {
+        enteringRows
+            .append('line')
+            .attr('class', _self.prefix + 'row-line');
+
+        updatingRows
+            .selectAll('.' + _self.prefix + 'row-line')
+            .attr('x2', _self.width);
+    } else {
+        updatingRows
+            .selectAll('.' + _self.prefix + 'row-line')
+            .remove();
+    }
+
+    _self.row.exit().remove();
+
+    // append or remove add track button
+    var addButton = _self.container.selectAll('.' + _self.prefix + 'add-track');
+
+    if(_self.collapsedTracks.length && _self.expandable) {
+        if(addButton.empty()) {
+            addButton = _self.container.append('text')
+                .text('+')
+                .attr('class', '' + _self.prefix + 'add-track')
+                .attr('x', -6)
+                .attr('dy', '.32em')
+                .attr('text-anchor', 'end')
+                .on('click', function() {
+                    _self.addTrackFunc(_self.collapsedTracks.slice(), _self.addTrack.bind(_self))
+                });
+        }
+
+        addButton.attr('y', (_self.cellHeight / 2) + (_self.length && _self.cellHeight + _self.y(_self.length - 1)))
+    } else {
+        addButton.remove();
     }
 };
 
