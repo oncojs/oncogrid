@@ -50,6 +50,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     };
     _self.drawGridLines = params.grid || false;
     _self.domain = params.domain;
+    _self.numDomain = _self.domain.length;
 
     _self.trackData = [];
 };
@@ -243,44 +244,39 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
         .rangeBands([0, _self.height]);
 
     // append columns
+    if (typeof _self.column !== 'undefined') {
+        _self.column.remove();
+    }
+
     _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
-        .data(_self.domain);
-
-    var enteringColumns = _self.column.enter()
-        .append('g');
-
-    var updatingColumns = _self.column
+        .data(_self.domain)
+        .enter().append('g')
         .attr('class', _self.prefix + 'column')
         .attr('donor', function (d) { return d.id; })
         .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
-    var columnLines = _self.column.selectAll('.' + _self.prefix + 'column-line');
-
     if (_self.drawGridLines) {
-        enteringColumns
-            .append('line')
-            .attr('class', _self.prefix + 'column-line')
-
-        updatingColumns
-            .selectAll('.' + _self.prefix + 'column-line')
+        _self.column.append('line')
             .attr('x1', -_self.height);
-    } else {
-        updatingColumns
-            .selectAll('.' + _self.prefix + 'column-line')
-            .remove();
     }
 
-    _self.column.exit().remove();
-
     // append rows
+    if (typeof _self.row !== 'undefined') {
+        _self.row.remove();
+    }
+
     _self.row = _self.container.selectAll('.' + _self.prefix + 'row')
-        .data(_self.tracks);
+        .data(_self.tracks)
+        .enter().append('g')
+        .attr('class', _self.prefix + 'row')
+        .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
 
-    var enteringRows = _self.row.enter()
-        .append('g');
+    if (_self.drawGridLines) {
+        _self.row.append('line')
+            .attr('x2', _self.width);
+    }
 
-    enteringRows
-        .append('text')
+    var labels = _self.row.append('text')
         .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
         .on('click', function (d) {
             _self.domain.sort(d.sort(d.fieldName));
@@ -291,51 +287,28 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
         .attr('y', _self.cellHeight / 2)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
+        .text(function (d, i) {
+            return _self.tracks[i].name;
+        });
 
-    var updatingRows = _self.row
-        .attr('class', _self.prefix + 'row')
-        .attr('transform', function (d, i) { return 'translate(0,' + _self.y(i) + ')'; });
-
-    var labels = updatingRows.selectAll('.' + _self.prefix + 'track-label')
-        .text(function (d) { return d.name; });
-
+    _self.container.selectAll('.' + _self.prefix + 'remove-track').remove();
     if(_self.expandable) {
-        enteringRows
-            .append('text')
-            .attr('class', 'remove-track')
-            .text('-')
-            .attr('y', _self.cellHeight / 2)
-            .attr('dy', '.32em')
-            .on('click', function(d, i) { _self.removeTrack(i); });
-
          setTimeout(function() {
             var textLengths = {};
             labels.each(function(d) {
                 textLengths[d.name] = this.getComputedTextLength();
             });
 
-            updatingRows.selectAll('.' + 'remove-track')
+            _self.row
+                .append('text')
+                .attr('class', 'remove-track')
+                .text('-')
+                .attr('y', _self.cellHeight / 2)
+                .attr('dy', '.32em')
+                .on('click', function(d, i) { _self.removeTrack(i); })
                 .attr('x', function(d) { return -(textLengths[d.name] + 12 + this.getComputedTextLength()) });
-        })
-    } else {
-        updatingRows.selectAll('.' + 'remove-track').remove();
+        });
     }
-
-    if (_self.drawGridLines) {
-        enteringRows
-            .append('line')
-            .attr('class', _self.prefix + 'row-line');
-
-        updatingRows
-            .selectAll('.' + _self.prefix + 'row-line')
-            .attr('x2', _self.width);
-    } else {
-        updatingRows
-            .selectAll('.' + _self.prefix + 'row-line')
-            .remove();
-    }
-
-    _self.row.exit().remove();
 
     // append or remove add track button
     var addButton = _self.container.selectAll('.' + _self.prefix + 'add-track');
