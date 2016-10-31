@@ -16,7 +16,7 @@
  */
 /*global d3*/
 'use strict';
-
+var cloneDeep = require('lodash.clonedeep');
 var MainGrid = require('./MainGrid');
 
 var OncoGrid;
@@ -41,7 +41,16 @@ OncoGrid = function(params) {
   _self.computeScores();
   _self.sortByScores();
 
-  _self.mainGrid = new MainGrid(params, _self.lookupTable, _self.update(_self), function() {
+  _self.initCharts();
+};
+
+/**
+ * Instantiate charts
+ */
+OncoGrid.prototype.initCharts = function() {
+  var _self = this;
+
+  _self.mainGrid = new MainGrid(cloneDeep(_self.params), _self.lookupTable, _self.update(_self), function() {
     _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
   });
 
@@ -389,6 +398,14 @@ OncoGrid.prototype.destroy = function() {
   _self.charts.forEach(function (chart) {
     chart.destroy();
   });
+};
+
+OncoGrid.prototype.reload = function() {
+  var _self = this;
+
+  _self.destroy();
+  _self.initCharts();
+  _self.render();
 };
 
 module.exports = OncoGrid;
