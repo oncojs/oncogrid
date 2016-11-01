@@ -17,6 +17,8 @@
 /*global d3*/
 'use strict';
 
+var _uniq = require('lodash.uniq');
+
 var OncoTrackGroup;
 
 OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback) {
@@ -40,6 +42,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     _self.updateCallback = updateCallback;
     _self.resizeCallback = resizeCallback;
     _self.trackLegend = params.trackLegend;
+    _self.trackLegendLabel = params.trackLegendLabel;
 
     _self.clickFunc = params.clickFunc;
     _self.opacityFunc = opacityFunc;
@@ -78,7 +81,7 @@ OncoTrackGroup.prototype.addTrack = function (tracks) {
         });
     });
 
-    _self.tracks = _.uniq(_self.tracks, 'fieldName');
+    _self.tracks = _uniq(_self.tracks, 'fieldName');
 
     _self.length = _self.tracks.length;
     _self.height = _self.cellHeight * _self.length;
@@ -143,6 +146,15 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('text-anchor', 'end')
         .attr('class', _self.prefix + 'track-group-label')
         .text(_self.name);
+    
+    _self.legend = _self.container.append('text')
+        .attr('x', _self.width)
+        .attr('y', -7)
+        .attr('dy', '.32em')
+        .attr('text-anchor', 'end')
+        .attr('class', _self.prefix + 'legend-group-label')
+        .style('fill', 'blue')
+        .text(_self.trackLegendLabel);
 
     _self.background = _self.container.append('rect')
         .attr('class', 'background')
@@ -168,7 +180,7 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
     _self.renderData();
 
-    _self.label
+    _self.legend
         .on('mouseover', function () {
             _self.div.transition()
                 .duration(200)

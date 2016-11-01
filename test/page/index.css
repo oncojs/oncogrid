@@ -69,7 +69,11 @@
 #grid-div .og-track-group-label {
     font-size: 0.8em;
 }
-    
+
+#grid-div .og-legend-group-label {
+    font-size: 0.6em;
+}
+
 #grid-div .og-sortable-rect {
 
 }
