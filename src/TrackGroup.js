@@ -153,7 +153,6 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
         .attr('class', _self.prefix + 'legend-group-label')
-        .style('fill', 'blue')
         .text(_self.trackLegendLabel);
 
     _self.background = _self.container.append('rect')

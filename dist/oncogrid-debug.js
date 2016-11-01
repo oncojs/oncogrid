@@ -4776,7 +4776,6 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.addTrackFunc = params.addTrackFunc;
 
   _self.trackLegends = params.trackLegends || {};
-
   _self.trackLegendLabel = params.trackLegendLabel;
 
   _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
@@ -5094,7 +5093,6 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
         .attr('class', _self.prefix + 'legend-group-label')
-        .style('fill', 'blue')
         .text(_self.trackLegendLabel);
 
     _self.background = _self.container.append('rect')
