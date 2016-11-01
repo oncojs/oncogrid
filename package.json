@@ -24,6 +24,7 @@
   "main": "src/OncoGrid.js",
   "dependencies": {
     "lodash.clonedeep": "^4.5.0",
+    "lodash.uniq": "^4.5.0",
     "mustache": "^2.2.1"
   }
 }

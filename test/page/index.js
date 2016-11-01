@@ -83,7 +83,6 @@ var donorTracks = [
   {'name': 'Foobar', 'fieldName': 'foobar', 'type': 'bool', 'group':'Data', 'sort': sortBool}
 ];
 
-
 var params = {
   element: '#grid-div',
   donors: donors,
@@ -93,6 +92,7 @@ var params = {
   width: 600,
   heatMap: true,
   trackHeight: 20,
+  trackLegendLabel: '(Legend)',
   donorTracks: donorTracks,
   donorOpacityFunc: donorOpacity,
   donorFillFunc: donorFill,

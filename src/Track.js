@@ -31,10 +31,11 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.rotated = rotated || false;
   _self.updateCallback = updateCallback;
   _self.resizeCallback = resizeCallback;
-  _self.expandableGroups = params.expandableGroups;
+  _self.expandableGroups = params.expandableGroups || [];
   _self.addTrackFunc = params.addTrackFunc;
 
   _self.trackLegends = params.trackLegends || {};
+  _self.trackLegendLabel = params.trackLegendLabel;
 
   _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
 
@@ -78,6 +79,7 @@ OncoTrack.prototype.parseGroups = function () {
         nullSentinel: _self.nullSentinel,
         domain: _self.domain,
         trackLegend: _self.trackLegends[group] || '',
+        trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
         addTrackFunc: _self.addTrackFunc,
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback);
