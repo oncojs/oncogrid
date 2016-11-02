@@ -5172,6 +5172,9 @@ OncoTrackGroup.prototype.resize = function (width, x) {
 
     _self.cellWidth = _self.width / _self.domain.length;
 
+    _self.legend
+        .attr('x', _self.width);
+
     _self.background
         .attr('class', 'background')
         .attr('width', _self.width)
