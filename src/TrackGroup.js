@@ -276,8 +276,9 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
             .attr('x2', _self.width);
     }
 
-    var labels = _self.row.append('text')
-        .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
+    var labels = _self.row.append('text');
+
+    labels.attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
         .on('click', function (d) {
             _self.domain.sort(d.sort(d.fieldName));
             _self.updateCallback(false);
