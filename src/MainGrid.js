@@ -38,13 +38,13 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback) {
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
-            params.donorFillFunc, updateCallback, _self.height, _self.resizeCallback);
+            params.donorFillFunc, updateCallback, _self.height, _self.resizeCallback, _self.isFullscreen);
     _self.donorTrack.init();
 
     _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
         new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback);
+            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
 };
@@ -77,6 +77,12 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
+
+    _self.fullscreen = false;
+
+    _self.isFullscreen = function(){
+      return _self.fullscreen;
+    }
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;

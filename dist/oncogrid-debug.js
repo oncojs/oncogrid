@@ -3581,13 +3581,13 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback) {
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
-            params.donorFillFunc, updateCallback, _self.height, _self.resizeCallback);
+            params.donorFillFunc, updateCallback, _self.height, _self.resizeCallback, _self.isFullscreen);
     _self.donorTrack.init();
 
     _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
         new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback);
+            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
 };
@@ -3620,6 +3620,12 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
+
+    _self.fullscreen = false;
+
+    _self.isFullscreen = function(){
+      return _self.fullscreen;
+    }
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
@@ -4354,21 +4360,8 @@ var OncoGrid;
 OncoGrid = function(params) {
   var _self = this;
   _self.params = params;
-
-  _self.donors = params.donors || [];
-  _self.genes = params.genes || [];
-  _self.observations = params.observations || [];
-
   _self.inputWidth = params.width || 500;
   _self.inputHeight = params.height || 500;
-
-  _self.createLookupTable();
-  _self.computeDonorCounts();
-  _self.computeGeneCounts();
-  _self.computeGeneScores();
-  _self.genesSortbyScores();
-  _self.computeScores();
-  _self.sortByScores();
 
   _self.initCharts();
 };
@@ -4379,7 +4372,21 @@ OncoGrid = function(params) {
 OncoGrid.prototype.initCharts = function() {
   var _self = this;
 
-  _self.mainGrid = new MainGrid(cloneDeep(_self.params), _self.lookupTable, _self.update(_self), function() {
+  _self.clonedParams = cloneDeep(_self.params);
+
+  _self.donors = _self.clonedParams.donors || [];
+  _self.genes = _self.clonedParams.genes || [];
+  _self.observations = _self.clonedParams.observations || [];
+
+  _self.createLookupTable();
+  _self.computeDonorCounts();
+  _self.computeGeneCounts();
+  _self.computeGeneScores();
+  _self.genesSortbyScores();
+  _self.computeScores();
+  _self.sortByScores();
+
+  _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
     _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
   });
 
@@ -4458,6 +4465,7 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
   var _self = this;
 
   _self.fullscreen = fullscreen;
+  _self.mainGrid.fullscreen = fullscreen;
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
     chart.resize(Number(width), Number(height));
@@ -4738,6 +4746,7 @@ OncoGrid.prototype.reload = function() {
 };
 
 module.exports = OncoGrid;
+
 },{"./MainGrid":5,"lodash.clonedeep":1}],7:[function(require,module,exports){
 /*
  * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
@@ -4762,7 +4771,7 @@ var OncoTrackGroup = require('./TrackGroup');
 
 var OncoTrack;
 
-OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback) {
+OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback, isFullscreen) {
   var _self = this;
   _self.padding = 20;
   _self.offset = offset;
@@ -4774,6 +4783,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.resizeCallback = resizeCallback;
   _self.expandableGroups = params.expandableGroups || [];
   _self.addTrackFunc = params.addTrackFunc;
+
+  _self.isFullscreen = isFullscreen;
 
   _self.trackLegends = params.trackLegends || {};
   _self.trackLegendLabel = params.trackLegendLabel;
@@ -4823,7 +4834,7 @@ OncoTrack.prototype.parseGroups = function () {
         trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
         addTrackFunc: _self.addTrackFunc,
-      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback);
+      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback, _self.isFullscreen);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
       _self.groups.push(trackGroup);
@@ -4961,7 +4972,7 @@ var _uniq = require('lodash.uniq');
 
 var OncoTrackGroup;
 
-OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback) {
+OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback, isFullscreen) {
     var _self = this;
 
     _self.prefix = params.prefix || 'og-';
@@ -4977,6 +4988,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
 
     _self.nullSentinel =  params.nullSentinel || -777;
 
+    _self.isFullscreen = isFullscreen;
 
     _self.rotated = rotated;
     _self.updateCallback = updateCallback;
@@ -5121,13 +5133,22 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
     _self.legend
         .on('mouseover', function () {
+            var coordinates;
+
+            if(_self.isFullscreen()){
+                coordinates = d3.mouse($('#og-maingrid-svg')[0]);
+            }else{
+                coordinates = [d3.event.pageX, d3.event.pageY];
+            }
+
             _self.div.transition()
                 .duration(200)
                 .style('opacity', 0.9);
+
             _self.div
                 .html(function () {return _self.trackLegend;})
-                .style('left', (d3.event.pageX + 15) + 'px')
-                .style('top', (d3.event.pageY + 30) + 'px');
+                .style('left', (coordinates[0] + 15) + 'px')
+                .style('top', (coordinates[1] + 30) + 'px');
         })
         .on('mouseout', function() {
             _self.div.transition()
@@ -5230,8 +5251,9 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
             .attr('x2', _self.width);
     }
 
-    var labels = _self.row.append('text')
-        .attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
+    var labels = _self.row.append('text');
+
+    labels.attr('class', _self.prefix + 'track-label ' + _self.prefix + 'label-text-font')
         .on('click', function (d) {
             _self.domain.sort(d.sort(d.fieldName));
             _self.updateCallback(false);

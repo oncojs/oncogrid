@@ -130,6 +130,7 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
   var _self = this;
 
   _self.fullscreen = fullscreen;
+  _self.mainGrid.fullscreen = fullscreen;
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
     chart.resize(Number(width), Number(height));

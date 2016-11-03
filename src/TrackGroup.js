@@ -21,7 +21,7 @@ var _uniq = require('lodash.uniq');
 
 var OncoTrackGroup;
 
-OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback) {
+OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback, isFullscreen) {
     var _self = this;
 
     _self.prefix = params.prefix || 'og-';
@@ -37,6 +37,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
 
     _self.nullSentinel =  params.nullSentinel || -777;
 
+    _self.isFullscreen = isFullscreen;
 
     _self.rotated = rotated;
     _self.updateCallback = updateCallback;
@@ -181,13 +182,22 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
     _self.legend
         .on('mouseover', function () {
+            var coordinates;
+
+            if(_self.isFullscreen()){
+                coordinates = d3.mouse($('#og-maingrid-svg')[0]);
+            }else{
+                coordinates = [d3.event.pageX, d3.event.pageY];
+            }
+
             _self.div.transition()
                 .duration(200)
                 .style('opacity', 0.9);
+
             _self.div
                 .html(function () {return _self.trackLegend;})
-                .style('left', (d3.event.pageX + 15) + 'px')
-                .style('top', (d3.event.pageY + 30) + 'px');
+                .style('left', (coordinates[0] + 15) + 'px')
+                .style('top', (coordinates[1] + 30) + 'px');
         })
         .on('mouseout', function() {
             _self.div.transition()
