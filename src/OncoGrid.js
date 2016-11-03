@@ -25,21 +25,8 @@ var OncoGrid;
 OncoGrid = function(params) {
   var _self = this;
   _self.params = params;
-
-  _self.donors = params.donors || [];
-  _self.genes = params.genes || [];
-  _self.observations = params.observations || [];
-
   _self.inputWidth = params.width || 500;
   _self.inputHeight = params.height || 500;
-
-  _self.createLookupTable();
-  _self.computeDonorCounts();
-  _self.computeGeneCounts();
-  _self.computeGeneScores();
-  _self.genesSortbyScores();
-  _self.computeScores();
-  _self.sortByScores();
 
   _self.initCharts();
 };
@@ -50,7 +37,21 @@ OncoGrid = function(params) {
 OncoGrid.prototype.initCharts = function() {
   var _self = this;
 
-  _self.mainGrid = new MainGrid(cloneDeep(_self.params), _self.lookupTable, _self.update(_self), function() {
+  _self.clonedParams = cloneDeep(_self.params);
+
+  _self.donors = _self.clonedParams.donors || [];
+  _self.genes = _self.clonedParams.genes || [];
+  _self.observations = _self.clonedParams.observations || [];
+
+  _self.createLookupTable();
+  _self.computeDonorCounts();
+  _self.computeGeneCounts();
+  _self.computeGeneScores();
+  _self.genesSortbyScores();
+  _self.computeScores();
+  _self.sortByScores();
+
+  _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
     _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
   });
 
