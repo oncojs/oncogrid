@@ -21,7 +21,7 @@ var OncoTrackGroup = require('./TrackGroup');
 
 var OncoTrack;
 
-OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback) {
+OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback, isFullscreen) {
   var _self = this;
   _self.padding = 20;
   _self.offset = offset;
@@ -33,6 +33,8 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.resizeCallback = resizeCallback;
   _self.expandableGroups = params.expandableGroups || [];
   _self.addTrackFunc = params.addTrackFunc;
+
+  _self.isFullscreen = isFullscreen;
 
   _self.trackLegends = params.trackLegends || {};
   _self.trackLegendLabel = params.trackLegendLabel;
@@ -82,7 +84,7 @@ OncoTrack.prototype.parseGroups = function () {
         trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
         addTrackFunc: _self.addTrackFunc,
-      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback);
+      }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback, _self.isFullscreen);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
       _self.groups.push(trackGroup);
