@@ -151,7 +151,7 @@ OncoTrackGroup.prototype.init = function (container) {
     _self.legendObject = _self.container.append('svg:foreignObject');
 
     _self.legend = _self.legendObject
-      .attr('x', _self.width-15)
+      .attr('x', -5)
       .attr('y', -20)
       .append("xhtml:div")
       .html(_self.trackLegendLabel);
@@ -243,7 +243,7 @@ OncoTrackGroup.prototype.resize = function (width, x) {
     _self.cellWidth = _self.width / _self.domain.length;
 
     _self.legendObject
-      .attr('x', _self.width-15);
+      .attr('x', -5);
 
     _self.background
         .attr('class', 'background')
