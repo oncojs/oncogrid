@@ -5099,13 +5099,13 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('class', _self.prefix + 'track-group-label')
         .text(_self.name);
     
-    _self.legend = _self.container.append('text')
-        .attr('x', _self.width)
-        .attr('y', -7)
-        .attr('dy', '.32em')
-        .attr('text-anchor', 'end')
-        .attr('class', _self.prefix + 'legend-group-label')
-        .text(_self.trackLegendLabel);
+    _self.legendObject = _self.container.append('svg:foreignObject');
+
+    _self.legend = _self.legendObject
+      .attr('x', _self.width-15)
+      .attr('y', -20)
+      .append("xhtml:div")
+      .html(_self.trackLegendLabel);
 
     _self.background = _self.container.append('rect')
         .attr('class', 'background')
@@ -5193,8 +5193,8 @@ OncoTrackGroup.prototype.resize = function (width, x) {
 
     _self.cellWidth = _self.width / _self.domain.length;
 
-    _self.legend
-        .attr('x', _self.width);
+    _self.legendObject
+      .attr('x', _self.width-15);
 
     _self.background
         .attr('class', 'background')
