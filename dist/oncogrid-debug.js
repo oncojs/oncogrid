@@ -5099,7 +5099,9 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('class', _self.prefix + 'track-group-label')
         .text(_self.name);
     
-    _self.legendObject = _self.container.append('svg:foreignObject');
+    _self.legendObject = _self.container.append('svg:foreignObject')
+        .attr('width', 20)
+        .attr('height', 20);
 
     _self.legend = _self.legendObject
       .attr('x', -5)
