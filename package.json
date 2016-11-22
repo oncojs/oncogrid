@@ -1,11 +1,11 @@
 {
   "name": "oncogrid",
   "description": "OncoGrid Visualization for ICGC",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://git@github.com:icgc/oncogrid.git"
+    "url": "git@github.com:oncojs/oncogrid.git"
   },
   "devDependencies": {
     "chai": "^3.5.0",
