@@ -113,7 +113,8 @@ MainGrid.prototype.loadParams = function (params) {
                 '{{observation.donorId}}<br>{{observation.consequence}}<br>{{/observation}}',
 
         mainGridCrosshair: templates.mainGridCrosshair || '{{#donor}}Donor: {{donor.id}}<br>{{/donor}}' +
-                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}',
+                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}' +
+                '{{#mutation}}Mutation: {{mutation}}<br>{{/mutation}}',
     };
 };
 
@@ -165,6 +166,7 @@ MainGrid.prototype.render = function () {
                 observation: d,
                 donor: _self.donors[xIndex],
                 gene: _self.genes[yIndex],
+                mutation: d.id
             });
 
             if(html) {
