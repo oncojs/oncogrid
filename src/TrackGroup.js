@@ -153,8 +153,8 @@ OncoTrackGroup.prototype.init = function (container) {
         .attr('height', 20);
 
     _self.legend = _self.legendObject
-      .attr('x', -5)
-      .attr('y', -20)
+      .attr('x', 0)
+      .attr('y', -23)
       .append("xhtml:div")
       .html(_self.trackLegendLabel);
 
@@ -243,9 +243,6 @@ OncoTrackGroup.prototype.resize = function (width, x) {
     if(_self.collapsedTracks.length) _self.totalHeight = _self.height + _self.cellHeight;
 
     _self.cellWidth = _self.width / _self.domain.length;
-
-    _self.legendObject
-      .attr('x', -5);
 
     _self.background
         .attr('class', 'background')
