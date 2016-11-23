@@ -47,8 +47,7 @@ var emptyTester = function () {
 
     it('Main Grid should have correct dimensions', function () {
       // Width and Height are computer based on input dimensions and margins
-      expect(d3.select(element).select('.og-maingrid-svg').attr('width')).to.be.equal('1080');
-      expect(d3.select(element).select('.og-maingrid-svg').attr('height')).to.be.equal('695');
+      expect(d3.select(element).select('.og-maingrid-svg').attr('width')).to.be.equal('100%');
     });
 
     it('Two Tracks Present', function() {
