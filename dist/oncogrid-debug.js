@@ -3944,6 +3944,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
     var moveCrossHair = function(eventType, target) {
         if (_self.crosshair) {
+            d3.event.stopPropagation();
             var coord = d3.mouse(target);
 
             _self.verticalCross.attr('x1', coord[0]).attr('opacity', 1);
@@ -3953,6 +3954,29 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
             if (eventType === 'mousemove' && typeof _self.selectionRegion !== 'undefined') {
                 _self.changeSelection(coord);
+            }
+            var xIndex = _self.rangeToDomain(_self.x, coord[0]),
+                yIndex = _self.rangeToDomain(_self.y, coord[1]),
+                template = _self.templates.mainGridCrosshair;
+
+            var donor = _self.donors[xIndex],
+                gene = _self.genes[yIndex];
+
+            var observation = (donor && _self.lookupTable[donor.id]) ? ((gene && _self.lookupTable[donor.id][gene.id]) ? _self.lookupTable[donor.id][gene.id][0] : undefined) : undefined;
+
+            var html = Mustache.render(template || '', {
+                observation: observation,
+                donor: donor,
+                gene: gene
+            });
+            
+            if(html) {
+                _self.div.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                _self.div.html(html)
+                    .style('left', (d3.event.pageX + 15) + 'px')
+                    .style('top', (d3.event.pageY + 30) + 'px');
             }
         }
     };
