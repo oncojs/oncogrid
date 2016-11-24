@@ -4773,7 +4773,7 @@ var OncoTrack;
 
 OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback, isFullscreen) {
   var _self = this;
-  _self.padding = 20;
+  _self.padding = params.trackPadding || 20;
   _self.offset = offset;
   _self.params = params;
   _self.prefix = params.prefix || 'og-';
@@ -5093,7 +5093,7 @@ OncoTrackGroup.prototype.init = function (container) {
 
     _self.label = _self.container.append('text')
         .attr('x', -6)
-        .attr('y', -7)
+        .attr('y', -11)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
         .attr('class', _self.prefix + 'track-group-label')
@@ -5105,7 +5105,7 @@ OncoTrackGroup.prototype.init = function (container) {
 
     _self.legend = _self.legendObject
       .attr('x', 0)
-      .attr('y', -23)
+      .attr('y', -22)
       .append("xhtml:div")
       .html(_self.trackLegendLabel);
 

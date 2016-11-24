@@ -23,7 +23,7 @@ var OncoTrack;
 
 OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback, isFullscreen) {
   var _self = this;
-  _self.padding = 20;
+  _self.padding = params.trackPadding || 20;
   _self.offset = offset;
   _self.params = params;
   _self.prefix = params.prefix || 'og-';
