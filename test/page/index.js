@@ -92,7 +92,7 @@ var params = {
   width: 600,
   heatMap: true,
   trackHeight: 20,
-  trackLegendLabel: '?',
+  trackLegendLabel: '<i>?</i>',
   donorTracks: donorTracks,
   donorOpacityFunc: donorOpacity,
   donorFillFunc: donorFill,
