@@ -803,8 +803,8 @@ MainGrid.prototype.rangeToDomain = function(scale, value) {
 MainGrid.prototype.nullableObsLookup = function(donor, gene) {
     var _self = this;
 
-    if (donor === undefined || donor === null) return null;
-    if (gene === undefined || donor === null) return null;
+    if(!donor || typeof donor !== 'object') return null;
+    if(!gene || typeof gene !== 'object') return null;
 
     if (_self.lookupTable.hasOwnProperty(donor.id) && _self.lookupTable[donor.id].hasOwnProperty(gene.id)) {
         return _self.lookupTable[donor.id][gene.id].join(); // Table stores arrays and we want to return a string;
