@@ -230,8 +230,8 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
 
     label.each(function() {
         var width = this.getBBox().width;
-        
-        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')')
+
+        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')');
     });
 };
 
