@@ -27,6 +27,14 @@ OncoGrid = function(params) {
   _self.params = params;
   _self.inputWidth = params.width || 500;
   _self.inputHeight = params.height || 500;
+  _self.prefix = params.prefix || 'og-';
+
+  params.wrapper = '.' + _self.prefix + 'container';
+
+  d3.select(params.element || 'body')
+    .append('div')
+    .attr('class', _self.prefix + 'container')
+    .style('position', 'relative');
 
   _self.initCharts();
 };

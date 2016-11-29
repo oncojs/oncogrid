@@ -64,7 +64,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
-    _self.element = params.element || 'body';
+    _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
             'missense_variant': '#ff9b6c',
@@ -123,11 +123,11 @@ MainGrid.prototype.loadParams = function (params) {
 MainGrid.prototype.init = function () {
     var _self = this;
 
-    _self.div = d3.select(_self.element).append('div')
+    _self.div = _self.wrapper.append('div')
         .attr('class', _self.prefix + 'tooltip-oncogrid')
         .style('opacity', 0);
 
-    _self.svg = d3.select(_self.element).append('svg')
+    _self.svg = _self.wrapper.append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
         .attr('id', _self.prefix + 'maingrid-svg')
         .attr('width', '100%');
@@ -168,12 +168,15 @@ MainGrid.prototype.render = function () {
             });
 
             if(html) {
+                var tooltipCoord = d3.mouse(_self.wrapper.node());
+
                 _self.div.transition()
                     .duration(200)
                     .style('opacity', 0.9);
+
                 _self.div.html(html)
-                    .style('left', (d3.event.pageX + 15) + 'px')
-                    .style('top', (d3.event.pageY + 30) + 'px');
+                    .style('left', (tooltipCoord[0] + 15) + 'px')
+                    .style('top', (tooltipCoord[1] + 30) + 'px');
             }
         })
         .on('mouseout', function () {
@@ -426,12 +429,15 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             });
 
             if(html) {
+                var tooltipCoord = d3.mouse(_self.wrapper.node());
+
                 _self.div.transition()
                     .duration(200)
                     .style('opacity', 0.9);
+
                 _self.div.html(html)
-                    .style('left', (d3.event.pageX + 15) + 'px')
-                    .style('top', (d3.event.pageY + 30) + 'px');
+                    .style('left', (tooltipCoord[0] + 15) + 'px')
+                    .style('top', (tooltipCoord[1] + 30) + 'px');
             }
         }
     };
@@ -819,8 +825,8 @@ MainGrid.prototype.nullableObsLookup = function(donor, gene) {
 MainGrid.prototype.destroy = function () {
     var _self = this;
 
-    d3.select(_self.element).select('.' + _self.prefix + 'maingrid-svg').remove();
-    d3.select(_self.element).select('.' + _self.prefix + 'tooltip-oncogrid').remove();
+    _self.wrapper.select('.' + _self.prefix + 'maingrid-svg').remove();
+    _self.wrapper.select('.' + _self.prefix + 'tooltip-oncogrid').remove();
 };
 
 module.exports = MainGrid;
