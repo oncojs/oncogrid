@@ -3514,8 +3514,8 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
 
     label.each(function() {
         var width = this.getBBox().width;
-        
-        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')')
+
+        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')');
     });
 };
 
@@ -3625,7 +3625,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.isFullscreen = function(){
       return _self.fullscreen;
-    }
+    };
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
@@ -3656,7 +3656,7 @@ MainGrid.prototype.loadParams = function (params) {
                 '{{observation.donorId}}<br>{{observation.consequence}}<br>{{/observation}}',
 
         mainGridCrosshair: templates.mainGridCrosshair || '{{#donor}}Donor: {{donor.id}}<br>{{/donor}}' +
-                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}',
+                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}' + '{{#obs}}Mutations: {{obs}}<br>{{/obs}}',
     };
 };
 
@@ -3707,7 +3707,7 @@ MainGrid.prototype.render = function () {
             var html = Mustache.render(template || '', {
                 observation: d,
                 donor: _self.donors[xIndex],
-                gene: _self.genes[yIndex],
+                gene: _self.genes[yIndex]
             });
 
             if(html) {
@@ -3953,6 +3953,28 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
             if (eventType === 'mousemove' && typeof _self.selectionRegion !== 'undefined') {
                 _self.changeSelection(coord);
+            }
+
+            var xIndex = _self.width < coord[0] ? -1 : _self.rangeToDomain(_self.x, coord[0]);
+            var yIndex = _self.height < coord[1] ? -1 : _self.rangeToDomain(_self.y, coord[1]);
+
+            var donor = _self.donors[xIndex];
+            var gene = _self.genes[yIndex];
+            var obsArray = _self.nullableObsLookup(donor, gene);
+
+            var html = Mustache.render(_self.templates.mainGridCrosshair, {
+                donor: donor,
+                gene: gene,
+                obs: obsArray
+            });
+
+            if(html) {
+                _self.div.transition()
+                    .duration(200)
+                    .style('opacity', 0.9);
+                _self.div.html(html)
+                    .style('left', (d3.event.pageX + 15) + 'px')
+                    .style('top', (d3.event.pageY + 30) + 'px');
             }
         }
     };
@@ -4318,6 +4340,20 @@ MainGrid.prototype.removeGene = function (i) {
 
 MainGrid.prototype.rangeToDomain = function(scale, value) {
     return scale.domain()[d3.bisect(scale.range(), value) - 1];
+};
+
+
+MainGrid.prototype.nullableObsLookup = function(donor, gene) {
+    var _self = this;
+
+    if (donor === undefined || donor === null) return null;
+    if (gene === undefined || donor === null) return null;
+
+    if (_self.lookupTable.hasOwnProperty(donor.id) && _self.lookupTable[donor.id].hasOwnProperty(gene.id)) {
+        return _self.lookupTable[donor.id][gene.id].join(); // Table stores arrays and we want to return a string;
+    } else {
+        return null;
+    }
 };
 
 /**

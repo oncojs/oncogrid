@@ -21,6 +21,7 @@ var genes = [
 
 var observations = [
   {"id": "MU1", "donorId": "DO1", "geneId": "ENSG00000157764"},
+  {"id": "MU11", "donorId": "DO1", "geneId": "ENSG00000157764"},
   {"id": "MU2", "donorId": "DO1", "geneId": "ENSG00000141510"},
   {"id": "MU3", "donorId": "DO2", "geneId": "ENSG00000141510"},
   {"id": "MU4", "donorId": "DO3", "geneId": "ENSG00000157764"},
