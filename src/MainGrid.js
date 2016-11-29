@@ -113,7 +113,7 @@ MainGrid.prototype.loadParams = function (params) {
                 '{{observation.donorId}}<br>{{observation.consequence}}<br>{{/observation}}',
 
         mainGridCrosshair: templates.mainGridCrosshair || '{{#donor}}Donor: {{donor.id}}<br>{{/donor}}' +
-                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}' + '{{#obs}}Mutations: {{obs}}<br>{{/obs}}',
+                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}' + '{{#obs}}Mutations: {{obs}}<br>{{/obs}}'
     };
 };
 
@@ -807,7 +807,7 @@ MainGrid.prototype.nullableObsLookup = function(donor, gene) {
     if(!gene || typeof gene !== 'object') return null;
 
     if (_self.lookupTable.hasOwnProperty(donor.id) && _self.lookupTable[donor.id].hasOwnProperty(gene.id)) {
-        return _self.lookupTable[donor.id][gene.id].join(); // Table stores arrays and we want to return a string;
+        return _self.lookupTable[donor.id][gene.id].join(', '); // Table stores arrays and we want to return a string;
     } else {
         return null;
     }
