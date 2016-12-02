@@ -49,6 +49,7 @@ OncoHistogram = function (params, s, rotated) {
     _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 
     _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
+    _self.wrapper = d3.select(params.wrapper || 'body');
 };
 
 OncoHistogram.prototype.render = function (x, div) {
@@ -103,9 +104,12 @@ OncoHistogram.prototype.render = function (x, div) {
         .enter()
         .append('rect')
         .on('mouseover', function (d) {
+            var coordinates = d3.mouse(_self.wrapper.node());
+
             _self.div.transition()
                 .duration(200)
                 .style('opacity', 0.9);
+
             _self.div.html( function() {
                 if (_self.rotated) {
                     return  d.symbol + '<br/> Count:' + d.count + '<br/>';
@@ -113,8 +117,8 @@ OncoHistogram.prototype.render = function (x, div) {
                     return d.id + '<br/> Count:' + d.count + '<br/>';
                 }
             })
-                .style('left', (d3.event.pageX + 10) + 'px')
-                .style('top', (d3.event.pageY - 28) + 'px');
+                .style('left', (coordinates[0] + 10) + 'px')
+                .style('top', (coordinates[1] - 28) + 'px');
         })
         .on('mouseout', function () {
             _self.div.transition()

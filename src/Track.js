@@ -84,6 +84,7 @@ OncoTrack.prototype.parseGroups = function () {
         trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
         addTrackFunc: _self.addTrackFunc,
+        wrapper: _self.params.wrapper,
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback, _self.isFullscreen);
       trackGroup.addTrack(track);
       _self.groupMap[group] = trackGroup;
