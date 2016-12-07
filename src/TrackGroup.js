@@ -57,6 +57,7 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     _self.numDomain = _self.domain.length;
 
     _self.trackData = [];
+    _self.wrapper = d3.select(params.wrapper || 'body');
 };
 
 /**
@@ -184,13 +185,7 @@ OncoTrackGroup.prototype.render = function (x, div) {
 
     _self.legend
         .on('mouseover', function () {
-            var coordinates;
-
-            if(_self.isFullscreen()){
-                coordinates = d3.mouse($('#og-maingrid-svg')[0]);
-            }else{
-                coordinates = [d3.event.pageX, d3.event.pageY];
-            }
+            var coordinates = d3.mouse(_self.wrapper.node());
 
             _self.div.transition()
                 .duration(200)
@@ -406,9 +401,12 @@ OncoTrackGroup.prototype.renderData = function(x, div) {
         })
         .on('click', function (d) { _self.clickFunc(d); })
         .on('mouseover', function (d) {
+            var coordinates = d3.mouse(_self.wrapper.node());
+
             _self.div.transition()
                 .duration(200)
                 .style('opacity', 0.9);
+
             _self.div.html(function () {
                 if (_self.rotated) {
                     return d.displayId + '<br>' + d.displayName + ': ' +
@@ -418,8 +416,8 @@ OncoTrackGroup.prototype.renderData = function(x, div) {
                         (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
                 }
             })
-                .style('left', (d3.event.pageX + 15) + 'px')
-                .style('top', (d3.event.pageY + 30) + 'px');
+                .style('left', (coordinates[0] + 15) + 'px')
+                .style('top', (coordinates[1] + 30) + 'px');
         })
         .on('mouseout', function () {
             _self.div.transition()
