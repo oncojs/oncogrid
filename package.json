@@ -25,6 +25,7 @@
   "dependencies": {
     "lodash.clonedeep": "^4.5.0",
     "lodash.uniq": "^4.5.0",
-    "mustache": "^2.2.1"
+    "mustache": "^2.2.1",
+    "d3": "3.5.17"
   }
 }

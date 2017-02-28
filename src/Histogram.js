@@ -14,9 +14,9 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*global d3*/
 'use strict';
 
+var d3 = require('d3');
 var OncoHistogram;
 
 OncoHistogram = function (params, s, rotated) {
