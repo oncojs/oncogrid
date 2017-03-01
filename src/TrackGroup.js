@@ -18,6 +18,7 @@
 
 var d3 = require('d3');
 var _uniq = require('lodash.uniq');
+var Mustache = require('mustache');
 
 var OncoTrackGroup;
 
@@ -118,16 +119,20 @@ OncoTrackGroup.prototype.refreshData = function () {
     for (var i = 0, domain; i < _self.domain.length; i++) {
         domain = _self.domain[i];
 
-        for (var j = 0, track; j < _self.length; j++) {
-            track = _self.tracks[j]; 
-
+        for (var j = 0, track, value; j < _self.length; j++) {
+            track = _self.tracks[j];
+            value = domain[track.fieldName];
+            var isNullSentinel = value === _self.nullSentinel;
             _self.trackData.push({
                 id: domain.id,
                 displayId: _self.rotated ? domain.symbol : domain.id,
-                value: domain[track.fieldName],
+                value: value,
+                displayValue: isNullSentinel ? 'Not Verified' : value,
+                notNullSentinel: !isNullSentinel,
                 displayName: track.name,
                 fieldName: track.fieldName,
-                type: track.type
+                type: track.type,
+                template: track.template || '{{displayId}}<br>{{displayName}}: {{displayValue}}',
             });
         }
     }
@@ -407,15 +412,7 @@ OncoTrackGroup.prototype.renderData = function(x, div) {
                 .duration(200)
                 .style('opacity', 0.9);
 
-            _self.div.html(function () {
-                if (_self.rotated) {
-                    return d.displayId + '<br>' + d.displayName + ': ' +
-                        (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
-                } else {
-                    return d.id + '<br>' + d.displayName + ': ' +
-                        (d.value === _self.nullSentinel ? 'Not Verified' : d.value);
-                }
-            })
+            _self.div.html(Mustache.render(d.template, d))
                 .style('left', (coordinates[0] + 15) + 'px')
                 .style('top', (coordinates[1] + 30) + 'px');
         })
