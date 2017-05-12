@@ -18,6 +18,7 @@
 var d3 = require('d3');
 var cloneDeep = require('lodash.clonedeep');
 var MainGrid = require('./MainGrid');
+var values = require('lodash.values');
 
 var OncoGrid;
 
@@ -53,8 +54,7 @@ OncoGrid.prototype.initCharts = function() {
 
   _self.createLookupTable();
   _self.computeDonorCounts();
-  _self.computeGeneCounts();
-  _self.computeGeneScores();
+  _self.computeGeneScoresAndCount();
   _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
@@ -212,7 +212,7 @@ OncoGrid.prototype.removeDonors = function(func) {
     }
   }
 
-  _self.computeGeneScores();
+  _self.computeGeneScoresAndCount();
   _self.update(_self)();
   _self.resize(_self.inputWidth, _self.inputHeight, false);
 };
@@ -333,7 +333,7 @@ OncoGrid.prototype.computeScores = function() {
 /**
  * Computes scores for gene sorting.
  */
-OncoGrid.prototype.computeGeneScores = function() {
+OncoGrid.prototype.computeGeneScoresAndCount = function() {
   var _self = this;
 
   for (var i = 0; i < _self.genes.length; i++) {
@@ -343,6 +343,7 @@ OncoGrid.prototype.computeGeneScores = function() {
       var donor = _self.donors[j];
       gene.score += _self.mutationGeneScore(donor.id, gene.id);
     }
+    gene.count = gene.score;
   }
 };
 
@@ -351,18 +352,10 @@ OncoGrid.prototype.computeGeneScores = function() {
  */
 OncoGrid.prototype.computeDonorCounts = function() {
   var _self = this;
-
   for (var i = 0; i < _self.donors.length; i++) {
     var donor = _self.donors[i];
-    donor.count = 0;
-
-    for (var j = 0; j < _self.observations.length; j++) {
-      var obs = _self.observations[j];
-        if (donor.id === obs.donorId) {
-          donor.count+= 1;
-        }
-    }
-
+    donor.count = values(_self.lookupTable[donor.id] || {})
+      .reduce(function(sum, gene) { return sum + gene.length; }, 0);
   }
 };
 
