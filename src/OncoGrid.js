@@ -354,8 +354,11 @@ OncoGrid.prototype.computeDonorCounts = function() {
   var _self = this;
   for (var i = 0; i < _self.donors.length; i++) {
     var donor = _self.donors[i];
-    donor.count = values(_self.lookupTable[donor.id] || {})
-      .reduce(function(sum, gene) { return sum + gene.length; }, 0);
+    var genes = values(_self.lookupTable[donor.id] || {});
+    donor.count = 0;
+    for(var j = 0; j < genes.length; j++) {
+      donor.count += genes[j].length;
+    }
   }
 };
 
