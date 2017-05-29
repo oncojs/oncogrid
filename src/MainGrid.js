@@ -127,8 +127,8 @@ MainGrid.prototype.init = function () {
         .attr('class', _self.prefix + 'tooltip-oncogrid')
         .style('opacity', 0);
 
-    _self.canvasSizer = _self.wrapper.append('canvas') // forces size of container to prevent default height in IE
-        .attr('class', _self.prefix + 'canvas-sizer');
+    _self.canvas = _self.wrapper.append('canvas') // forces size of container to prevent default height in IE
+        .attr('class', _self.prefix + 'canvas');
 
     _self.svg = _self.wrapper.append('svg')
         .attr('class', _self.prefix + 'maingrid-svg')
@@ -392,15 +392,15 @@ MainGrid.prototype.resizeSvg = function() {
     var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight + _self.geneTrack.height + _self.margin.right;
     var height = _self.margin.top + _self.histogramHeight + _self.height + _self.donorTrack.height + _self.margin.bottom;
 
-    _self.canvasSizer
+    _self.canvas
         .attr('width', width)
         .attr('height', height);
 
     if(_self.scaleToFit) {
-        _self.canvasSizer.style('width', '100%');
+        _self.canvas.style('width', '100%');
         _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
     } else {
-        _self.canvasSizer.style('width', width + 'px');
+        _self.canvas.style('width', width + 'px');
         _self.svg.attr('width', width).attr('height', height);
     }
 
@@ -838,7 +838,7 @@ MainGrid.prototype.destroy = function () {
     var _self = this;
 
     _self.wrapper.select('.' + _self.prefix + 'maingrid-svg').remove();
-    _self.wrapper.select('.' + _self.prefix + 'canvas-sizer').remove();
+    _self.wrapper.select('.' + _self.prefix + 'canvas').remove();
     _self.wrapper.select('.' + _self.prefix + 'tooltip-oncogrid').remove();
 };
 
