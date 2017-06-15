@@ -52,9 +52,8 @@ OncoHistogram = function (params, s, rotated) {
     _self.wrapper = d3.select(params.wrapper || 'body');
 };
 
-OncoHistogram.prototype.render = function (x, div) {
+OncoHistogram.prototype.render = function (div) {
     var _self = this;
-    _self.x = x;
     _self.div = div;
 
     /**
@@ -99,11 +98,11 @@ OncoHistogram.prototype.render = function (x, div) {
 
     _self.renderAxis(topCount);
 
-    _self.histogram.selectAll('rect')
-        .data(_self.domain)
-        .enter()
-        .append('rect')
-        .on('mouseover', function (d) {
+    _self.histogram
+        .on('mouseover', function () {
+            var target = d3.event.target;
+            var domain = _self.domain[target.dataset.domainIndex];
+            if(!domain) return;
             var coordinates = d3.mouse(_self.wrapper.node());
 
             _self.div.transition()
@@ -112,9 +111,9 @@ OncoHistogram.prototype.render = function (x, div) {
 
             _self.div.html( function() {
                 if (_self.rotated) {
-                    return  d.symbol + '<br/> Count:' + d.count + '<br/>';
+                    return  domain.symbol + '<br/> Count:' + domain.count + '<br/>';
                 } else {
-                    return d.id + '<br/> Count:' + d.count + '<br/>';
+                    return domain.id + '<br/> Count:' + domain.count + '<br/>';
                 }
             })
                 .style('left', (coordinates[0] + 10) + 'px')
@@ -125,16 +124,26 @@ OncoHistogram.prototype.render = function (x, div) {
                 .duration(500)
                 .style('opacity', 0);
         })
-        .on('click', _self.clickFunc)
+        .on('click', function() {
+            var target = d3.event.target;
+            var domain = _self.domain[target.dataset.domainIndex];
+            if(domain) _self.clickFunc(domain);
+        });
+
+    _self.histogram.selectAll('rect')
+        .data(_self.domain)
+        .enter()
+        .append('rect')
         .attr('class', function (d) {
             return _self.prefix + 'sortable-bar ' + _self.prefix + d.id + '-bar';
         })
+        .attr('data-domain-index', function(d, i) { return i; })
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {
             return _self.histogramHeight * d.count / topCount;
         })
         .attr('x', function (d) {
-            return _self.x(_self.getIndex(_self.domain, d.id));
+            return _self.rotated ? d.y : d.x;
         })
         .attr('y', function (d) {
             return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
@@ -142,9 +151,8 @@ OncoHistogram.prototype.render = function (x, div) {
         .attr('fill', '#1693C0');
 };
 
-OncoHistogram.prototype.update = function (domain, x) {
+OncoHistogram.prototype.update = function (domain) {
     var _self = this;
-    _self.x = x;
     _self.domain = domain;
     _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 
@@ -152,7 +160,7 @@ OncoHistogram.prototype.update = function (domain, x) {
         .transition()
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('x', function (d) {
-            return _self.x(_self.getIndex(_self.domain, d.id));
+            return _self.rotated ? d.y : d.x;
         });
 };
 
@@ -235,20 +243,6 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
             x: -_self.histogramHeight / 2,
             y: -_self.lineHeightOffset - _self.padding,
         });
-};
-
-/**
- * Helper the gets the index of the current id.
- */
-OncoHistogram.prototype.getIndex = function (list, id) {
-    for (var i = 0; i < list.length; i++) {
-        var obj = list[i];
-        if (obj.id === id) {
-            return i;
-        }
-    }
-
-    return -1;
 };
 
 OncoHistogram.prototype.destroy = function() {

@@ -43,6 +43,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
+
   _self.width = (_self.rotated ? params.height : params.width) || 500;
 
   _self.cellHeight = params.trackHeight || 10;
@@ -124,17 +125,17 @@ OncoTrack.prototype.init = function () {
 };
 
 /** Calls render on all track groups */
-OncoTrack.prototype.render = function (x, div) {
+OncoTrack.prototype.render = function (div) {
   var _self = this;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.render(x, div);
+    g.render(div);
   }
 };
 
 /** Resizes all the track groups */
-OncoTrack.prototype.resize = function (width, height, x, offset) {
+OncoTrack.prototype.resize = function (width, height, offset) {
   var _self = this;
 
   _self.offset = offset || _self.offset;
@@ -145,7 +146,7 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + _self.height + ')');
-    g.resize(_self.width, x);
+    g.resize(_self.width);
     _self.height += Number(g.totalHeight) + _self.padding;
   }
 
@@ -164,15 +165,14 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
 /**
  * Updates the rendering of the tracks.
  */
-OncoTrack.prototype.update = function (domain, x) {
+OncoTrack.prototype.update = function (domain) {
   var _self = this;
 
   _self.domain = domain;
-  _self.x = x;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.update(domain, x);
+    g.update(domain);
   }
 };
 
