@@ -100,7 +100,7 @@ OncoTrack.prototype.init = function () {
   var _self = this;
   _self.container = _self.svg.append('g');
 
-  var labelHeight = 0;
+  var labelHeight = _self.rotated ? 16.5 : 0;
   _self.height = 0;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
@@ -108,12 +108,6 @@ OncoTrack.prototype.init = function () {
         .attr('transform', 'translate(0,' + _self.height + ')');
     g.init(trackContainer);
     _self.height += Number(g.totalHeight) + _self.padding;
-
-    if(_self.rotated) {
-      g.label.each(function() {
-        labelHeight = Math.max(labelHeight, this.getBBox().height);
-      });
-    }
   }
 
   var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
@@ -146,19 +140,13 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
   _self.offset = offset || _self.offset;
   _self.width = _self.rotated ? height : width;
   _self.height = 0;
-  var labelHeight = 0;
+  var labelHeight = _self.rotated ? 16.5 : 0;
   
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + _self.height + ')');
     g.resize(_self.width, x);
     _self.height += Number(g.totalHeight) + _self.padding;
-
-    if(_self.rotated) {
-      g.label.each(function() {
-        labelHeight = Math.max(labelHeight, this.getBBox().height);
-      });
-    }
   }
 
   var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);

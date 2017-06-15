@@ -227,16 +227,14 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
         .text(halfInt);
 
     var label = _self.histogram.append('text')
-        .attr('class', _self.prefix + 'label-text-font')
-        .attr('dy', '.32em')
-        .attr('text-anchor', 'end')
-        .text("Mutation freq.");
-
-    label.each(function() {
-        var width = this.getBBox().width;
-
-        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')');
-    });
+        .text("Mutation freq.")
+        .attr({
+            'class': _self.prefix + 'label-text-font',
+            'text-anchor': 'middle',
+            transform: 'rotate(-90)',
+            x: -_self.histogramHeight / 2,
+            y: -_self.lineHeightOffset - _self.padding,
+        });
 };
 
 /**

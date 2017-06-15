@@ -146,6 +146,8 @@ MainGrid.prototype.init = function () {
         .attr('class', 'background')
         .attr('width', _self.width)
         .attr('height', _self.height);
+
+    _self.gridContainer = _self.container.append('g');
 };
 
 /**
@@ -313,7 +315,7 @@ MainGrid.prototype.computeCoordinates = function () {
         _self.column.remove();
     }
 
-    _self.column = _self.container.selectAll('.' + _self.prefix + 'donor-column')
+    _self.column = _self.gridContainer.selectAll('.' + _self.prefix + 'donor-column')
         .data(_self.donors)
         .enter().append('g')
         .attr('class', _self.prefix + 'donor-column')
@@ -338,7 +340,7 @@ MainGrid.prototype.computeCoordinates = function () {
         _self.row.remove();
     }
 
-    _self.row = _self.container.selectAll('.' + _self.prefix + 'gene-row')
+    _self.row = _self.gridContainer.selectAll('.' + _self.prefix + 'gene-row')
         .data(_self.genes)
         .enter().append('g')
         .attr('class', _self.prefix + 'gene-row')
@@ -402,10 +404,8 @@ MainGrid.prototype.resize = function(width, height) {
     _self.resizeSvg();
     _self.update();
 
-    var boundingBox = _self.container.node().getBBox();
-    _self.verticalCross.attr('y2', boundingBox.height);
-    _self.horizontalCross.attr('x2', boundingBox.width);
-
+    _self.verticalCross.attr('y2', _self.height + _self.donorTrack.height);
+    _self.horizontalCross.attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height);
 };
 
 MainGrid.prototype.resizeSvg = function() {
