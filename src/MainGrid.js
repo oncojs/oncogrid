@@ -158,45 +158,52 @@ MainGrid.prototype.render = function () {
     _self.emit('render:mainGrid:start');
     _self.computeCoordinates();
 
+    _self.svg.on('mouseover', function (d) {
+        var target = d3.event.target;
+        var coord = d3.mouse(target);
+        var xIndex = _self.rangeToDomain(_self.x, coord[0]);
+        var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+        var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
+        var obs = _self.observations[target.dataset.obsIndex];
 
+        if (!obs) return;
+
+        var html = Mustache.render(template || '', {
+            observation: obs,
+            donor: _self.donors[xIndex],
+            gene: _self.genes[yIndex]
+        });
+
+        if(html) {
+            var tooltipCoord = d3.mouse(_self.wrapper.node());
+
+            _self.div.transition()
+                .duration(200)
+                .style('opacity', 0.9);
+
+            _self.div.html(html)
+                .style('left', (tooltipCoord[0] + 15) + 'px')
+                .style('top', (tooltipCoord[1] + 30) + 'px');
+        }
+    });
+
+    _self.svg.on('mouseout', function() {
+        _self.div.transition()
+            .duration(500)
+            .style('opacity', 0);
+    });
+
+    _self.svg.on('click', function () {
+        if (_self.gridClick) {
+            var obs = _self.observations[d3.event.target.dataset.obsIndex];
+            if(!obs) return;
+            _self.gridClick(obs);
+        }
+    });
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
-        .on('mouseover', function (d) {
-            var coord = d3.mouse(this);
-
-            var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-            var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-            var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
-
-            var html = Mustache.render(template || '', {
-                observation: d,
-                donor: _self.donors[xIndex],
-                gene: _self.genes[yIndex]
-            });
-
-            if(html) {
-                var tooltipCoord = d3.mouse(_self.wrapper.node());
-
-                _self.div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-
-                _self.div.html(html)
-                    .style('left', (tooltipCoord[0] + 15) + 'px')
-                    .style('top', (tooltipCoord[1] + 30) + 'px');
-            }
-        })
-        .on('mouseout', function () {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
-        })
-        .on('click', function (d) {
-            if (typeof _self.gridClick !== 'undefined') {
-                _self.gridClick(d);
-            }
-        })
+        .attr('data-obs-index', function(d, i) { return i; })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
