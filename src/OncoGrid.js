@@ -19,11 +19,10 @@ var d3 = require('d3');
 var cloneDeep = require('lodash.clonedeep');
 var MainGrid = require('./MainGrid');
 var values = require('lodash.values');
+var EventEmitter = require('eventemitter3');
+var util = require('util');
 
-var OncoGrid;
-
-
-OncoGrid = function(params) {
+var OncoGrid = function(params) {
   var _self = this;
   _self.params = params;
   _self.inputWidth = params.width || 500;
@@ -38,7 +37,11 @@ OncoGrid = function(params) {
     .style('position', 'relative');
 
   _self.initCharts();
+
+  EventEmitter.call(this);
 };
+
+util.inherits(OncoGrid, EventEmitter);
 
 /**
  * Instantiate charts
@@ -61,7 +64,7 @@ OncoGrid.prototype.initCharts = function() {
 
   _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
     _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
-  });
+  }, _self.emit.bind(_self));
 
   _self.heatMapMode = _self.mainGrid.heatMap;
   _self.drawGridLines = _self.mainGrid.drawGridLines;
@@ -104,10 +107,13 @@ OncoGrid.prototype.createLookupTable = function () {
 OncoGrid.prototype.render = function() {
   var _self = this;
 
+  _self.emit('render:all:start');
   setTimeout(function () {
     _self.charts.forEach(function(chart) {
         chart.render();
     });
+
+    _self.emit('render:all:end');
   });
 };
 

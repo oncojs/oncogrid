@@ -23,9 +23,10 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, updateCallback, resizeCallback) {
+MainGrid = function (params, lookupTable, updateCallback, resizeCallback, emit) {
     var _self = this;
 
+    _self.emit = emit;
     _self.lookupTable = lookupTable;
     _self.updateCallback = updateCallback;
     _self.resizeCallback = resizeCallback;
@@ -154,6 +155,7 @@ MainGrid.prototype.init = function () {
 MainGrid.prototype.render = function () {
     var _self = this;
 
+    _self.emit('render:mainGrid:start');
     _self.computeCoordinates();
 
 
@@ -219,11 +221,23 @@ MainGrid.prototype.render = function () {
         })
         .attr('stroke-width', 2);
 
-    _self.donorHistogram.render(_self.x, _self.div);
-    _self.donorTrack.render(_self.x, _self.div);
+    _self.emit('render:mainGrid:end');
 
+    _self.emit('render:donorHisogram:start');
+    _self.donorHistogram.render(_self.x, _self.div);
+    _self.emit('render:donorHisogram:end');
+
+    _self.emit('render:donorTrack:start');
+    _self.donorTrack.render(_self.x, _self.div);
+    _self.emit('render:donorTrack:end');
+
+    _self.emit('render:geneHistogram:start');
     _self.geneHistogram.render(_self.y, _self.div);
+    _self.emit('render:geneHistogram:end');
+
+    _self.emit('render:geneTrack:start');
     _self.geneTrack.render(_self.y, _self.div);
+    _self.emit('render:geneTrack:end');
 
     _self.defineCrosshairBehaviour();
 
