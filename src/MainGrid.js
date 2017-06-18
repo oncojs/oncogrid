@@ -330,7 +330,8 @@ MainGrid.prototype.computeCoordinates = function () {
                 x2: function(d) { return d.x; },
                 y2: _self.height,
                 'class': _self.prefix + 'donor-column',
-            });
+            })
+            .style('pointer-events', 'none');
     }
 
     _self.cellHeight = _self.height / _self.genes.length;
@@ -349,7 +350,8 @@ MainGrid.prototype.computeCoordinates = function () {
 
     if (_self.drawGridLines) {
         _self.row.append('line')
-            .attr('x2', _self.width);
+            .attr('x2', _self.width)
+            .style('pointer-events', 'none');
     }
 
     _self.row.append('text')
