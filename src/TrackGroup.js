@@ -218,10 +218,14 @@ OncoTrackGroup.prototype.update = function(domain) {
     if (_self.domain.length !== _self.numDomain) {
         _self.numDomain = _self.domain.length;
         _self.cellWidth = _self.width / _self.numDomain;
+
+        _self.refreshData();
+
         _self.computeCoordinates();
     }
 
     _self.container.selectAll('.' + _self.prefix + 'track-data')
+        .data(_self.trackData)
         .transition()
         .attr('x', function(d, i) {
             var domain = _self.domain[d.domainIndex];

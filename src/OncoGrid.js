@@ -167,8 +167,9 @@ OncoGrid.prototype.update = function(scope) {
     if (donorSort) {
       _self.computeScores();
       _self.sortByScores();
-      _self.calculatePositions();
     }
+
+    _self.calculatePositions();
 
     _self.charts.forEach(function (chart) {
       chart.update(_self.x, _self.y);
