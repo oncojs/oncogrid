@@ -54,7 +54,7 @@ util.inherits(OncoGrid, EventEmitter);
 /**
  * Instantiate charts
  */
-OncoGrid.prototype.initCharts = function() {
+OncoGrid.prototype.initCharts = function(reloading) {
   var _self = this;
 
   _self.clonedParams = cloneDeep(_self.params);
@@ -71,8 +71,13 @@ OncoGrid.prototype.initCharts = function() {
   _self.sortByScores();
   _self.calculatePositions();
   
+  if(reloading) {
+    _self.clonedParams.width = _self.width;
+    _self.clonedParams.height = _self.height;
+  }
+
   _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
-    _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
+    _self.resize(_self.width, _self.height, _self.fullscreen);
   }, _self.emit.bind(_self), _self.x, _self.y);
 
   _self.heatMapMode = _self.mainGrid.heatMap;
@@ -255,7 +260,7 @@ OncoGrid.prototype.removeDonors = function(func) {
 
   _self.computeGeneScoresAndCount();
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -280,7 +285,7 @@ OncoGrid.prototype.removeGenes = function(func) {
   }
 
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -451,7 +456,7 @@ OncoGrid.prototype.reload = function() {
   var _self = this;
 
   _self.destroy();
-  _self.initCharts();
+  _self.initCharts(true);
   _self.render();
 };
 
