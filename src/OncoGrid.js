@@ -39,7 +39,7 @@ var OncoGrid = function(params) {
 
   params.wrapper = '.' + _self.prefix + 'container';
 
-  d3.select(params.element || 'body')
+  _self.container = d3.select(params.element || 'body')
     .append('div')
     .attr('class', _self.prefix + 'container')
     .style('position', 'relative');
@@ -450,6 +450,7 @@ OncoGrid.prototype.destroy = function() {
   _self.charts.forEach(function (chart) {
     chart.destroy();
   });
+  _self.container.remove();
 };
 
 OncoGrid.prototype.reload = function() {
