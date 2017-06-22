@@ -313,24 +313,48 @@ OncoGrid.prototype.sortGenes= function(func) {
 };
 
 /**
+ * set oncogrid between heatmap mode and regular mode showing individual consequence types.
+ */
+OncoGrid.prototype.setHeatmap = function(active) {
+  var _self = this;
+
+  _self.heatMapMode = active;
+  _self.mainGrid.setHeatmap(active);
+};
+
+/**
  * Toggles oncogrid between heatmap mode and regular mode showing individual consequence types.
  */
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
-  _self.heatMapMode = _self.mainGrid.toggleHeatmap();
+  _self.setHeatmap(!_self.heatMapMode);
+};
+
+OncoGrid.prototype.setGridLines = function(active) {
+  var _self = this;
+
+  _self.drawGridLines = active;
+  _self.mainGrid.setGridLines(active);
 };
 
 OncoGrid.prototype.toggleGridLines = function() {
   var _self = this;
 
-  _self.drawGridLines = _self.mainGrid.toggleGridLines();
+  _self.setGridLines(!_self.drawGridLines);
+};
+
+OncoGrid.prototype.setCrosshair = function(active) {
+  var _self = this;
+
+  _self.crosshairMode = active;
+  _self.mainGrid.setCrosshair(active);
 };
 
 OncoGrid.prototype.toggleCrosshair = function() {
   var _self = this;
 
-  _self.crosshairMode = _self.mainGrid.toggleCrosshair();
+  _self.setCrosshair(!_self.crosshairMode);
 };
 
 /**
@@ -456,7 +480,9 @@ OncoGrid.prototype.destroy = function() {
 OncoGrid.prototype.reload = function() {
   var _self = this;
 
-  _self.destroy();
+  _self.charts.forEach(function (chart) {
+    chart.destroy();
+  });
   _self.initCharts(true);
   _self.render();
 };

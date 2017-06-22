@@ -763,12 +763,12 @@ MainGrid.prototype.getHeight = function (d) {
 };
 
 /**
- * Toggles the observation rects between heatmap and regular mode.
+ * set the observation rects between heatmap and regular mode.
  */
-MainGrid.prototype.toggleHeatmap = function () {
+MainGrid.prototype.setHeatmap = function (active) {
     var _self = this;
-
-    _self.heatMap = _self.heatMap !== true;
+    if (active === _self.heatMap) return _self.heatMap;
+    _self.heatMap = active;
 
     d3.selectAll('.' + _self.prefix + 'sortable-rect')
         .transition()
@@ -788,22 +788,22 @@ MainGrid.prototype.toggleHeatmap = function () {
     return _self.heatMap;
 };
 
-MainGrid.prototype.toggleGridLines = function () {
+MainGrid.prototype.setGridLines = function (active) {
     var _self = this;
+    if(_self.drawGridLines === active) return _self.drawGridLines;
+    _self.drawGridLines = active;
 
-    _self.drawGridLines = !_self.drawGridLines;
-
-    _self.geneTrack.toggleGridLines();
-    _self.donorTrack.toggleGridLines();
+    _self.geneTrack.setGridLines(_self.drawGridLines);
+    _self.donorTrack.setGridLines(_self.drawGridLines);
 
     _self.computeCoordinates();
 
     return _self.drawGridLines;
 };
 
-MainGrid.prototype.toggleCrosshair = function () {
+MainGrid.prototype.setCrosshair = function (active) {
     var _self = this;
-    _self.crosshair = !_self.crosshair;
+    _self.crosshair = active;
 
     return _self.crosshair;
 };

@@ -125,8 +125,11 @@ for styling and the opacity function passed in for the tracks.
 * `removeDonors(function)` - Removes all donors that evaluate true for the passed function.
 * `removeGenes(function)` - Removes all genes that evaluate true for the passed function.
 * `toggleHeatmap()` - Toggle between heatMap and regular mode.
+* `setHeatmap()` - Set heatMap mode, accepts `true` or `false`.
 * `toggleGridLines()` - Toggle the gridlines that define the cells
+* `setGridLines()` - Set the gridlines, accepts `true` or `false`.
 * `toggleCrosshair()` - Toggles the crosshair & resizing mode.
+* `setCrosshair()` - Set the crosshair, accepts `true` or `false`.
 * `sortDonors(function)` - Sorts the donors and updates rendering based on the comparator function passed in.
 * `sortGenes(function)` - Sorts the genes by provided comparator and then re-scores and re-renders the grid.
 * `destroy()` - cleanup function to be called to remove grid and watchers.

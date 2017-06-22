@@ -176,12 +176,12 @@ OncoTrack.prototype.update = function (domain) {
   }
 };
 
-OncoTrack.prototype.toggleGridLines = function () {
+OncoTrack.prototype.setGridLines = function (active) {
   var _self = this;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.toggleGridLines();
+    g.setGridLines(active);
   }
 };
 

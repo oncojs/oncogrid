@@ -360,9 +360,10 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
     }
 };
 
-OncoTrackGroup.prototype.toggleGridLines = function () {
+OncoTrackGroup.prototype.setGridLines = function (active) {
     var _self = this;
-    _self.drawGridLines = !_self.drawGridLines;
+    if(_self.drawGridLines === active) return;
+    _self.drawGridLines = active;
     _self.computeCoordinates();
 };
 
