@@ -218,16 +218,29 @@ OncoTrackGroup.prototype.update = function(domain) {
     if (_self.domain.length !== _self.numDomain) {
         _self.numDomain = _self.domain.length;
         _self.cellWidth = _self.width / _self.numDomain;
-
-        _self.refreshData();
-
-        _self.computeCoordinates();
     }
+
+    var map = {};
+    for(var i = 0; i < domain.length; i += 1) {
+        map[domain[i].id] = i;
+    }
+
+    var trackData = [];
+    for (var i = 0; i < _self.trackData.length; i += 1) {
+        var data = _self.trackData[i];
+        var domainIndex = map[data.id];
+        if(domainIndex || domainIndex === 0) {
+            data.domainIndex = domainIndex;
+            trackData.push(data);
+        }
+    }
+    _self.trackData = trackData;
+
+    _self.computeCoordinates();
 
     _self.container.selectAll('.' + _self.prefix + 'track-data')
         .data(_self.trackData)
-        .transition()
-        .attr('x', function(d, i) {
+        .attr('x', function(d) {
             var domain = _self.domain[d.domainIndex];
             return _self.rotated ? domain.y : domain.x;
         })
