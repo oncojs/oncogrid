@@ -126,6 +126,7 @@ OncoTrackGroup.prototype.refreshData = function () {
             _self.trackData.push({
                 id: domain.id,
                 displayId: _self.rotated ? domain.symbol : domain.id,
+                domainIndex: i,
                 value: value,
                 displayValue: isNullSentinel ? 'Not Verified' : value,
                 notNullSentinel: !isNullSentinel,
@@ -177,17 +178,14 @@ OncoTrackGroup.prototype.init = function (container) {
 /**
  * Renders the track group. Takes the x axis range, and the div for tooltips.
  */
-OncoTrackGroup.prototype.render = function (x, div) {
+OncoTrackGroup.prototype.render = function (div) {
     var _self = this;
     _self.rendered = true;
-    _self.x = x;
     _self.div = div;
     _self.computeCoordinates();
 
     _self.cellWidth = _self.width / _self.domain.length;
-
     _self.renderData();
-
     _self.legend
         .on('mouseover', function () {
             var coordinates = d3.mouse(_self.wrapper.node());
@@ -212,33 +210,51 @@ OncoTrackGroup.prototype.render = function (x, div) {
 /**
  * Updates the track group rendering based on the given domain and range for axis.
  */
-OncoTrackGroup.prototype.update = function(domain, x) {
+OncoTrackGroup.prototype.update = function(domain) {
     var _self = this;
 
     _self.domain = domain;
-    _self.x = x;
 
     if (_self.domain.length !== _self.numDomain) {
         _self.numDomain = _self.domain.length;
         _self.cellWidth = _self.width / _self.numDomain;
-        _self.computeCoordinates();
     }
 
-    _self.container.selectAll('.' + _self.prefix + 'track-data')
-        .transition()
-        .attr('x', function (d) { return _self.getX(d); })
-        .attr('width', _self.cellWidth);
+    var map = {};
+    for(var i = 0; i < domain.length; i += 1) {
+        map[domain[i].id] = i;
+    }
 
+    var trackData = [];
+    for (var i = 0; i < _self.trackData.length; i += 1) {
+        var data = _self.trackData[i];
+        var domainIndex = map[data.id];
+        if(domainIndex || domainIndex === 0) {
+            data.domainIndex = domainIndex;
+            trackData.push(data);
+        }
+    }
+    _self.trackData = trackData;
+
+    _self.computeCoordinates();
+
+    _self.container.selectAll('.' + _self.prefix + 'track-data')
+        .data(_self.trackData)
+        .attr('x', function(d) {
+            var domain = _self.domain[d.domainIndex];
+            return _self.rotated ? domain.y : domain.x;
+        })
+        .attr('data-track-data-index', function(d, i) { return i; })
+        .attr('width', _self.cellWidth);
 };
 
 /**
  * Resizes to the given width.
  */
-OncoTrackGroup.prototype.resize = function (width, x) {
+OncoTrackGroup.prototype.resize = function (width) {
     var _self = this;
 
     _self.width = width;
-    _self.x = x;
     _self.height = _self.cellHeight * _self.length;
     if(_self.collapsedTracks.length) _self.totalHeight = _self.height + _self.cellHeight;
 
@@ -267,19 +283,22 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
         .rangeBands([0, _self.height]);
 
     // append columns
-    if (typeof _self.column !== 'undefined') {
+    if (_self.column) {
         _self.column.remove();
     }
 
-    _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
-        .data(_self.domain)
-        .enter().append('g')
-        .attr('class', _self.prefix + 'column')
-        .attr('donor', function (d) { return d.id; })
-        .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
     if (_self.drawGridLines) {
-        _self.column.append('line')
+        _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
+            .data(_self.domain)
+            .enter()
+            .append('line')
+            .attr('class', _self.prefix + 'column')
+            .attr('donor', function (d) { return d.id; })
+            .attr('transform', function (d, i) {
+                return 'translate(' + (_self.rotated ? d.y : d.x) + ')rotate(-90)';
+            })
+            .style('pointer-events', 'none')
             .attr('x1', -_self.height);
     }
 
@@ -296,6 +315,7 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
 
     if (_self.drawGridLines) {
         _self.row.append('line')
+            .style('pointer-events', 'none')
             .attr('x2', _self.width);
     }
 
@@ -356,56 +376,41 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
     }
 };
 
-OncoTrackGroup.prototype.getX = function (obj) {
+OncoTrackGroup.prototype.setGridLines = function (active) {
     var _self = this;
-
-    var index = _self.domain.map(function (d) {
-        return d.id;
-    });
-
-    return _self.x(index.indexOf(obj.id));
-};
-
-OncoTrackGroup.prototype.getY = function (obj) {
-    var _self = this;
-
-    var index = _self.tracks.map(function (d) {
-        return d.fieldName;
-    });
-
-    return _self.y(index.indexOf(obj.fieldName));
-};
-
-OncoTrackGroup.prototype.toggleGridLines = function () {
-    var _self = this;
-    _self.drawGridLines = !_self.drawGridLines;
+    if(_self.drawGridLines === active) return;
+    _self.drawGridLines = active;
     _self.computeCoordinates();
 };
 
-OncoTrackGroup.prototype.renderData = function(x, div) {
+OncoTrackGroup.prototype.renderData = function() {
     var _self = this;
 
     var selection = _self.container.selectAll('.' + _self.prefix + 'track-data')
         .data(_self.trackData);
 
     selection.enter()
-        .append('rect')
+        .append('rect');
 
-    selection
-        .attr('x', function (d) { return _self.getX(d); })
-        .attr('y', function (d) { return _self.getY(d); })
-        .attr('width', _self.cellWidth)
-        .attr('height', _self.cellHeight)
-        .attr('fill', _self.fillFunc)
-        .attr('opacity', _self.opacityFunc)
-        .attr('class', function (d) {
-            return _self.prefix + 'track-data ' + 
-                _self.prefix + 'track-' + d.fieldName + ' ' +
-                _self.prefix + 'track-' + d.value + ' ' + 
-                _self.prefix + d.id + '-cell';
+
+    var yIndexLookup = {};
+    for(var i = 0; i < _self.tracks.length; i += 1) {
+        yIndexLookup[_self.tracks[i].fieldName] = i;
+    }
+
+
+    _self.container
+        .on('click', function (d) {
+            var target = d3.event.target;
+            var d = _self.trackData[target.dataset.trackDataIndex];
+            if (!d) return;
+            _self.clickFunc(d);
         })
-        .on('click', function (d) { _self.clickFunc(d); })
-        .on('mouseover', function (d) {
+        .on('mouseover', function () {
+            var target = d3.event.target;
+            var d = _self.trackData[target.dataset.trackDataIndex];
+            if (!d) return;
+
             var coordinates = d3.mouse(_self.wrapper.node());
 
             _self.div.transition()
@@ -421,6 +426,26 @@ OncoTrackGroup.prototype.renderData = function(x, div) {
                 .duration(500)
                 .style('opacity', 0);
         });
+
+
+    selection
+        .attr('data-track-data-index', function(d, i) { return i; })
+        .attr('x', function(d) { 
+            var domain = _self.domain[d.domainIndex];
+            return _self.rotated ? domain.y : domain.x;
+         })
+        .attr('y', function(d) { return _self.y(yIndexLookup[d.fieldName]); })
+        .attr('width', _self.cellWidth)
+        .attr('height', _self.cellHeight)
+        .attr('fill', _self.fillFunc)
+        .attr('opacity', _self.opacityFunc)
+        .attr('class', function (d) {
+            return _self.prefix + 'track-data ' + 
+                _self.prefix + 'track-' + d.fieldName + ' ' +
+                _self.prefix + 'track-' + d.value + ' ' + 
+                _self.prefix + d.id + '-cell';
+        });
+
 
     selection.exit().remove();
 };

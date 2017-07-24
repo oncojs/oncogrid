@@ -14326,9 +14326,23 @@ function hasOwnProperty(obj, prop) {
 'use strict';
 
 var d3 = require('d3');
-var OncoHistogram;
 
-OncoHistogram = function (params, s, rotated) {
+/**
+ * Want to find the maximum value so we can label the axis and scale the bars accordingly.
+ * No need to make this function public.
+ * @returns {number}
+ */
+function getLargestCount(domain) {
+    var retVal = 1;
+
+    for (var i = 0; i < domain.length; i++) {
+        retVal = Math.max(retVal, domain[i].count);
+    }
+
+    return retVal;
+}
+
+var OncoHistogram = function (params, s, rotated) {
     var _self = this;
 
     var histogramBorderPadding = params.histogramBorderPadding || {};
@@ -14361,28 +14375,12 @@ OncoHistogram = function (params, s, rotated) {
     _self.wrapper = d3.select(params.wrapper || 'body');
 };
 
-OncoHistogram.prototype.render = function (x, div) {
+OncoHistogram.prototype.render = function (div) {
     var _self = this;
-    _self.x = x;
     _self.div = div;
 
-    /**
-     * Want to find the maximum value so we can label the axis and scale the bars accordingly.
-     * No need to make this function public.
-     * @returns {number}
-     */
-    function getLargestCount() {
-        var retVal = 1;
-
-        for (var i = 0; i < _self.domain.length; i++) {
-            var donor = _self.domain[i];
-            retVal = Math.max(retVal, donor.count);
-        }
-
-        return retVal;
-    }
-
-    var topCount = getLargestCount();
+    var topCount = getLargestCount(_self.domain);
+    _self.topCount = topCount;
 
     _self.container = _self.svg.append('g')
         .attr('class', _self.prefix + 'histogram')
@@ -14408,11 +14406,11 @@ OncoHistogram.prototype.render = function (x, div) {
 
     _self.renderAxis(topCount);
 
-    _self.histogram.selectAll('rect')
-        .data(_self.domain)
-        .enter()
-        .append('rect')
-        .on('mouseover', function (d) {
+    _self.histogram
+        .on('mouseover', function () {
+            var target = d3.event.target;
+            var domain = _self.domain[target.dataset.domainIndex];
+            if(!domain) return;
             var coordinates = d3.mouse(_self.wrapper.node());
 
             _self.div.transition()
@@ -14421,9 +14419,9 @@ OncoHistogram.prototype.render = function (x, div) {
 
             _self.div.html( function() {
                 if (_self.rotated) {
-                    return  d.symbol + '<br/> Count:' + d.count + '<br/>';
+                    return  domain.symbol + '<br/> Count:' + domain.count + '<br/>';
                 } else {
-                    return d.id + '<br/> Count:' + d.count + '<br/>';
+                    return domain.id + '<br/> Count:' + domain.count + '<br/>';
                 }
             })
                 .style('left', (coordinates[0] + 10) + 'px')
@@ -14434,16 +14432,26 @@ OncoHistogram.prototype.render = function (x, div) {
                 .duration(500)
                 .style('opacity', 0);
         })
-        .on('click', _self.clickFunc)
+        .on('click', function() {
+            var target = d3.event.target;
+            var domain = _self.domain[target.dataset.domainIndex];
+            if(domain) _self.clickFunc(domain);
+        });
+
+    _self.histogram.selectAll('rect')
+        .data(_self.domain)
+        .enter()
+        .append('rect')
         .attr('class', function (d) {
             return _self.prefix + 'sortable-bar ' + _self.prefix + d.id + '-bar';
         })
+        .attr('data-domain-index', function(d, i) { return i; })
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {
             return _self.histogramHeight * d.count / topCount;
         })
         .attr('x', function (d) {
-            return _self.x(_self.getIndex(_self.domain, d.id));
+            return _self.rotated ? d.y : d.x;
         })
         .attr('y', function (d) {
             return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
@@ -14451,17 +14459,28 @@ OncoHistogram.prototype.render = function (x, div) {
         .attr('fill', '#1693C0');
 };
 
-OncoHistogram.prototype.update = function (domain, x) {
+OncoHistogram.prototype.update = function (domain) {
     var _self = this;
-    _self.x = x;
     _self.domain = domain;
     _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 
+    var topCount = _self.topCount || getLargestCount(_self.domain);
+
+    _self.updateAxis(topCount);
+
     _self.histogram.selectAll('rect')
+        .data(_self.domain)
+        .attr('data-domain-index', function(d, i) { return i; })
         .transition()
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
+        .attr('height', function (d) {
+            return _self.histogramHeight * d.count / topCount;
+        })
+        .attr('y', function (d) {
+            return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
+        })
         .attr('x', function (d) {
-            return _self.x(_self.getIndex(_self.domain, d.id));
+            return _self.rotated ? d.y : d.x;
         });
 };
 
@@ -14503,63 +14522,64 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
     var _self = this;
 
     _self.bottomAxis = _self.histogram.append('line')
-        .attr('class', _self.prefix + 'histogram-axis')
+        .attr('class', _self.prefix + 'histogram-axis');
+
+    _self.leftAxis = _self.histogram.append('line')
+        .attr('class', _self.prefix + 'histogram-axis');
+
+    _self.topText = _self.histogram.append('text')
+        .attr('class', _self.prefix + 'label-text-font')
+        .attr('dy', '.32em')
+        .attr('text-anchor', 'end');
+
+    _self.middleText = _self.histogram.append('text')
+        .attr('class', _self.prefix + 'label-text-font')
+        .attr('dy', '.32em')
+        .attr('text-anchor', 'end');
+
+    _self.leftLabel = _self.histogram.append('text')
+        .text("Mutation freq.")
+        .attr({
+            'class': _self.prefix + 'label-text-font',
+            'text-anchor': 'middle',
+            transform: 'rotate(-90)',
+        });
+
+    _self.updateAxis(topCount);
+};
+
+OncoHistogram.prototype.updateAxis = function (topCount) {
+    var _self = this;
+
+    _self.bottomAxis
         .attr('y1', _self.histogramHeight + _self.lineHeightOffset)
         .attr('y2', _self.histogramHeight + _self.lineHeightOffset)
         .attr('x2', _self.histogramWidth + _self.lineWidthOffset)
-
         .attr('transform', 'translate(-' + _self.lineHeightOffset + ',0)');
 
-    _self.histogram.append('line')
-        .attr('class', _self.prefix + 'histogram-axis')
+    _self.leftAxis
         .attr('y1', 0)
         .attr('y2', _self.histogramHeight + _self.lineHeightOffset)
         .attr('transform', 'translate(-' + _self.lineHeightOffset + ',0)');
 
-    _self.histogram.append('text')
-        .attr('class', _self.prefix + 'label-text-font')
+    _self.topText
         .attr('x', _self.centerText)
-        .attr('dy', '.32em')
-        .attr('text-anchor', 'end')
         .text(topCount);
 
     // Round to a nice round number and then adjust position accordingly
     var halfInt = parseInt(topCount / 2);
     var secondHeight = _self.histogramHeight - _self.histogramHeight / (topCount / halfInt);
 
-    _self.histogram.append('text')
-        .attr('class', _self.prefix + 'label-text-font')
+    _self.middleText
         .attr('x', _self.centerText)
         .attr('y', secondHeight)
-        .attr('dy', '.32em')
-        .attr('text-anchor', 'end')
         .text(halfInt);
 
-    var label = _self.histogram.append('text')
-        .attr('class', _self.prefix + 'label-text-font')
-        .attr('dy', '.32em')
-        .attr('text-anchor', 'end')
-        .text("Mutation freq.");
-
-    label.each(function() {
-        var width = this.getBBox().width;
-
-        label.attr('transform', 'rotate(-90)translate(' + (-(_self.histogramHeight - width)) + ',' + -(_self.lineHeightOffset + _self.padding) + ')');
-    });
-};
-
-/**
- * Helper the gets the index of the current id.
- */
-OncoHistogram.prototype.getIndex = function (list, id) {
-    for (var i = 0; i < list.length; i++) {
-        var obj = list[i];
-        if (obj.id === id) {
-            return i;
-        }
-    }
-
-    return -1;
+    _self.leftLabel
+        .attr({
+            x: -_self.histogramHeight / 2,
+            y: -_self.lineHeightOffset - _self.padding,
+        });
 };
 
 OncoHistogram.prototype.destroy = function() {
@@ -14595,14 +14615,17 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, updateCallback, resizeCallback, emit) {
+MainGrid = function (params, lookupTable, updateCallback, resizeCallback, emit, x, y) {
     var _self = this;
 
     _self.emit = emit;
+    _self.x = x;
+    _self.y = y;
     _self.lookupTable = lookupTable;
     _self.updateCallback = updateCallback;
     _self.resizeCallback = resizeCallback;
     _self.loadParams(params);
+    _self.createGeneMap();
     _self.init();
 
     // Histograms and tracks.
@@ -14718,6 +14741,8 @@ MainGrid.prototype.init = function () {
         .attr('class', 'background')
         .attr('width', _self.width)
         .attr('height', _self.height);
+
+    _self.gridContainer = _self.container.append('g');
 };
 
 /**
@@ -14730,45 +14755,52 @@ MainGrid.prototype.render = function () {
     _self.emit('render:mainGrid:start');
     _self.computeCoordinates();
 
+    _self.svg.on('mouseover', function (d) {
+        var target = d3.event.target;
+        var coord = d3.mouse(target);
+        var xIndex = _self.rangeToDomain(_self.x, coord[0]);
+        var yIndex = _self.rangeToDomain(_self.y, coord[1]);
+        var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
+        var obs = _self.observations[target.dataset.obsIndex];
 
+        if (!obs) return;
+
+        var html = Mustache.render(template || '', {
+            observation: obs,
+            donor: _self.donors[xIndex],
+            gene: _self.genes[yIndex]
+        });
+
+        if(html) {
+            var tooltipCoord = d3.mouse(_self.wrapper.node());
+
+            _self.div.transition()
+                .duration(200)
+                .style('opacity', 0.9);
+
+            _self.div.html(html)
+                .style('left', (tooltipCoord[0] + 15) + 'px')
+                .style('top', (tooltipCoord[1] + 30) + 'px');
+        }
+    });
+
+    _self.svg.on('mouseout', function() {
+        _self.div.transition()
+            .duration(500)
+            .style('opacity', 0);
+    });
+
+    _self.svg.on('click', function () {
+        if (_self.gridClick) {
+            var obs = _self.observations[d3.event.target.dataset.obsIndex];
+            if(!obs) return;
+            _self.gridClick(obs);
+        }
+    });
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
-        .on('mouseover', function (d) {
-            var coord = d3.mouse(this);
-
-            var xIndex = _self.rangeToDomain(_self.x, coord[0]);
-            var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-            var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
-
-            var html = Mustache.render(template || '', {
-                observation: d,
-                donor: _self.donors[xIndex],
-                gene: _self.genes[yIndex]
-            });
-
-            if(html) {
-                var tooltipCoord = d3.mouse(_self.wrapper.node());
-
-                _self.div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-
-                _self.div.html(html)
-                    .style('left', (tooltipCoord[0] + 15) + 'px')
-                    .style('top', (tooltipCoord[1] + 30) + 'px');
-            }
-        })
-        .on('mouseout', function () {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
-        })
-        .on('click', function (d) {
-            if (typeof _self.gridClick !== 'undefined') {
-                _self.gridClick(d);
-            }
-        })
+        .attr('data-obs-index', function(d, i) { return i; })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
@@ -14776,7 +14808,7 @@ MainGrid.prototype.render = function () {
             return d.consequence;
         })
         .attr('x', function (d) {
-            return _self.x(_self.getDonorIndex(_self.donors, d.donorId));
+            return _self.lookupTable[d.donorId].x;
         })
         .attr('y', function (d) {
             return _self.getY(d);
@@ -14796,19 +14828,19 @@ MainGrid.prototype.render = function () {
     _self.emit('render:mainGrid:end');
 
     _self.emit('render:donorHisogram:start');
-    _self.donorHistogram.render(_self.x, _self.div);
+    _self.donorHistogram.render(_self.div);
     _self.emit('render:donorHisogram:end');
 
     _self.emit('render:donorTrack:start');
-    _self.donorTrack.render(_self.x, _self.div);
+    _self.donorTrack.render(_self.div);
     _self.emit('render:donorTrack:end');
 
     _self.emit('render:geneHistogram:start');
-    _self.geneHistogram.render(_self.y, _self.div);
+    _self.geneHistogram.render(_self.div);
     _self.emit('render:geneHistogram:end');
 
     _self.emit('render:geneTrack:start');
-    _self.geneTrack.render(_self.y, _self.div);
+    _self.geneTrack.render(_self.div);
     _self.emit('render:geneTrack:end');
 
     _self.defineCrosshairBehaviour();
@@ -14819,8 +14851,13 @@ MainGrid.prototype.render = function () {
 /**
  * Render function ensures presentation matches the data. Called after modifying data.
  */
-MainGrid.prototype.update = function () {
+MainGrid.prototype.update = function (x, y) {
     var _self = this;
+
+    _self.createGeneMap();
+
+    _self.x = x;
+    _self.y = y;
 
     // Recalculate positions and dimensions of cells only on change in number of elements
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
@@ -14842,7 +14879,7 @@ MainGrid.prototype.update = function () {
     _self.row
         .transition()
         .attr('transform', function (d) {
-            return 'translate( 0, ' + _self.y(_self.genes.indexOf(d)) + ')';
+            return 'translate( 0, ' + d.y + ')';
         });
 
     _self.container.selectAll('.' + _self.prefix + 'sortable-rect')
@@ -14853,14 +14890,14 @@ MainGrid.prototype.update = function () {
             return _self.getY(d);
         })
         .attr('x', function (d) {
-            return _self.x(_self.getDonorIndex(_self.donors, d.donorId));
+            return _self.lookupTable[d.donorId].x;
         });
 
-    _self.donorHistogram.update(_self.donors, _self.x);
-    _self.donorTrack.update(_self.donors, _self.x);
+    _self.donorHistogram.update(_self.donors);
+    _self.donorTrack.update(_self.donors);
 
-    _self.geneHistogram.update(_self.genes, _self.y);
-    _self.geneTrack.update(_self.genes, _self.y);
+    _self.geneHistogram.update(_self.genes);
+    _self.geneTrack.update(_self.genes);
 };
 
 /**
@@ -14869,51 +14906,44 @@ MainGrid.prototype.update = function () {
 MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
-    _self.x = d3.scale.ordinal()
-        .domain(d3.range(_self.donors.length))
-        .rangeBands([0, _self.width]);
     _self.cellWidth = _self.width / _self.donors.length;
 
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
     }
 
-    _self.column = _self.container.selectAll('.' + _self.prefix + 'donor-column')
-        .data(_self.donors)
-        .enter().append('g')
-        .attr('class', _self.prefix + 'donor-column')
-        .attr('donor', function (d) {
-            return d.id;
-        })
-        .attr('transform', function (d, i) {
-            return 'translate(' + _self.x(i) + ')rotate(-90)';
-        });
-
     if (_self.drawGridLines) {
-        _self.column.append('line')
-            .attr('x1', -_self.height);
+        _self.column = _self.gridContainer.selectAll('.' + _self.prefix + 'donor-column')
+            .data(_self.donors)
+            .enter()
+            .append('line')
+            .attr({
+                x1: function(d) { return d.x; },
+                x2: function(d) { return d.x; },
+                y2: _self.height,
+                'class': _self.prefix + 'donor-column',
+            })
+            .style('pointer-events', 'none');
     }
 
-    _self.y = d3.scale.ordinal()
-        .domain(d3.range(_self.genes.length))
-        .rangeBands([0, _self.height]);
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (typeof _self.row !== 'undefined') {
         _self.row.remove();
     }
 
-    _self.row = _self.container.selectAll('.' + _self.prefix + 'gene-row')
+    _self.row = _self.gridContainer.selectAll('.' + _self.prefix + 'gene-row')
         .data(_self.genes)
         .enter().append('g')
         .attr('class', _self.prefix + 'gene-row')
-        .attr('transform', function (d, i) {
-            return 'translate(0,' + _self.y(i) + ')';
+        .attr('transform', function (d) {
+            return 'translate(0,' + d.y + ')';
         });
 
     if (_self.drawGridLines) {
         _self.row.append('line')
-            .attr('x2', _self.width);
+            .attr('x2', _self.width)
+            .style('pointer-events', 'none');
     }
 
     _self.row.append('text')
@@ -14938,9 +14968,13 @@ MainGrid.prototype.computeCoordinates = function () {
     _self.defineRowDragBehaviour();
 };
 
-MainGrid.prototype.resize = function(width, height) {
+MainGrid.prototype.resize = function(width, height, x, y) {
     var _self = this;
 
+    _self.createGeneMap();
+
+    _self.x = x;
+    _self.y = y;
     _self.width = width;
     _self.height = height;
 
@@ -14959,18 +14993,16 @@ MainGrid.prototype.resize = function(width, height) {
     _self.computeCoordinates();
 
     _self.donorHistogram.resize(width, _self.height);
-    _self.donorTrack.resize(width, _self.height, _self.x, _self.height);
+    _self.donorTrack.resize(width, _self.height, _self.height);
 
     _self.geneHistogram.resize(width, _self.height);
-    _self.geneTrack.resize(width, _self.height, _self.y, _self.width + _self.histogramHeight);
+    _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight);
 
     _self.resizeSvg();
-    _self.update();
+    _self.update(_self.x, _self.x);
 
-    var boundingBox = _self.container.node().getBBox();
-    _self.verticalCross.attr('y2', boundingBox.height);
-    _self.horizontalCross.attr('x2', boundingBox.width);
-
+    _self.verticalCross.attr('y2', _self.height + _self.donorTrack.height);
+    _self.horizontalCross.attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height);
 };
 
 MainGrid.prototype.resizeSvg = function() {
@@ -15151,11 +15183,6 @@ MainGrid.prototype.finishSelection = function() {
         _self.selectionRegion.remove();
         delete _self.selectionRegion;
 
-        // The order here is really import, first resize then update.
-        // Otherwise weird things happen with grids.
-        if (!_self.fullscreen) {
-            _self.resize(_self.inputWidth, _self.inputHeight);
-        }
         _self.updateCallback(true);
     }
 };
@@ -15255,23 +15282,29 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     });
 };
 
+MainGrid.prototype.createGeneMap = function() {
+    var _self = this;
+    var geneMap = {};
+    for (var i = 0; i < _self.genes.length; i += 1) {
+        var gene = _self.genes[i];
+        geneMap[gene.id] = gene;
+    }
+    _self.geneMap = geneMap;
+};
 /**
  * Function that determines the y position of a mutation within a cell
  */
 MainGrid.prototype.getY = function (d) {
     var _self = this;
 
-    var pseudoGenes = _self.genes.map(function (g) {
-        return g.id;
-    });
+    var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap === true) {
-        return _self.y(pseudoGenes.indexOf(d.geneId));
+    if (_self.heatMap) {
+        return y;
     }
 
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
-    return _self.y(pseudoGenes.indexOf(d.geneId)) + (_self.cellHeight / obsArray.length) *
-        (obsArray.indexOf(d.id));
+    return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
 
 /**
@@ -15322,12 +15355,12 @@ MainGrid.prototype.getHeight = function (d) {
 };
 
 /**
- * Toggles the observation rects between heatmap and regular mode.
+ * set the observation rects between heatmap and regular mode.
  */
-MainGrid.prototype.toggleHeatmap = function () {
+MainGrid.prototype.setHeatmap = function (active) {
     var _self = this;
-
-    _self.heatMap = _self.heatMap !== true;
+    if (active === _self.heatMap) return _self.heatMap;
+    _self.heatMap = active;
 
     d3.selectAll('.' + _self.prefix + 'sortable-rect')
         .transition()
@@ -15347,22 +15380,22 @@ MainGrid.prototype.toggleHeatmap = function () {
     return _self.heatMap;
 };
 
-MainGrid.prototype.toggleGridLines = function () {
+MainGrid.prototype.setGridLines = function (active) {
     var _self = this;
+    if(_self.drawGridLines === active) return _self.drawGridLines;
+    _self.drawGridLines = active;
 
-    _self.drawGridLines = !_self.drawGridLines;
-
-    _self.geneTrack.toggleGridLines();
-    _self.donorTrack.toggleGridLines();
+    _self.geneTrack.setGridLines(_self.drawGridLines);
+    _self.donorTrack.setGridLines(_self.drawGridLines);
 
     _self.computeCoordinates();
 
     return _self.drawGridLines;
 };
 
-MainGrid.prototype.toggleCrosshair = function () {
+MainGrid.prototype.setCrosshair = function (active) {
     var _self = this;
-    _self.crosshair = !_self.crosshair;
+    _self.crosshair = active;
 
     return _self.crosshair;
 };
@@ -15459,12 +15492,20 @@ var OncoGrid = function(params) {
   var _self = this;
   _self.params = params;
   _self.inputWidth = params.width || 500;
+  _self.width = _self.inputWidth;
+  _self.minCellHeight = params.minCellHeight || 10;
+  
   _self.inputHeight = params.height || 500;
+  _self.height = _self.inputHeight;
+  if (_self.height / params.genes.length < _self.minCellHeight) {
+      _self.height = params.genes.length * _self.minCellHeight;
+  }
+
   _self.prefix = params.prefix || 'og-';
 
   params.wrapper = '.' + _self.prefix + 'container';
 
-  d3.select(params.element || 'body')
+  _self.container = d3.select(params.element || 'body')
     .append('div')
     .attr('class', _self.prefix + 'container')
     .style('position', 'relative');
@@ -15479,7 +15520,7 @@ util.inherits(OncoGrid, EventEmitter);
 /**
  * Instantiate charts
  */
-OncoGrid.prototype.initCharts = function() {
+OncoGrid.prototype.initCharts = function(reloading) {
   var _self = this;
 
   _self.clonedParams = cloneDeep(_self.params);
@@ -15494,10 +15535,16 @@ OncoGrid.prototype.initCharts = function() {
   _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
+  _self.calculatePositions();
+  
+  if(reloading) {
+    _self.clonedParams.width = _self.width;
+    _self.clonedParams.height = _self.height;
+  }
 
   _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
-    _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
-  }, _self.emit.bind(_self));
+    _self.resize(_self.width, _self.height, _self.fullscreen);
+  }, _self.emit.bind(_self), _self.x, _self.y);
 
   _self.heatMapMode = _self.mainGrid.heatMap;
   _self.drawGridLines = _self.mainGrid.drawGridLines;
@@ -15505,6 +15552,35 @@ OncoGrid.prototype.initCharts = function() {
 
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
+};
+
+OncoGrid.prototype.calculatePositions = function () {
+  var _self = this;
+
+  var getX = d3.scale.ordinal()
+    .domain(d3.range(_self.donors.length))
+    .rangeBands([0, _self.width]);
+
+  for(var i = 0, donor, donorId, x; i < _self.donors.length; i += 1) {
+    donor = _self.donors[i];
+    donorId = donor.id;
+
+    x = getX(i);
+    donor.x = x;
+    _self.lookupTable[donorId] = _self.lookupTable[donorId] || {};
+    _self.lookupTable[donorId].x = x;
+  }
+
+  var getY = d3.scale.ordinal()
+    .domain(d3.range(_self.genes.length))
+    .rangeBands([0, _self.height]);
+
+  for(var i = 0; i < _self.genes.length; i += 1) {
+    _self.genes[i].y = getY(i);
+  }
+
+  _self.y = getY;
+  _self.x = getX;
 };
 
 /**
@@ -15564,8 +15640,10 @@ OncoGrid.prototype.update = function(scope) {
       _self.sortByScores();
     }
 
+    _self.calculatePositions();
+
     _self.charts.forEach(function (chart) {
-      chart.update();
+      chart.update(_self.x, _self.y);
     });
   };
 };
@@ -15578,9 +15656,18 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
 
   _self.fullscreen = fullscreen;
   _self.mainGrid.fullscreen = fullscreen;
+  _self.width = Number(width);
+  _self.height = Number(height);
+
+  if (_self.height / _self.genes.length < _self.minCellHeight) {
+    _self.height = _self.genes.length * _self.minCellHeight;
+  }
+
+  _self.calculatePositions();
+
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
-    chart.resize(Number(width), Number(height));
+    chart.resize(_self.width, _self.height, _self.x, _self.y);
   });
 };
 
@@ -15597,20 +15684,6 @@ OncoGrid.prototype.genesSortbyScores = function() {
   var _self = this;
 
   _self.genes.sort(_self.sortScore);
-};
-
-/**
- * Helper for getting donor index position
- */
-OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
-  for (var i = 0; i < donors.length; i++) {
-    var donor = donors[i];
-    if (donor.id === donorId) {
-      return i;
-    }
-  }
-
-  return -1;
 };
 
 /**
@@ -15653,7 +15726,7 @@ OncoGrid.prototype.removeDonors = function(func) {
 
   _self.computeGeneScoresAndCount();
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -15678,7 +15751,7 @@ OncoGrid.prototype.removeGenes = function(func) {
   }
 
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -15706,24 +15779,48 @@ OncoGrid.prototype.sortGenes= function(func) {
 };
 
 /**
+ * set oncogrid between heatmap mode and regular mode showing individual consequence types.
+ */
+OncoGrid.prototype.setHeatmap = function(active) {
+  var _self = this;
+
+  _self.heatMapMode = active;
+  _self.mainGrid.setHeatmap(active);
+};
+
+/**
  * Toggles oncogrid between heatmap mode and regular mode showing individual consequence types.
  */
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
-  _self.heatMapMode = _self.mainGrid.toggleHeatmap();
+  _self.setHeatmap(!_self.heatMapMode);
+};
+
+OncoGrid.prototype.setGridLines = function(active) {
+  var _self = this;
+
+  _self.drawGridLines = active;
+  _self.mainGrid.setGridLines(active);
 };
 
 OncoGrid.prototype.toggleGridLines = function() {
   var _self = this;
 
-  _self.drawGridLines = _self.mainGrid.toggleGridLines();
+  _self.setGridLines(!_self.drawGridLines);
+};
+
+OncoGrid.prototype.setCrosshair = function(active) {
+  var _self = this;
+
+  _self.crosshairMode = active;
+  _self.mainGrid.setCrosshair(active);
 };
 
 OncoGrid.prototype.toggleCrosshair = function() {
   var _self = this;
 
-  _self.crosshairMode = _self.mainGrid.toggleCrosshair();
+  _self.setCrosshair(!_self.crosshairMode);
 };
 
 /**
@@ -15843,13 +15940,16 @@ OncoGrid.prototype.destroy = function() {
   _self.charts.forEach(function (chart) {
     chart.destroy();
   });
+  _self.container.remove();
 };
 
 OncoGrid.prototype.reload = function() {
   var _self = this;
 
-  _self.destroy();
-  _self.initCharts();
+  _self.charts.forEach(function (chart) {
+    chart.destroy();
+  });
+  _self.initCharts(true);
   _self.render();
 };
 
@@ -15901,6 +16001,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
   _self.domain = (_self.rotated ? params.genes : params.donors) || [];
+
   _self.width = (_self.rotated ? params.height : params.width) || 500;
 
   _self.cellHeight = params.trackHeight || 10;
@@ -15958,7 +16059,7 @@ OncoTrack.prototype.init = function () {
   var _self = this;
   _self.container = _self.svg.append('g');
 
-  var labelHeight = 0;
+  var labelHeight = _self.rotated ? 16.5 : 0;
   _self.height = 0;
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
@@ -15966,12 +16067,6 @@ OncoTrack.prototype.init = function () {
         .attr('transform', 'translate(0,' + _self.height + ')');
     g.init(trackContainer);
     _self.height += Number(g.totalHeight) + _self.padding;
-
-    if(_self.rotated) {
-      g.label.each(function() {
-        labelHeight = Math.max(labelHeight, this.getBBox().height);
-      });
-    }
   }
 
   var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
@@ -15988,35 +16083,29 @@ OncoTrack.prototype.init = function () {
 };
 
 /** Calls render on all track groups */
-OncoTrack.prototype.render = function (x, div) {
+OncoTrack.prototype.render = function (div) {
   var _self = this;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.render(x, div);
+    g.render(div);
   }
 };
 
 /** Resizes all the track groups */
-OncoTrack.prototype.resize = function (width, height, x, offset) {
+OncoTrack.prototype.resize = function (width, height, offset) {
   var _self = this;
 
   _self.offset = offset || _self.offset;
   _self.width = _self.rotated ? height : width;
   _self.height = 0;
-  var labelHeight = 0;
+  var labelHeight = _self.rotated ? 16.5 : 0;
   
   for (var k = 0; k < _self.groups.length; k++) {
     var g = _self.groups[k];
     g.container.attr('transform', 'translate(0,' + _self.height + ')');
-    g.resize(_self.width, x);
+    g.resize(_self.width);
     _self.height += Number(g.totalHeight) + _self.padding;
-
-    if(_self.rotated) {
-      g.label.each(function() {
-        labelHeight = Math.max(labelHeight, this.getBBox().height);
-      });
-    }
   }
 
   var translateDown = _self.rotated ? -(_self.offset + _self.height) : (_self.padding + _self.offset);
@@ -16034,24 +16123,23 @@ OncoTrack.prototype.resize = function (width, height, x, offset) {
 /**
  * Updates the rendering of the tracks.
  */
-OncoTrack.prototype.update = function (domain, x) {
+OncoTrack.prototype.update = function (domain) {
   var _self = this;
 
   _self.domain = domain;
-  _self.x = x;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.update(domain, x);
+    g.update(domain);
   }
 };
 
-OncoTrack.prototype.toggleGridLines = function () {
+OncoTrack.prototype.setGridLines = function (active) {
   var _self = this;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.toggleGridLines();
+    g.setGridLines(active);
   }
 };
 
@@ -16185,6 +16273,7 @@ OncoTrackGroup.prototype.refreshData = function () {
             _self.trackData.push({
                 id: domain.id,
                 displayId: _self.rotated ? domain.symbol : domain.id,
+                domainIndex: i,
                 value: value,
                 displayValue: isNullSentinel ? 'Not Verified' : value,
                 notNullSentinel: !isNullSentinel,
@@ -16236,17 +16325,14 @@ OncoTrackGroup.prototype.init = function (container) {
 /**
  * Renders the track group. Takes the x axis range, and the div for tooltips.
  */
-OncoTrackGroup.prototype.render = function (x, div) {
+OncoTrackGroup.prototype.render = function (div) {
     var _self = this;
     _self.rendered = true;
-    _self.x = x;
     _self.div = div;
     _self.computeCoordinates();
 
     _self.cellWidth = _self.width / _self.domain.length;
-
     _self.renderData();
-
     _self.legend
         .on('mouseover', function () {
             var coordinates = d3.mouse(_self.wrapper.node());
@@ -16271,33 +16357,51 @@ OncoTrackGroup.prototype.render = function (x, div) {
 /**
  * Updates the track group rendering based on the given domain and range for axis.
  */
-OncoTrackGroup.prototype.update = function(domain, x) {
+OncoTrackGroup.prototype.update = function(domain) {
     var _self = this;
 
     _self.domain = domain;
-    _self.x = x;
 
     if (_self.domain.length !== _self.numDomain) {
         _self.numDomain = _self.domain.length;
         _self.cellWidth = _self.width / _self.numDomain;
-        _self.computeCoordinates();
     }
 
-    _self.container.selectAll('.' + _self.prefix + 'track-data')
-        .transition()
-        .attr('x', function (d) { return _self.getX(d); })
-        .attr('width', _self.cellWidth);
+    var map = {};
+    for(var i = 0; i < domain.length; i += 1) {
+        map[domain[i].id] = i;
+    }
 
+    var trackData = [];
+    for (var i = 0; i < _self.trackData.length; i += 1) {
+        var data = _self.trackData[i];
+        var domainIndex = map[data.id];
+        if(domainIndex || domainIndex === 0) {
+            data.domainIndex = domainIndex;
+            trackData.push(data);
+        }
+    }
+    _self.trackData = trackData;
+
+    _self.computeCoordinates();
+
+    _self.container.selectAll('.' + _self.prefix + 'track-data')
+        .data(_self.trackData)
+        .attr('x', function(d) {
+            var domain = _self.domain[d.domainIndex];
+            return _self.rotated ? domain.y : domain.x;
+        })
+        .attr('data-track-data-index', function(d, i) { return i; })
+        .attr('width', _self.cellWidth);
 };
 
 /**
  * Resizes to the given width.
  */
-OncoTrackGroup.prototype.resize = function (width, x) {
+OncoTrackGroup.prototype.resize = function (width) {
     var _self = this;
 
     _self.width = width;
-    _self.x = x;
     _self.height = _self.cellHeight * _self.length;
     if(_self.collapsedTracks.length) _self.totalHeight = _self.height + _self.cellHeight;
 
@@ -16326,19 +16430,22 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
         .rangeBands([0, _self.height]);
 
     // append columns
-    if (typeof _self.column !== 'undefined') {
+    if (_self.column) {
         _self.column.remove();
     }
 
-    _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
-        .data(_self.domain)
-        .enter().append('g')
-        .attr('class', _self.prefix + 'column')
-        .attr('donor', function (d) { return d.id; })
-        .attr('transform', function (d, i) { return 'translate(' + _self.x(i) + ')rotate(-90)'; });
 
     if (_self.drawGridLines) {
-        _self.column.append('line')
+        _self.column = _self.container.selectAll('.' + _self.prefix + 'column')
+            .data(_self.domain)
+            .enter()
+            .append('line')
+            .attr('class', _self.prefix + 'column')
+            .attr('donor', function (d) { return d.id; })
+            .attr('transform', function (d, i) {
+                return 'translate(' + (_self.rotated ? d.y : d.x) + ')rotate(-90)';
+            })
+            .style('pointer-events', 'none')
             .attr('x1', -_self.height);
     }
 
@@ -16355,6 +16462,7 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
 
     if (_self.drawGridLines) {
         _self.row.append('line')
+            .style('pointer-events', 'none')
             .attr('x2', _self.width);
     }
 
@@ -16415,56 +16523,41 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
     }
 };
 
-OncoTrackGroup.prototype.getX = function (obj) {
+OncoTrackGroup.prototype.setGridLines = function (active) {
     var _self = this;
-
-    var index = _self.domain.map(function (d) {
-        return d.id;
-    });
-
-    return _self.x(index.indexOf(obj.id));
-};
-
-OncoTrackGroup.prototype.getY = function (obj) {
-    var _self = this;
-
-    var index = _self.tracks.map(function (d) {
-        return d.fieldName;
-    });
-
-    return _self.y(index.indexOf(obj.fieldName));
-};
-
-OncoTrackGroup.prototype.toggleGridLines = function () {
-    var _self = this;
-    _self.drawGridLines = !_self.drawGridLines;
+    if(_self.drawGridLines === active) return;
+    _self.drawGridLines = active;
     _self.computeCoordinates();
 };
 
-OncoTrackGroup.prototype.renderData = function(x, div) {
+OncoTrackGroup.prototype.renderData = function() {
     var _self = this;
 
     var selection = _self.container.selectAll('.' + _self.prefix + 'track-data')
         .data(_self.trackData);
 
     selection.enter()
-        .append('rect')
+        .append('rect');
 
-    selection
-        .attr('x', function (d) { return _self.getX(d); })
-        .attr('y', function (d) { return _self.getY(d); })
-        .attr('width', _self.cellWidth)
-        .attr('height', _self.cellHeight)
-        .attr('fill', _self.fillFunc)
-        .attr('opacity', _self.opacityFunc)
-        .attr('class', function (d) {
-            return _self.prefix + 'track-data ' + 
-                _self.prefix + 'track-' + d.fieldName + ' ' +
-                _self.prefix + 'track-' + d.value + ' ' + 
-                _self.prefix + d.id + '-cell';
+
+    var yIndexLookup = {};
+    for(var i = 0; i < _self.tracks.length; i += 1) {
+        yIndexLookup[_self.tracks[i].fieldName] = i;
+    }
+
+
+    _self.container
+        .on('click', function (d) {
+            var target = d3.event.target;
+            var d = _self.trackData[target.dataset.trackDataIndex];
+            if (!d) return;
+            _self.clickFunc(d);
         })
-        .on('click', function (d) { _self.clickFunc(d); })
-        .on('mouseover', function (d) {
+        .on('mouseover', function () {
+            var target = d3.event.target;
+            var d = _self.trackData[target.dataset.trackDataIndex];
+            if (!d) return;
+
             var coordinates = d3.mouse(_self.wrapper.node());
 
             _self.div.transition()
@@ -16480,6 +16573,26 @@ OncoTrackGroup.prototype.renderData = function(x, div) {
                 .duration(500)
                 .style('opacity', 0);
         });
+
+
+    selection
+        .attr('data-track-data-index', function(d, i) { return i; })
+        .attr('x', function(d) { 
+            var domain = _self.domain[d.domainIndex];
+            return _self.rotated ? domain.y : domain.x;
+         })
+        .attr('y', function(d) { return _self.y(yIndexLookup[d.fieldName]); })
+        .attr('width', _self.cellWidth)
+        .attr('height', _self.cellHeight)
+        .attr('fill', _self.fillFunc)
+        .attr('opacity', _self.opacityFunc)
+        .attr('class', function (d) {
+            return _self.prefix + 'track-data ' + 
+                _self.prefix + 'track-' + d.fieldName + ' ' +
+                _self.prefix + 'track-' + d.value + ' ' + 
+                _self.prefix + d.id + '-cell';
+        });
+
 
     selection.exit().remove();
 };

@@ -26,12 +26,20 @@ var OncoGrid = function(params) {
   var _self = this;
   _self.params = params;
   _self.inputWidth = params.width || 500;
+  _self.width = _self.inputWidth;
+  _self.minCellHeight = params.minCellHeight || 10;
+  
   _self.inputHeight = params.height || 500;
+  _self.height = _self.inputHeight;
+  if (_self.height / params.genes.length < _self.minCellHeight) {
+      _self.height = params.genes.length * _self.minCellHeight;
+  }
+
   _self.prefix = params.prefix || 'og-';
 
   params.wrapper = '.' + _self.prefix + 'container';
 
-  d3.select(params.element || 'body')
+  _self.container = d3.select(params.element || 'body')
     .append('div')
     .attr('class', _self.prefix + 'container')
     .style('position', 'relative');
@@ -46,7 +54,7 @@ util.inherits(OncoGrid, EventEmitter);
 /**
  * Instantiate charts
  */
-OncoGrid.prototype.initCharts = function() {
+OncoGrid.prototype.initCharts = function(reloading) {
   var _self = this;
 
   _self.clonedParams = cloneDeep(_self.params);
@@ -61,10 +69,16 @@ OncoGrid.prototype.initCharts = function() {
   _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
+  _self.calculatePositions();
+  
+  if(reloading) {
+    _self.clonedParams.width = _self.width;
+    _self.clonedParams.height = _self.height;
+  }
 
   _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
-    _self.resize(_self.inputWidth, _self.inputHeight, _self.fullscreen);
-  }, _self.emit.bind(_self));
+    _self.resize(_self.width, _self.height, _self.fullscreen);
+  }, _self.emit.bind(_self), _self.x, _self.y);
 
   _self.heatMapMode = _self.mainGrid.heatMap;
   _self.drawGridLines = _self.mainGrid.drawGridLines;
@@ -72,6 +86,35 @@ OncoGrid.prototype.initCharts = function() {
 
   _self.charts = [];
   _self.charts.push(_self.mainGrid);
+};
+
+OncoGrid.prototype.calculatePositions = function () {
+  var _self = this;
+
+  var getX = d3.scale.ordinal()
+    .domain(d3.range(_self.donors.length))
+    .rangeBands([0, _self.width]);
+
+  for(var i = 0, donor, donorId, x; i < _self.donors.length; i += 1) {
+    donor = _self.donors[i];
+    donorId = donor.id;
+
+    x = getX(i);
+    donor.x = x;
+    _self.lookupTable[donorId] = _self.lookupTable[donorId] || {};
+    _self.lookupTable[donorId].x = x;
+  }
+
+  var getY = d3.scale.ordinal()
+    .domain(d3.range(_self.genes.length))
+    .rangeBands([0, _self.height]);
+
+  for(var i = 0; i < _self.genes.length; i += 1) {
+    _self.genes[i].y = getY(i);
+  }
+
+  _self.y = getY;
+  _self.x = getX;
 };
 
 /**
@@ -131,8 +174,10 @@ OncoGrid.prototype.update = function(scope) {
       _self.sortByScores();
     }
 
+    _self.calculatePositions();
+
     _self.charts.forEach(function (chart) {
-      chart.update();
+      chart.update(_self.x, _self.y);
     });
   };
 };
@@ -145,9 +190,18 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
 
   _self.fullscreen = fullscreen;
   _self.mainGrid.fullscreen = fullscreen;
+  _self.width = Number(width);
+  _self.height = Number(height);
+
+  if (_self.height / _self.genes.length < _self.minCellHeight) {
+    _self.height = _self.genes.length * _self.minCellHeight;
+  }
+
+  _self.calculatePositions();
+
   _self.charts.forEach(function (chart) {
     chart.fullscreen = fullscreen;
-    chart.resize(Number(width), Number(height));
+    chart.resize(_self.width, _self.height, _self.x, _self.y);
   });
 };
 
@@ -164,20 +218,6 @@ OncoGrid.prototype.genesSortbyScores = function() {
   var _self = this;
 
   _self.genes.sort(_self.sortScore);
-};
-
-/**
- * Helper for getting donor index position
- */
-OncoGrid.prototype.getDonorIndex = function(donors, donorId) {
-  for (var i = 0; i < donors.length; i++) {
-    var donor = donors[i];
-    if (donor.id === donorId) {
-      return i;
-    }
-  }
-
-  return -1;
 };
 
 /**
@@ -220,7 +260,7 @@ OncoGrid.prototype.removeDonors = function(func) {
 
   _self.computeGeneScoresAndCount();
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -245,7 +285,7 @@ OncoGrid.prototype.removeGenes = function(func) {
   }
 
   _self.update(_self)();
-  _self.resize(_self.inputWidth, _self.inputHeight, false);
+  _self.resize(_self.width, _self.height, false);
 };
 
 /**
@@ -273,24 +313,48 @@ OncoGrid.prototype.sortGenes= function(func) {
 };
 
 /**
+ * set oncogrid between heatmap mode and regular mode showing individual consequence types.
+ */
+OncoGrid.prototype.setHeatmap = function(active) {
+  var _self = this;
+
+  _self.heatMapMode = active;
+  _self.mainGrid.setHeatmap(active);
+};
+
+/**
  * Toggles oncogrid between heatmap mode and regular mode showing individual consequence types.
  */
 OncoGrid.prototype.toggleHeatmap = function() {
   var _self = this;
 
-  _self.heatMapMode = _self.mainGrid.toggleHeatmap();
+  _self.setHeatmap(!_self.heatMapMode);
+};
+
+OncoGrid.prototype.setGridLines = function(active) {
+  var _self = this;
+
+  _self.drawGridLines = active;
+  _self.mainGrid.setGridLines(active);
 };
 
 OncoGrid.prototype.toggleGridLines = function() {
   var _self = this;
 
-  _self.drawGridLines = _self.mainGrid.toggleGridLines();
+  _self.setGridLines(!_self.drawGridLines);
+};
+
+OncoGrid.prototype.setCrosshair = function(active) {
+  var _self = this;
+
+  _self.crosshairMode = active;
+  _self.mainGrid.setCrosshair(active);
 };
 
 OncoGrid.prototype.toggleCrosshair = function() {
   var _self = this;
 
-  _self.crosshairMode = _self.mainGrid.toggleCrosshair();
+  _self.setCrosshair(!_self.crosshairMode);
 };
 
 /**
@@ -410,13 +474,16 @@ OncoGrid.prototype.destroy = function() {
   _self.charts.forEach(function (chart) {
     chart.destroy();
   });
+  _self.container.remove();
 };
 
 OncoGrid.prototype.reload = function() {
   var _self = this;
 
-  _self.destroy();
-  _self.initCharts();
+  _self.charts.forEach(function (chart) {
+    chart.destroy();
+  });
+  _self.initCharts(true);
   _self.render();
 };
 
