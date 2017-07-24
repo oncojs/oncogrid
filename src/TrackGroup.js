@@ -125,7 +125,7 @@ OncoTrackGroup.prototype.refreshData = function () {
             var isNullSentinel = value === _self.nullSentinel;
             _self.trackData.push({
                 id: domain.id,
-                displayId: _self.rotated ? domain.symbol : domain.id,
+                displayId: domain.displayId || (_self.rotated ? domain.symbol : domain.id),
                 domainIndex: i,
                 value: value,
                 displayValue: isNullSentinel ? 'Not Verified' : value,

@@ -17,6 +17,7 @@
 'use strict';
 
 var d3 = require('d3');
+var Mustache = require('mustache');
 
 /**
  * Want to find the maximum value so we can label the axis and scale the bars accordingly.
@@ -64,6 +65,14 @@ var OncoHistogram = function (params, s, rotated) {
 
     _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
     _self.wrapper = d3.select(params.wrapper || 'body');
+
+    var templates = params.templates || {};
+    _self.templates = {
+        histogram: templates.histogram ||
+        '{{#domain.symbol}}{{domain.symbol}}{{/domain.symbol}}' +
+        '{{^domain.symbol}}{{domain.id}}{{/domain.symbol}}' +
+        '<br/> Count: {{domain.count}}<br/>',
+    };
 };
 
 OncoHistogram.prototype.render = function (div) {
@@ -108,13 +117,9 @@ OncoHistogram.prototype.render = function (div) {
                 .duration(200)
                 .style('opacity', 0.9);
 
-            _self.div.html( function() {
-                if (_self.rotated) {
-                    return  domain.symbol + '<br/> Count:' + domain.count + '<br/>';
-                } else {
-                    return domain.id + '<br/> Count:' + domain.count + '<br/>';
-                }
-            })
+            var html = Mustache.render(_self.templates.histogram, { domain: domain });
+
+            _self.div.html(html)
                 .style('left', (coordinates[0] + 10) + 'px')
                 .style('top', (coordinates[1] - 28) + 'px');
         })
