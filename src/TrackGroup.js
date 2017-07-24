@@ -244,6 +244,7 @@ OncoTrackGroup.prototype.update = function(domain) {
             var domain = _self.domain[d.domainIndex];
             return _self.rotated ? domain.y : domain.x;
         })
+        .attr('data-track-data-index', function(d, i) { return i; })
         .attr('width', _self.cellWidth);
 };
 
@@ -297,7 +298,8 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
             .attr('transform', function (d, i) {
                 return 'translate(' + (_self.rotated ? d.y : d.x) + ')rotate(-90)';
             })
-            .attr('x1', -_self.height);;
+            .style('pointer-events', 'none')
+            .attr('x1', -_self.height);
     }
 
     // append rows
@@ -313,6 +315,7 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
 
     if (_self.drawGridLines) {
         _self.row.append('line')
+            .style('pointer-events', 'none')
             .attr('x2', _self.width);
     }
 
