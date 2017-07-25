@@ -22,6 +22,7 @@ var OncoTrack;
 
 OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateCallback, offset, resizeCallback, isFullscreen) {
   var _self = this;
+  _self.emit = params.emit;
   _self.padding = params.trackPadding || 20;
   _self.offset = offset;
   _self.params = params;
@@ -35,10 +36,7 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
 
   _self.isFullscreen = isFullscreen;
 
-  _self.trackLegends = params.trackLegends || {};
   _self.trackLegendLabel = params.trackLegendLabel;
-
-  _self.clickFunc = _self.rotated ? params.geneClick : params.donorClick;
 
   _self.margin = params.margin || { top: 30, right: 15, bottom: 15, left: 80 };
 
@@ -74,13 +72,12 @@ OncoTrack.prototype.parseGroups = function () {
       _self.groupMap[group].addTrack(track);
     } else {
       var trackGroup = new OncoTrackGroup({
+        emit: _self.emit,
         cellHeight: _self.cellHeight,
         width: _self.width,
-        clickFunc: _self.clickFunc,
         grid: _self.drawGridLines,
         nullSentinel: _self.nullSentinel,
         domain: _self.domain,
-        trackLegend: _self.trackLegends[group] || '',
         trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
         addTrackFunc: _self.addTrackFunc,
@@ -125,12 +122,12 @@ OncoTrack.prototype.init = function () {
 };
 
 /** Calls render on all track groups */
-OncoTrack.prototype.render = function (div) {
+OncoTrack.prototype.render = function () {
   var _self = this;
 
   for (var i = 0; i < _self.groups.length; i++) {
     var g = _self.groups[i];
-    g.render(div);
+    g.render();
   }
 };
 

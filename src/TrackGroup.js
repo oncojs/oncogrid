@@ -18,13 +18,12 @@
 
 var d3 = require('d3');
 var _uniq = require('lodash.uniq');
-var Mustache = require('mustache');
 
 var OncoTrackGroup;
 
 OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateCallback, resizeCallback, isFullscreen) {
     var _self = this;
-
+    _self.emit = params.emit;
     _self.prefix = params.prefix || 'og-';
     _self.expandable = params.expandable;
     _self.name = name;
@@ -43,10 +42,8 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     _self.rotated = rotated;
     _self.updateCallback = updateCallback;
     _self.resizeCallback = resizeCallback;
-    _self.trackLegend = params.trackLegend;
     _self.trackLegendLabel = params.trackLegendLabel;
 
-    _self.clickFunc = params.clickFunc;
     _self.opacityFunc = opacityFunc;
     _self.fillFunc = fillFunc;
 
@@ -133,7 +130,6 @@ OncoTrackGroup.prototype.refreshData = function () {
                 displayName: track.name,
                 fieldName: track.fieldName,
                 type: track.type,
-                template: track.template || '{{displayId}}<br>{{displayName}}: {{displayValue}}',
             });
         }
     }
@@ -178,31 +174,21 @@ OncoTrackGroup.prototype.init = function (container) {
 /**
  * Renders the track group. Takes the x axis range, and the div for tooltips.
  */
-OncoTrackGroup.prototype.render = function (div) {
+OncoTrackGroup.prototype.render = function () {
     var _self = this;
     _self.rendered = true;
-    _self.div = div;
     _self.computeCoordinates();
 
     _self.cellWidth = _self.width / _self.domain.length;
     _self.renderData();
     _self.legend
         .on('mouseover', function () {
-            var coordinates = d3.mouse(_self.wrapper.node());
-
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-
-            _self.div
-                .html(function () {return _self.trackLegend;})
-                .style('left', (coordinates[0] + 15) + 'px')
-                .style('top', (coordinates[1] + 30) + 'px');
+            _self.emit('trackLegendMouseOver', {
+                group: _self.name
+            });
         })
         .on('mouseout', function() {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
+            _self.emit('trackLegendMouseOut');
         });
 
 };
@@ -404,27 +390,23 @@ OncoTrackGroup.prototype.renderData = function() {
             var target = d3.event.target;
             var d = _self.trackData[target.dataset.trackDataIndex];
             if (!d) return;
-            _self.clickFunc(d);
+            _self.emit('trackClick', {
+                domain: d,
+                type: _self.rotated ? 'gene' : 'donor',
+            });
         })
         .on('mouseover', function () {
             var target = d3.event.target;
             var d = _self.trackData[target.dataset.trackDataIndex];
             if (!d) return;
 
-            var coordinates = d3.mouse(_self.wrapper.node());
-
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-
-            _self.div.html(Mustache.render(d.template, d))
-                .style('left', (coordinates[0] + 15) + 'px')
-                .style('top', (coordinates[1] + 30) + 'px');
+            _self.emit('trackMouseOver', {
+                domain: d,
+                type: _self.rotated ? 'gene' : 'donor',
+            });
         })
         .on('mouseout', function () {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
+            _self.emit('trackMouseOut');
         });
 
 

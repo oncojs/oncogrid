@@ -10,10 +10,6 @@ var destroyTester = function (grid) {
     it('should have no more elements on screen', function () {
       expect(d3.select(element).selectAll('.og-maingrid-svg')[0]).is.empty;
     });
-
-    it('should have cleaned up hidden tooltips', function () {
-      expect(d3.select(element).selectAll('.og-tooltip-oncogrid')[0]).is.empty;
-    });
   });
 };
 

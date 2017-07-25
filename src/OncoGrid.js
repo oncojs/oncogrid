@@ -24,6 +24,7 @@ var util = require('util');
 
 var OncoGrid = function(params) {
   var _self = this;
+  params.emit = _self.emit.bind(this);
   _self.params = params;
   _self.inputWidth = params.width || 500;
   _self.width = _self.inputWidth;
@@ -78,7 +79,7 @@ OncoGrid.prototype.initCharts = function(reloading) {
 
   _self.mainGrid = new MainGrid(_self.clonedParams, _self.lookupTable, _self.update(_self), function() {
     _self.resize(_self.width, _self.height, _self.fullscreen);
-  }, _self.emit.bind(_self), _self.x, _self.y);
+  }, _self.x, _self.y);
 
   _self.heatMapMode = _self.mainGrid.heatMap;
   _self.drawGridLines = _self.mainGrid.drawGridLines;

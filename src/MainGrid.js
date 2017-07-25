@@ -16,17 +16,16 @@
  */
 'use strict';
 var d3 = require('d3');
-var Mustache = require('mustache');
 
 var OncoHistogram = require('./Histogram');
 var OncoTrack = require('./Track');
 
 var MainGrid;
 
-MainGrid = function (params, lookupTable, updateCallback, resizeCallback, emit, x, y) {
+MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) {
     var _self = this;
 
-    _self.emit = emit;
+    _self.emit = params.emit;
     _self.x = x;
     _self.y = y;
     _self.lookupTable = lookupTable;
@@ -108,17 +107,6 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.drawGridLines = params.grid || false;
     _self.crosshair = false;
-
-    _self.gridClick = params.gridClick;
-    var templates = params.templates || {};
-    _self.templates = {
-        mainGrid: templates.mainGrid || '{{#observation}}' +
-                '{{observation.id}}<br>{{observation.geneSymbol}}<br>' +
-                '{{observation.donorId}}<br>{{observation.consequence}}<br>{{/observation}}',
-
-        mainGridCrosshair: templates.mainGridCrosshair || '{{#donor}}Donor: {{donor.id}}<br>{{/donor}}' +
-                '{{#gene}}Gene: {{gene.symbol}}<br>{{/gene}}' + '{{#obs}}Mutations: {{obs}}<br>{{/obs}}'
-    };
 };
 
 /**
@@ -126,10 +114,6 @@ MainGrid.prototype.loadParams = function (params) {
  */
 MainGrid.prototype.init = function () {
     var _self = this;
-
-    _self.div = _self.wrapper.append('div')
-        .attr('class', _self.prefix + 'tooltip-oncogrid')
-        .style('opacity', 0);
 
     _self.canvas = _self.wrapper.append('canvas') // forces size of container to prevent default height in IE
         .attr('class', _self.prefix + 'canvas');
@@ -168,42 +152,24 @@ MainGrid.prototype.render = function () {
         var coord = d3.mouse(target);
         var xIndex = _self.rangeToDomain(_self.x, coord[0]);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-        var template = _self.crosshair ? _self.templates.mainGridCrosshair : _self.templates.mainGrid;
         var obs = _self.observations[target.dataset.obsIndex];
 
-        if (!obs) return;
-
-        var html = Mustache.render(template || '', {
+        if (!obs || _self.crosshair) return;
+        _self.emit('gridMouseOver', {
             observation: obs,
             donor: _self.donors[xIndex],
-            gene: _self.genes[yIndex]
+            gene: _self.genes[yIndex],
         });
-
-        if(html) {
-            var tooltipCoord = d3.mouse(_self.wrapper.node());
-
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-
-            _self.div.html(html)
-                .style('left', (tooltipCoord[0] + 15) + 'px')
-                .style('top', (tooltipCoord[1] + 30) + 'px');
-        }
     });
 
     _self.svg.on('mouseout', function() {
-        _self.div.transition()
-            .duration(500)
-            .style('opacity', 0);
+        _self.emit('gridMouseOut');
     });
 
     _self.svg.on('click', function () {
-        if (_self.gridClick) {
-            var obs = _self.observations[d3.event.target.dataset.obsIndex];
-            if(!obs) return;
-            _self.gridClick(obs);
-        }
+        var observation = _self.observations[d3.event.target.dataset.obsIndex];
+        if(!observation) return;
+        _self.emit('gridClick', { observation: observation });
     });
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
@@ -236,19 +202,19 @@ MainGrid.prototype.render = function () {
     _self.emit('render:mainGrid:end');
 
     _self.emit('render:donorHisogram:start');
-    _self.donorHistogram.render(_self.div);
+    _self.donorHistogram.render();
     _self.emit('render:donorHisogram:end');
 
     _self.emit('render:donorTrack:start');
-    _self.donorTrack.render(_self.div);
+    _self.donorTrack.render();
     _self.emit('render:donorTrack:end');
 
     _self.emit('render:geneHistogram:start');
-    _self.geneHistogram.render(_self.div);
+    _self.geneHistogram.render();
     _self.emit('render:geneHistogram:end');
 
     _self.emit('render:geneTrack:start');
-    _self.geneTrack.render(_self.div);
+    _self.geneTrack.render();
     _self.emit('render:geneTrack:end');
 
     _self.defineCrosshairBehaviour();
@@ -458,25 +424,14 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
             var donor = _self.donors[xIndex];
             var gene = _self.genes[yIndex];
-            var obsArray = _self.nullableObsLookup(donor, gene);
 
-            var html = Mustache.render(_self.templates.mainGridCrosshair, {
+            if(!donor || !gene) return;
+
+            _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-                obs: obsArray
+                obs: _self.nullableObsLookup(donor, gene),
             });
-
-            if(html) {
-                var tooltipCoord = d3.mouse(_self.wrapper.node());
-
-                _self.div.transition()
-                    .duration(200)
-                    .style('opacity', 0.9);
-
-                _self.div.html(html)
-                    .style('left', (tooltipCoord[0] + 15) + 'px')
-                    .style('top', (tooltipCoord[1] + 30) + 'px');
-            }
         }
     };
 
@@ -502,6 +457,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             if (_self.crosshair) {
                 _self.verticalCross.attr('opacity', 0);
                 _self.horizontalCross.attr('opacity', 0);
+                _self.emit('gridCrosshairMouseOut');
             }
         })
         .on('mouseup', function() {_self.finishSelection();});
@@ -866,7 +822,6 @@ MainGrid.prototype.destroy = function () {
 
     _self.wrapper.select('.' + _self.prefix + 'maingrid-svg').remove();
     _self.wrapper.select('.' + _self.prefix + 'canvas').remove();
-    _self.wrapper.select('.' + _self.prefix + 'tooltip-oncogrid').remove();
 };
 
 module.exports = MainGrid;
