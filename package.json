@@ -1,7 +1,7 @@
 {
   "name": "oncogrid",
   "description": "OncoGrid Visualization for ICGC",
-  "version": "1.4.6",
+  "version": "2.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
