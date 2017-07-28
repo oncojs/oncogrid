@@ -27,7 +27,6 @@
     "eventemitter3": "^2.0.3",
     "lodash.clonedeep": "^4.5.0",
     "lodash.uniq": "^4.5.0",
-    "lodash.values": "^4.3.0",
-    "mustache": "^2.2.1"
+    "lodash.values": "^4.3.0"
   }
 }

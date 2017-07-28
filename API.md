@@ -53,15 +53,11 @@ optional configuration. The full description of the `params` object is as follow
   * `donorOpacityFunc` - `function` - Function describing how to compute the opacity of the a donor track cell.
   * `geneTracks` - `Array` - An array of objects describing the tracks to be displayed for genes.
   * `geneOpacityFunc` - `function` - Function describing how to compute the opacity of the a gene track cell.
-  * `gridClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the main grid.
-  * `donorClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the donor track grid.
-  * `geneClick` - `function` - Function for the intended behaviour triggered by clicking on a cell in the gene track grid.
   * `margin` - `object` - Object holding the settings for the margins: `Default: { top: 30, right: 100, bottom: 15, left: 80 }`
   * `heatMap` - `bool` - If true, initial render will be in heatMap mode.
   * `donorFillFunc` - `function` - Function to determine cell fill color for donor track data.
   * `geneFillFunc` - `function` - Function to determine cell fill color for gene track data.
   * `colorMap` - `object` - A mapping from consequence type to colour.
-  * `templates` - `object` - An array of string to use as templates. Supported fields are `mainGridCrosshair` and `mainGrid`.
   * `histogramBorderPadding` - `object` - Object holding the settings for the space between border and histogram: `Default: { bottom: 5, left: 10 }`
   * `scaleToFit` - `bool` - If true, the grid will scale to fit parent container: `Default: true`
   * `leftTextWidth` - `number` - The width to set for the text on the left of the grid(should be set to the max text length): `Default: 80`
@@ -133,3 +129,44 @@ for styling and the opacity function passed in for the tracks.
 * `sortDonors(function)` - Sorts the donors and updates rendering based on the comparator function passed in.
 * `sortGenes(function)` - Sorts the genes by provided comparator and then re-scores and re-renders the grid.
 * `destroy()` - cleanup function to be called to remove grid and watchers.
+
+## Event Listeners
+Oncgrid extends [eventemitter3](https://www.npmjs.com/package/eventemitter3)
+
+### Usage
+```
+var grid = new OncoGrid(opts);
+grid.on('gridClick', function(data) {
+  ...
+})
+```
+
+### Available events
+#### Mouse events
+* `histogramClick` - on histogram click. callback argument `{ roated, domain }`
+* `histogramMouseOver` - on histogram mouse over. callback argument `{ domain }`
+* `histogramMouseOut` - on histogram mouse out.
+* `gridClick` - on grid click. callback argument `{ observation }`
+* `gridMouseOver` - on grid mouse over. callback argument `{ observation, donor, gene }`
+* `gridMouseOut` - on grid mouse out.
+* `gridCrosshairMouseOver` - on grid mouse over in cross hair mode. callback argument `{ donor, gene, obs }`
+* `gridCrosshairMouseOut` - on grid mouse out in cross hair mode.
+* `trackClick` - on track click. callback argument `{ domain, type }`
+* `trackMouseOver` - on track mouse over. callback argument `{ domain, type }`
+* `trackMouseOut` - on track mouse out.
+* `trackLegendMouseOver` - on track legend mouse over. callback argument `{ group }`
+* `trackLegendMouseOut` - on track legend mouse out.
+
+#### Timing events
+* `render:mainGrid:start`
+* `render:mainGrid:end`
+* `render:donorHisogram:start`
+* `render:donorHisogram:end`
+* `render:donorTrack:start`
+* `render:donorTrack:end`
+* `render:geneHistogram:start`
+* `render:geneHistogram:end`
+* `render:geneTrack:start`
+* `render:geneTrack:end`
+* `render:all:start`
+* `render:all:end`

@@ -17,7 +17,6 @@
 'use strict';
 
 var d3 = require('d3');
-var Mustache = require('mustache');
 
 /**
  * Want to find the maximum value so we can label the axis and scale the bars accordingly.
@@ -44,15 +43,13 @@ var OncoHistogram = function (params, s, rotated) {
     _self.centerText = -6;
 
     _self.prefix = params.prefix || 'og-';
-
+    _self.emit = params.emit;
     _self.observations = params.observations;
     _self.svg = s;
     _self.rotated = rotated || false;
 
     _self.domain = (_self.rotated ? params.genes : params.donors) || [];
     _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
-
-    _self.clickFunc = _self.rotated ? params.geneHistogramClick : params.donorHistogramClick;
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
@@ -65,19 +62,10 @@ var OncoHistogram = function (params, s, rotated) {
 
     _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
     _self.wrapper = d3.select(params.wrapper || 'body');
-
-    var templates = params.templates || {};
-    _self.templates = {
-        histogram: templates.histogram ||
-        '{{#domain.symbol}}{{domain.symbol}}{{/domain.symbol}}' +
-        '{{^domain.symbol}}{{domain.id}}{{/domain.symbol}}' +
-        '<br/> Count: {{domain.count}}<br/>',
-    };
 };
 
-OncoHistogram.prototype.render = function (div) {
+OncoHistogram.prototype.render = function () {
     var _self = this;
-    _self.div = div;
 
     var topCount = getLargestCount(_self.domain);
     _self.topCount = topCount;
@@ -111,27 +99,19 @@ OncoHistogram.prototype.render = function (div) {
             var target = d3.event.target;
             var domain = _self.domain[target.dataset.domainIndex];
             if(!domain) return;
-            var coordinates = d3.mouse(_self.wrapper.node());
-
-            _self.div.transition()
-                .duration(200)
-                .style('opacity', 0.9);
-
-            var html = Mustache.render(_self.templates.histogram, { domain: domain });
-
-            _self.div.html(html)
-                .style('left', (coordinates[0] + 10) + 'px')
-                .style('top', (coordinates[1] - 28) + 'px');
+            _self.emit('histogramMouseOver', { domain: domain });
         })
         .on('mouseout', function () {
-            _self.div.transition()
-                .duration(500)
-                .style('opacity', 0);
+            _self.emit('histogramMouseOut');
         })
         .on('click', function() {
             var target = d3.event.target;
             var domain = _self.domain[target.dataset.domainIndex];
-            if(domain) _self.clickFunc(domain);
+            if(!domain) return;
+            _self.emit('histogramClick', {
+                type: _self.rotated ? 'gene' : 'donor',
+                domain: domain,
+            });
         });
 
     _self.histogram.selectAll('rect')
