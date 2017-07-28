@@ -32,7 +32,6 @@ OncoTrack = function (params, s, rotated, tracks, opacityFunc, fillFunc, updateC
   _self.updateCallback = updateCallback;
   _self.resizeCallback = resizeCallback;
   _self.expandableGroups = params.expandableGroups || [];
-  _self.addTrackFunc = params.addTrackFunc;
 
   _self.isFullscreen = isFullscreen;
 
@@ -80,7 +79,6 @@ OncoTrack.prototype.parseGroups = function () {
         domain: _self.domain,
         trackLegendLabel: _self.trackLegendLabel,
         expandable: _self.expandableGroups.indexOf(group) >= 0,
-        addTrackFunc: _self.addTrackFunc,
         wrapper: _self.params.wrapper,
       }, group, _self.rotated, _self.opacityFunc, _self.fillFunc, _self.updateCallback, _self.resizeCallback, _self.isFullscreen);
       trackGroup.addTrack(track);

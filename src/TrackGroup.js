@@ -47,9 +47,6 @@ OncoTrackGroup = function (params, name, rotated, opacityFunc, fillFunc, updateC
     _self.opacityFunc = opacityFunc;
     _self.fillFunc = fillFunc;
 
-    _self.addTrackFunc = params.addTrackFunc || function(tracks, callback) {
-        callback(tracks[0]);
-    };
     _self.drawGridLines = params.grid || false;
     _self.domain = params.domain;
     _self.numDomain = _self.domain.length;
@@ -321,17 +318,18 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
             return _self.tracks[i].name;
         });
 
-    _self.container.selectAll('.' + _self.prefix + 'remove-track').remove();
     if(_self.expandable) {
          setTimeout(function() {
+             var removeTrackClass = _self.prefix + 'remove-track';
+             _self.container.selectAll('.' + removeTrackClass).remove();
+
             var textLengths = {};
             labels.each(function(d) {
                 textLengths[d.name] = this.getComputedTextLength();
             });
-
             _self.row
                 .append('text')
-                .attr('class', 'remove-track')
+                .attr('class', removeTrackClass)
                 .text('-')
                 .attr('y', _self.cellHeight / 2)
                 .attr('dy', '.32em')
@@ -352,7 +350,10 @@ OncoTrackGroup.prototype.computeCoordinates = function () {
                 .attr('dy', '.32em')
                 .attr('text-anchor', 'end')
                 .on('click', function() {
-                    _self.addTrackFunc(_self.collapsedTracks.slice(), _self.addTrack.bind(_self))
+                    _self.emit('addTrackClick', {
+                        hiddenTracks: _self.collapsedTracks.slice(),
+                        addTrack: _self.addTrack.bind(_self),
+                    });
                 });
         }
 

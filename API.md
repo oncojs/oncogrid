@@ -156,6 +156,7 @@ grid.on('gridClick', function(data) {
 * `trackMouseOut` - on track mouse out.
 * `trackLegendMouseOver` - on track legend mouse over. callback argument `{ group }`
 * `trackLegendMouseOut` - on track legend mouse out.
+* `addTrackClick` - on add track click. callback argument `{ hiddenTracks, addTrack }`
 
 #### Timing events
 * `render:mainGrid:start`
