@@ -67,6 +67,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
+    _self.cnvObservations = params.cnvObservations || [];
     _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
@@ -87,13 +88,21 @@ MainGrid.prototype.loadParams = function (params) {
       return _self.fullscreen;
     };
 
+    _self.getCNVCellWidth = function(){
+      if (_self.cnvObservations.length) {
+        return (_self.width / _self.donors.length)/2;
+      } else {
+        return _self.width / _self.donors.length;
+      }
+    }
+
     _self.width = params.width || 500;
     _self.height = params.height || 500;
 
     _self.inputWidth = params.width || 500;
     _self.inputHeight = params.height || 500;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight <  _self.minCellHeight) {
@@ -199,6 +208,35 @@ MainGrid.prototype.render = function () {
         })
         .attr('stroke-width', 2);
 
+    _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
+        .data(_self.cnvObservations).enter()
+        .append('rect')
+        .attr('data-cnv-obs-index', function(d, i) { return i; })
+        .attr('class', function (d) {
+            return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+        })
+        .attr('cons', function (d) {
+            return d.consequence;
+        })
+        .attr('x', function (d) {
+            var cellWidth = _self.getCNVCellWidth()
+            return _self.lookupTable[d.donorId].x + cellWidth;
+        })
+        .attr('y', function (d) {
+            return _self.getY(d);
+        })
+        .attr('width', _self.cellWidth)
+        .attr('height', function (d) {
+            return _self.getHeight(d);
+        })
+        .attr('fill', function (d) {
+            return _self.getColor(d);
+        })
+        .attr('opacity', function (d) {
+            return _self.getOpacity(d);
+        })
+        .attr('stroke-width', 2);
+
     _self.emit('render:mainGrid:end');
 
     _self.emit('render:donorHisogram:start');
@@ -237,7 +275,7 @@ MainGrid.prototype.update = function (x, y) {
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
         _self.numGenes = _self.genes.length;
-        _self.cellWidth = _self.width / _self.numDonors;
+        _self.cellWidth = _self.getCNVCellWidth();
         _self.cellHeight = _self.height / _self.numGenes;
         _self.computeCoordinates();
     } else {
@@ -280,7 +318,7 @@ MainGrid.prototype.update = function (x, y) {
 MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
 
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
@@ -352,7 +390,7 @@ MainGrid.prototype.resize = function(width, height, x, y) {
     _self.width = width;
     _self.height = height;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight <  _self.minCellHeight) {
@@ -398,7 +436,7 @@ MainGrid.prototype.resizeSvg = function() {
 
     _self.container
         .attr('transform', 'translate(' +
-            (_self.margin.left + _self.leftTextWidth) + ',' + 
+            (_self.margin.left + _self.leftTextWidth) + ',' +
             (_self.margin.top + _self.histogramHeight) +
         ')');
 };
@@ -663,10 +701,11 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap) {
+    if (_self.heatMap || d.score) {
         return y;
     }
 
+    // this currently causing y position to be one unit of height higher than it should be cnv observations
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
     return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
@@ -707,9 +746,10 @@ MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        if (_self.heatMap === true) {
+        if (_self.heatMap === true || d.score) {
             return _self.cellHeight;
         } else {
+          // this is where the cells get split, into sections, but the
             var count = _self.lookupTable[d.donorId][d.geneId].length;
             return _self.cellHeight / count;
         }
