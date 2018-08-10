@@ -677,7 +677,9 @@ MainGrid.prototype.getY = function (d) {
     var y = _self.geneMap[d.geneId].y;
 
     // what is a good way to differentiate between cnv and mutation to prevent incorrect y positioning?
-    if (_self.heatMap || !d.functional_impact) {
+    // if you map the data in one array, checking here for 'd.score' for example, will prevent every occurrence
+    // at this coordinate to return here
+    if (_self.heatMap) {
         return y;
     }
 

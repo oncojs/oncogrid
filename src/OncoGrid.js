@@ -156,9 +156,9 @@ OncoGrid.prototype.createLookupTable = function () {
   // show as one solid block anyway
   // although, that is how they show up anyway, but with a line...i'm not sure if that's a problem
 
-  var allObservations = _self.observations.concat(_self.cnvObservations)
-  for (var i = 0; i < allObservations.length; i++) {
-    var obs = allObservations[i];
+  // var allObservations = _self.observations.concat(_self.cnvObservations)
+  for (var i = 0; i < _self.observations.length; i++) {
+    var obs = _self.observations[i];
     var donorId = obs.donorId;
     var geneId = obs.geneId;
     // so here maybe you can group the obs together by consequence type
