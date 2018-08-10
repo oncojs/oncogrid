@@ -177,24 +177,6 @@ OncoGrid.prototype.createLookupTable = function () {
 
     _self.lookupTable = lookupTable;
   }
-  // for (var index = 0; index < allObservations.length; index++) {
-  //   var cnv = allObservations[index];
-  //   var cnvDonorId = cnv.donorId;
-  //   var cnvGeneId = cnv.geneId;
-  //
-  //   if (lookupTable.hasOwnProperty(cnvDonorId)) {
-  //     if (lookupTable[cnvDonorId].hasOwnProperty(cnvGeneId)) {
-  //       lookupTable[cnvDonorId][cnvGeneId].push(cnv.id);
-  //     } else {
-  //       lookupTable[cnvDonorId][cnvGeneId] = [cnv.id];
-  //     }
-  //   } else {
-  //     lookupTable[cnvDonorId] = {};
-  //     lookupTable[cnvDonorId][cnvGeneId] = [cnv.id];
-  //   }
-  //
-  //   _self.lookupTable = lookupTable;
-  // }
 };
 
 /**

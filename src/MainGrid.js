@@ -66,7 +66,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
-    _self.observations = params.observations || [];
+    _self.observations = params.observations.concat(params.cnvObservations) || [];
     _self.cnvObservations = params.cnvObservations || [];
     _self.wrapper = d3.select(params.wrapper || 'body');
 
@@ -191,36 +191,11 @@ MainGrid.prototype.render = function () {
             return d.consequence;
         })
         .attr('x', function (d) {
+            if (d.score) {
+              var cellWidth = _self.getCNVCellWidth()
+              return _self.lookupTable[d.donorId].x + cellWidth;
+            }
             return _self.lookupTable[d.donorId].x;
-        })
-        .attr('y', function (d) {
-            return _self.getY(d);
-        })
-        .attr('width', _self.cellWidth)
-        .attr('height', function (d) {
-            return _self.getHeight(d);
-        })
-        .attr('fill', function (d) {
-            return _self.getColor(d);
-        })
-        .attr('opacity', function (d) {
-            return _self.getOpacity(d);
-        })
-        .attr('stroke-width', 2);
-
-    _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-        .data(_self.cnvObservations).enter()
-        .append('rect')
-        .attr('data-cnv-obs-index', function(d, i) { return i; })
-        .attr('class', function (d) {
-            return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
-        })
-        .attr('cons', function (d) {
-            return d.consequence;
-        })
-        .attr('x', function (d) {
-            var cellWidth = _self.getCNVCellWidth()
-            return _self.lookupTable[d.donorId].x + cellWidth;
         })
         .attr('y', function (d) {
             return _self.getY(d);
@@ -701,11 +676,13 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap || d.score) {
+    // what is a good way to differentiate between cnv and mutation to prevent incorrect y positioning?
+    if (_self.heatMap || !d.functional_impact) {
         return y;
     }
 
     // this currently causing y position to be one unit of height higher than it should be cnv observations
+    // because there will only be one cnv per cell, no need to do calc for list of occurrences as below
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
     return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
