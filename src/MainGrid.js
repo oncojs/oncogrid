@@ -66,8 +66,9 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
-    _self.observations = params.observations.concat(params.cnvObservations) || [];
+    _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
+    _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
     _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
@@ -89,7 +90,7 @@ MainGrid.prototype.loadParams = function (params) {
     };
 
     _self.getCNVCellWidth = function(){
-      if (_self.cnvObservations.length) {
+      if (_self.cnvObservations.length && _self.ssmObservations.length) {
         return (_self.width / _self.donors.length)/2;
       } else {
         return _self.width / _self.donors.length;
@@ -159,6 +160,7 @@ MainGrid.prototype.render = function () {
     _self.svg.on('mouseover', function (d) {
         var target = d3.event.target;
         var coord = d3.mouse(target);
+
         var xIndex = _self.rangeToDomain(_self.x, coord[0]);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
         var obs = _self.observations[target.dataset.obsIndex];
@@ -180,6 +182,7 @@ MainGrid.prototype.render = function () {
         if(!observation) return;
         _self.emit('gridClick', { observation: observation });
     });
+
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
@@ -188,11 +191,15 @@ MainGrid.prototype.render = function () {
             return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
-            return d.consequence;
+          if (d.type === 'cnv') {
+            return d.cnv_change
+          }
+          return d.consequence;
         })
         .attr('x', function (d) {
-            if (d.score) {
-              var cellWidth = _self.getCNVCellWidth()
+          // move x position one half cell width if type is cnv and there are 2 sets of data
+            if (d.type === 'cnv' && _self.ssmObservations.length) {
+              var cellWidth = _self.getCNVCellWidth();
               return _self.lookupTable[d.donorId].x + cellWidth;
             }
             return _self.lookupTable[d.donorId].x;
@@ -676,15 +683,10 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    // what is a good way to differentiate between cnv and mutation to prevent incorrect y positioning?
-    // if you map the data in one array, checking here for 'd.score' for example, will prevent every occurrence
-    // at this coordinate to return here
-    if (_self.heatMap) {
+    if (_self.heatMap || d.type === 'cnv') {
         return y;
     }
 
-    // this currently causing y position to be one unit of height higher than it should be cnv observations
-    // because there will only be one cnv per cell, no need to do calc for list of occurrences as below
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
     return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
@@ -695,11 +697,12 @@ MainGrid.prototype.getY = function (d) {
  */
 MainGrid.prototype.getColor = function (d) {
     var _self = this;
+    var colorKey = d.type === 'cnv' ? 'cnv_change' : 'consequence';
 
     if (_self.heatMap === true) {
         return '#D33682';
     } else {
-        return _self.colorMap[d.consequence];
+        return _self.colorMap[d[colorKey]];
     }
 };
 
@@ -725,7 +728,7 @@ MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        if (_self.heatMap === true || d.score) {
+        if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
         } else {
           // this is where the cells get split, into sections, but the
