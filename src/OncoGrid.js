@@ -127,42 +127,10 @@ OncoGrid.prototype.createLookupTable = function () {
   var _self = this;
   var lookupTable = {};
 
-// do you need to look at cnvObservations here? or should you combine them in the ui so that you create a table from a single source?
-  // function arrayFromObject(obj) {
-  //   var arr = [];
-  //   for (var i in obj) {
-  //       arr.push(obj[i]);
-  //   }
-  //   return arr;
-  // }
-  //
-  // function groupBy(list, fn) {
-  //   var groups = {};
-  //   for (var i = 0; i < list.length; i++) {
-  //       var group = JSON.stringify(fn(list[i]));
-  //       if (group in groups) {
-  //           groups[group].push(list[i]);
-  //       } else {
-  //           groups[group] = [list[i]];
-  //       }
-  //   }
-  //   return arrayFromObject(groups);
-  // }
-  //
-  // var result = groupBy(_self.observations, function(item) {
-  //   return [item.geneId, item.donorId, item.consequence];
-  // });
-
-  // group them so they provide the same list as lookupMap was making before, but make sure they're grouped in order so the matching types
-  // show as one solid block anyway
-  // although, that is how they show up anyway, but with a line...i'm not sure if that's a problem
-
   for (var i = 0; i < _self.observations.length; i++) {
     var obs = _self.observations[i];
     var donorId = obs.donorId;
     var geneId = obs.geneId;
-    // so here maybe you can group the obs together by consequence type
-    // to prevent multiple of one type
 
     if (lookupTable.hasOwnProperty(donorId)) {
       if (lookupTable[donorId].hasOwnProperty(geneId)) {

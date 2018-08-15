@@ -34,7 +34,6 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.loadParams(params);
     _self.createGeneMap();
     _self.init();
-
     // Histograms and tracks.
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
@@ -687,6 +686,7 @@ MainGrid.prototype.getY = function (d) {
         return y;
     }
 
+    // need to filter out cnv to get correct ratios
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
     return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
@@ -731,7 +731,6 @@ MainGrid.prototype.getHeight = function (d) {
         if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
         } else {
-          // this is where the cells get split, into sections, but the
             var count = _self.lookupTable[d.donorId][d.geneId].length;
             return _self.cellHeight / count;
         }
