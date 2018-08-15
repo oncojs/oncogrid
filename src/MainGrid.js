@@ -196,12 +196,12 @@ MainGrid.prototype.render = function () {
           return d.consequence;
         })
         .attr('x', function (d) {
-          // move x position one half cell width if type is cnv and there are 2 sets of data
-            if (d.type === 'cnv' && _self.ssmObservations.length) {
-              var cellWidth = _self.getCNVCellWidth();
-              return _self.lookupTable[d.donorId].x + cellWidth;
-            }
-            return _self.lookupTable[d.donorId].x;
+            return _self.getCellX(d);
+            // if (d.type === 'cnv' && _self.ssmObservations.length) {
+            //   var cellWidth = _self.getCNVCellWidth();
+            //   return _self.lookupTable[d.donorId].x + cellWidth;
+            // }
+            // return _self.lookupTable[d.donorId].x;
         })
         .attr('y', function (d) {
             return _self.getY(d);
@@ -283,7 +283,7 @@ MainGrid.prototype.update = function (x, y) {
             return _self.getY(d);
         })
         .attr('x', function (d) {
-            return _self.lookupTable[d.donorId].x;
+            return _self.getCellX(d);
         });
 
     _self.donorHistogram.update(_self.donors);
@@ -690,6 +690,20 @@ MainGrid.prototype.getY = function (d) {
     var obsArray = _self.lookupTable[d.donorId][d.geneId];
     return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
 };
+
+/**
+ * Function that determines the x position of a mutation or cnv within a cell
+ * move x position one half cell width if type is cnv and there are 2 sets of data
+ */
+MainGrid.prototype.getCellX = function (d) {
+  var _self = this;
+
+  if (d.type === 'cnv' && _self.ssmObservations.length) {
+    var cellWidth = _self.getCNVCellWidth();
+    return _self.lookupTable[d.donorId].x + cellWidth;
+  }
+  return _self.lookupTable[d.donorId].x;
+}
 
 /**
  * Returns the color for the given observation.
