@@ -697,15 +697,15 @@ MainGrid.prototype.getY = function (d) {
         return y;
     }
 
-    var obsArray = _self.lookupTable[d.type][d.donorId][d.geneId];
-    var sortedObs = obsArray;
-    if (obsArray.length > 1) {
-      sortedObs = groupBy(obsArray, 'consequence')
-    }
-    var sortedIds = sortedObs.map(function(o) {
-      return o.id
-    });
-    return y + (_self.cellHeight / sortedObs.length) * (sortedIds.indexOf(d.id));
+    var obsArray = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]);
+    var totalIds = obsArray.length;
+    var count = d.ids.length;
+
+    var obHeight = (_self.cellHeight/totalIds);
+    var obIndex = _self.lookupTable[d.type][d.donorId][d.geneId].indexOf(d.ids);
+    var previousIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId].slice(0, obIndex));
+
+    return y + (obHeight * previousIds.length);
 };
 
 /**
@@ -762,8 +762,8 @@ MainGrid.prototype.getHeight = function (d) {
         if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
         } else {
-            var count = _self.lookupTable[d.type][d.donorId][d.geneId].length;
-            return _self.cellHeight / count;
+          var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
+          return _self.cellHeight * (d.ids.length/totalIds);
         }
     } else {
         return 0;

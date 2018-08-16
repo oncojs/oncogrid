@@ -134,24 +134,6 @@ OncoGrid.prototype.createLookupTable = function () {
   var _self = this;
   var lookupTable = {};
 
-  // for (var i = 0; i < _self.observations.length; i++) {
-  //   var obs = _self.observations[i];
-  //   var donorId = obs.donorId;
-  //   var geneId = obs.geneId;
-  //
-  //   if (lookupTable.hasOwnProperty(donorId)) {
-  //     if (lookupTable[donorId].hasOwnProperty(geneId)) {
-  //       lookupTable[donorId][geneId].push(obs.id);
-  //     } else {
-  //       lookupTable[donorId][geneId] = [obs.id];
-  //     }
-  //   } else {
-  //     lookupTable[donorId] = {};
-  //     lookupTable[donorId][geneId] = [obs.id];
-  //   }
-  //
-  //   _self.lookupTable = lookupTable;
-  // }
   for (var i = 0; i < _self.observations.length; i++) {
     var obs = _self.observations[i];
     var donorId = obs.donorId;
@@ -159,7 +141,7 @@ OncoGrid.prototype.createLookupTable = function () {
     var type = obs.type;
 
     var obsObj = {};
-    obsObj['id'] = obs.id;
+    obsObj['ids'] = obs.ids;
     if (obs.consequence) {
       obsObj['consequence'] = obs.consequence;
     }
@@ -167,18 +149,18 @@ OncoGrid.prototype.createLookupTable = function () {
     if (lookupTable.hasOwnProperty(type)) {
       if (lookupTable[type].hasOwnProperty(donorId)) {
         if (lookupTable[type][donorId].hasOwnProperty(geneId)) {
-          lookupTable[type][donorId][geneId].push(obsObj);
+          lookupTable[type][donorId][geneId].push(obs.ids);
         } else {
-          lookupTable[type][donorId][geneId] = [obsObj];
+          lookupTable[type][donorId][geneId] = [obs.ids];
         }
       } else {
         lookupTable[type][donorId] = {};
-        lookupTable[type][donorId][geneId] = [obsObj];
+        lookupTable[type][donorId][geneId] = [obs.ids];
       }
     } else {
       lookupTable[type] = {};
       lookupTable[type][donorId] = {};
-      lookupTable[type][donorId][geneId] = [obsObj];
+      lookupTable[type][donorId][geneId] = [obs.ids];
     }
 
     _self.lookupTable = lookupTable;
