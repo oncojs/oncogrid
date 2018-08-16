@@ -22,22 +22,6 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
-function arrayFromObject(obj) {
-  var arr = [];
-  for (var i in obj) {
-      arr.push(obj[i]);
-  }
-  return arr;
-}
-
-function groupBy(xs, key) {
-  var bar = xs.reduce(function(rv, x) {
-    (rv[x[key]] = rv[x[key]] || []).push(x);
-    return rv;
-  }, {});
-  return [].concat.apply([], arrayFromObject(bar))
-};
-
 MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) {
     var _self = this;
 
