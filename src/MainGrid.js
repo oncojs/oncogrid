@@ -22,6 +22,22 @@ var OncoTrack = require('./Track');
 
 var MainGrid;
 
+function arrayFromObject(obj) {
+  var arr = [];
+  for (var i in obj) {
+      arr.push(obj[i]);
+  }
+  return arr;
+}
+
+function groupBy(xs, key) {
+  var bar = xs.reduce(function(rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x);
+    return rv;
+  }, {});
+  return [].concat.apply([], arrayFromObject(bar))
+};
+
 MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) {
     var _self = this;
 
@@ -197,11 +213,6 @@ MainGrid.prototype.render = function () {
         })
         .attr('x', function (d) {
             return _self.getCellX(d);
-            // if (d.type === 'cnv' && _self.ssmObservations.length) {
-            //   var cellWidth = _self.getCNVCellWidth();
-            //   return _self.lookupTable[d.donorId].x + cellWidth;
-            // }
-            // return _self.lookupTable[d.donorId].x;
         })
         .attr('y', function (d) {
             return _self.getY(d);
@@ -686,9 +697,15 @@ MainGrid.prototype.getY = function (d) {
         return y;
     }
 
-    // need to filter out cnv to get correct ratios
-    var obsArray = _self.lookupTable[d.donorId][d.geneId];
-    return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
+    var obsArray = _self.lookupTable[d.type][d.donorId][d.geneId];
+    var sortedObs = obsArray;
+    if (obsArray.length > 1) {
+      sortedObs = groupBy(obsArray, 'consequence')
+    }
+    var sortedIds = sortedObs.map(function(o) {
+      return o.id
+    });
+    return y + (_self.cellHeight / sortedObs.length) * (sortedIds.indexOf(d.id));
 };
 
 /**
@@ -700,9 +717,9 @@ MainGrid.prototype.getCellX = function (d) {
 
   if (d.type === 'cnv' && _self.ssmObservations.length) {
     var cellWidth = _self.getCNVCellWidth();
-    return _self.lookupTable[d.donorId].x + cellWidth;
+    return _self.lookupTable[d.type][d.donorId].x + cellWidth;
   }
-  return _self.lookupTable[d.donorId].x;
+  return _self.lookupTable[d.type][d.donorId].x;
 }
 
 /**
@@ -745,7 +762,7 @@ MainGrid.prototype.getHeight = function (d) {
         if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
         } else {
-            var count = _self.lookupTable[d.donorId][d.geneId].length;
+            var count = _self.lookupTable[d.type][d.donorId][d.geneId].length;
             return _self.cellHeight / count;
         }
     } else {
