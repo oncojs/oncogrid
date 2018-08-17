@@ -140,12 +140,6 @@ OncoGrid.prototype.createLookupTable = function () {
     var geneId = obs.geneId;
     var type = obs.type;
 
-    var obsObj = {};
-    obsObj['ids'] = obs.ids;
-    if (obs.consequence) {
-      obsObj['consequence'] = obs.consequence;
-    }
-
     if (lookupTable.hasOwnProperty(type)) {
       if (lookupTable[type].hasOwnProperty(donorId)) {
         if (lookupTable[type][donorId].hasOwnProperty(geneId)) {

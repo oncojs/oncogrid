@@ -65,6 +65,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
+    _self.types = ['cnv', 'mutation'];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
@@ -677,7 +678,7 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap || d.type === 'cnv') {
+    if (_self.heatMap) {
         return y;
     }
 
@@ -743,7 +744,7 @@ MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        if (_self.heatMap === true || d.type === 'cnv') {
+        if (_self.heatMap === true) {
             return _self.cellHeight;
         } else {
           var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
