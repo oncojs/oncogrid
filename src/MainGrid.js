@@ -19,12 +19,12 @@ var d3 = require('d3');
 
 var OncoHistogram = require('./Histogram');
 var OncoTrack = require('./Track');
+var CnvHistogram = require('./CnvHistogram');
 
 var MainGrid;
 
 MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) {
     var _self = this;
-
     _self.emit = params.emit;
     _self.x = x;
     _self.y = y;
@@ -36,8 +36,41 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.init();
 
     // Histograms and tracks.
+    console.log("params", params);
+
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
+    // Test
+    var params2 = Object.assign({}, params);
+    params2.offset = 120
+    params2.cnvColors = {
+        gain2: "#900000", gain1: "#d33737", loss1: "#0d71e8", loss2: "#00457c",
+    }
+    params2.component = ["gain2","gain1","loss1","loss2"];
+    params2.cnvDonors = [
+            { displayId: "TCGA-CHOL / TCGA-W5-AA31", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 0 }, 
+            // { displayId: "TCGA-CHOL / TCGA-4G-AAZT", gain2: 9, gain1: 4, loss1: 3, loss2: 4, x: 60 }, 
+            // { displayId: "TCGA-CHOL / TCGA-4G-AAZF", gain2: 15, gain1: 7, loss1: 3, loss2: 4, x: 120 }, 
+            // { displayId: "TCGA-CHOL / TCGA-4G-AAZO", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 180 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W6-AA0T", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 240 }, 
+            // { displayId: "TCGA-CHOL / TCGA-3X-AAVE", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 300 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA2J", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 360 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA33", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 420 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA2R", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 480 }, 
+            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y8", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 540 }, 
+            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y7", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 600 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA30", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 660 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA38", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 720 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W6-AA0S", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 780 }, 
+            // { displayId: "TCGA-CHOL / TCGA-3X-AAVC", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 840 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA2Q", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 900 }, 
+            // { displayId: "TCGA-CHOL / TCGA-4G-AAZG", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 960 }, 
+            // { displayId: "TCGA-CHOL / TCGA-W5-AA2G", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1020 }, 
+            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y6", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1080 }, 
+            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y5", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1140 }, 
+            // { displayId: "TCGA-CHOL / TCGA-3X-AAVB", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1200 }, 
+    ]
+    _self.cnvDonorHistogram = new CnvHistogram(params2, _self.container, false, 'cnv');
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
@@ -47,8 +80,10 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
         new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight, _self.resizeCallback, _self.isFullscreen);
+            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight * 2, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
+
+    _self.cnvGeneHistogram = new CnvHistogram(params2, _self.container, true, 'cnv');
 
 };
 
@@ -70,21 +105,21 @@ MainGrid.prototype.loadParams = function (params) {
     _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
-            'missense_variant': '#ff9b6c',
-            'frameshift_variant': '#57dba4',
-            'stop_gained': '#af57db',
-            'start_lost': '#ff2323',
-            'stop_lost': '#d3ec00',
-            'initiator_codon_variant': '#5abaff'
-        };
+        'missense_variant': '#ff9b6c',
+        'frameshift_variant': '#57dba4',
+        'stop_gained': '#af57db',
+        'start_lost': '#ff2323',
+        'stop_lost': '#d3ec00',
+        'initiator_codon_variant': '#5abaff'
+    };
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
 
     _self.fullscreen = false;
 
-    _self.isFullscreen = function(){
-      return _self.fullscreen;
+    _self.isFullscreen = function () {
+        return _self.fullscreen;
     };
 
     _self.width = params.width || 500;
@@ -96,13 +131,13 @@ MainGrid.prototype.loadParams = function (params) {
     _self.cellWidth = _self.width / _self.donors.length;
     _self.cellHeight = _self.height / _self.genes.length;
 
-    if (_self.cellHeight <  _self.minCellHeight) {
-        _self.cellHeight =  _self.minCellHeight;
+    if (_self.cellHeight < _self.minCellHeight) {
+        _self.cellHeight = _self.minCellHeight;
         params.height = _self.numGenes * _self.minCellHeight;
         _self.height = params.height;
     }
 
-    _self.margin = params.margin || {top: 30, right: 100, bottom: 15, left: 80};
+    _self.margin = params.margin || { top: 30, right: 100, bottom: 15, left: 80 };
     _self.heatMap = params.heatMap;
 
     _self.drawGridLines = params.grid || false;
@@ -162,19 +197,19 @@ MainGrid.prototype.render = function () {
         });
     });
 
-    _self.svg.on('mouseout', function() {
+    _self.svg.on('mouseout', function () {
         _self.emit('gridMouseOut');
     });
 
     _self.svg.on('click', function () {
         var observation = _self.observations[d3.event.target.dataset.obsIndex];
-        if(!observation) return;
+        if (!observation) return;
         _self.emit('gridClick', { observation: observation });
     });
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
-        .attr('data-obs-index', function(d, i) { return i; })
+        .attr('data-obs-index', function (d, i) { return i; })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
@@ -205,6 +240,10 @@ MainGrid.prototype.render = function () {
     _self.donorHistogram.render();
     _self.emit('render:donorHisogram:end');
 
+    _self.emit('render:cnvDonorHistogram:start');
+    _self.cnvDonorHistogram.render();
+    _self.emit('render:cnvDonorHisogram:end');
+
     _self.emit('render:donorTrack:start');
     _self.donorTrack.render();
     _self.emit('render:donorTrack:end');
@@ -212,6 +251,10 @@ MainGrid.prototype.render = function () {
     _self.emit('render:geneHistogram:start');
     _self.geneHistogram.render();
     _self.emit('render:geneHistogram:end');
+
+    _self.emit('render:cnvGeneHistogram:start');
+    _self.cnvGeneHistogram.render();
+    _self.emit('render:cnvGeneHistogram:end');
 
     _self.emit('render:geneTrack:start');
     _self.geneTrack.render();
@@ -241,7 +284,7 @@ MainGrid.prototype.update = function (x, y) {
         _self.cellHeight = _self.height / _self.numGenes;
         _self.computeCoordinates();
     } else {
-        _self.row.selectAll('text').attr('style', function() {
+        _self.row.selectAll('text').attr('style', function () {
             if (_self.cellHeight < _self.minCellHeight) {
                 return 'display: none;';
             } else {
@@ -259,7 +302,7 @@ MainGrid.prototype.update = function (x, y) {
     _self.container.selectAll('.' + _self.prefix + 'sortable-rect')
         .transition()
         .attr('width', _self.cellWidth)
-        .attr('height', function(d) {return _self.getHeight(d);})
+        .attr('height', function (d) { return _self.getHeight(d); })
         .attr('y', function (d) {
             return _self.getY(d);
         })
@@ -269,9 +312,11 @@ MainGrid.prototype.update = function (x, y) {
 
     _self.donorHistogram.update(_self.donors);
     _self.donorTrack.update(_self.donors);
+    _self.cnvDonorHistogram.update(_self.donors);
 
     _self.geneHistogram.update(_self.genes);
     _self.geneTrack.update(_self.genes);
+    _self.cnvGeneHistogram.update(_self.genes);
 };
 
 /**
@@ -281,7 +326,7 @@ MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
     _self.cellWidth = _self.width / _self.donors.length;
-
+    console.log('cellWidth', _self.cellWidth);
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
     }
@@ -292,8 +337,8 @@ MainGrid.prototype.computeCoordinates = function () {
             .enter()
             .append('line')
             .attr({
-                x1: function(d) { return d.x; },
-                x2: function(d) { return d.x; },
+                x1: function (d) { return d.x; },
+                x2: function (d) { return d.x; },
                 y2: _self.height,
                 'class': _self.prefix + 'donor-column',
             })
@@ -328,7 +373,7 @@ MainGrid.prototype.computeCoordinates = function () {
         .attr('y', _self.cellHeight / 2)
         .attr('dy', '.32em')
         .attr('text-anchor', 'end')
-        .attr('style', function() {
+        .attr('style', function () {
             if (_self.cellHeight < _self.minCellHeight) {
                 return 'display: none;';
             } else {
@@ -342,7 +387,7 @@ MainGrid.prototype.computeCoordinates = function () {
     _self.defineRowDragBehaviour();
 };
 
-MainGrid.prototype.resize = function(width, height, x, y) {
+MainGrid.prototype.resize = function (width, height, x, y) {
     var _self = this;
 
     _self.createGeneMap();
@@ -355,8 +400,8 @@ MainGrid.prototype.resize = function(width, height, x, y) {
     _self.cellWidth = _self.width / _self.donors.length;
     _self.cellHeight = _self.height / _self.genes.length;
 
-    if (_self.cellHeight <  _self.minCellHeight) {
-        _self.cellHeight =  _self.minCellHeight;
+    if (_self.cellHeight < _self.minCellHeight) {
+        _self.cellHeight = _self.minCellHeight;
         _self.height = _self.genes.length * _self.minCellHeight;
     }
 
@@ -367,28 +412,34 @@ MainGrid.prototype.resize = function(width, height, x, y) {
     _self.computeCoordinates();
 
     _self.donorHistogram.resize(width, _self.height);
+    _self.cnvDonorHistogram.resize(width, _self.height);
     _self.donorTrack.resize(width, _self.height, _self.height);
+    console.log("_self.height", _self.height);
 
     _self.geneHistogram.resize(width, _self.height);
+    _self.cnvGeneHistogram.resize(width, _self.height);
     _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight);
+
 
     _self.resizeSvg();
     _self.update(_self.x, _self.x);
 
     _self.verticalCross.attr('y2', _self.height + _self.donorTrack.height);
-    _self.horizontalCross.attr('x2', _self.width + _self.histogramHeight + _self.geneTrack.height);
+    _self.horizontalCross.attr('x2', _self.width + _self.histogramHeight * 2 + _self.geneTrack.height);
 };
 
-MainGrid.prototype.resizeSvg = function() {
+MainGrid.prototype.resizeSvg = function () {
     var _self = this;
-    var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight + _self.geneTrack.height + _self.margin.right;
-    var height = _self.margin.top + _self.histogramHeight + _self.height + _self.donorTrack.height + _self.margin.bottom;
+    var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight * 2 + _self.geneTrack.height + _self.margin.right;
+    // The total hight of the Grid. 729
+    var height = _self.margin.top + _self.histogramHeight * 2 + _self.height + _self.donorTrack.height + _self.margin.bottom;
 
     _self.canvas
         .attr('width', width)
         .attr('height', height);
-
-    if(_self.scaleToFit) {
+    console.log('height', height);
+    console.log('width', width)
+    if (_self.scaleToFit) {
         _self.canvas.style('width', '100%');
         _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
     } else {
@@ -398,15 +449,15 @@ MainGrid.prototype.resizeSvg = function() {
 
     _self.container
         .attr('transform', 'translate(' +
-            (_self.margin.left + _self.leftTextWidth) + ',' + 
-            (_self.margin.top + _self.histogramHeight) +
-        ')');
+            (_self.margin.left + _self.leftTextWidth) + ',' +
+            (_self.margin.top + _self.histogramHeight * 2) +
+            ')');
 };
 
 MainGrid.prototype.defineCrosshairBehaviour = function () {
     var _self = this;
 
-    var moveCrossHair = function(eventType, target) {
+    var moveCrossHair = function (eventType, target) {
         if (_self.crosshair) {
             var coord = d3.mouse(target);
 
@@ -425,7 +476,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var donor = _self.donors[xIndex];
             var gene = _self.genes[yIndex];
 
-            if(!donor || !gene) return;
+            if (!donor || !gene) return;
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
@@ -450,9 +501,9 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
         .attr('style', 'pointer-events: none');
 
     _self.container
-        .on('mousedown', function() {_self.startSelection(this);})
-        .on('mouseover', function() { moveCrossHair('mouseover', this); })
-        .on('mousemove', function() { moveCrossHair('mousemove', this); })
+        .on('mousedown', function () { _self.startSelection(this); })
+        .on('mouseover', function () { moveCrossHair('mouseover', this); })
+        .on('mousemove', function () { moveCrossHair('mousemove', this); })
         .on('mouseout', function () {
             if (_self.crosshair) {
                 _self.verticalCross.attr('opacity', 0);
@@ -460,13 +511,13 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
                 _self.emit('gridCrosshairMouseOut');
             }
         })
-        .on('mouseup', function() {_self.finishSelection();});
+        .on('mouseup', function () { _self.finishSelection(); });
 };
 
 /**
  * Event behavior when pressing down on the mouse to make a selection
  */
-MainGrid.prototype.startSelection = function(e) {
+MainGrid.prototype.startSelection = function (e) {
     var _self = this;
 
     if (_self.crosshair && typeof _self.selectionRegion === 'undefined') {
@@ -488,7 +539,7 @@ MainGrid.prototype.startSelection = function(e) {
 /**
  * Event behavior as you drag selected region around
  */
-MainGrid.prototype.changeSelection = function(coord) {
+MainGrid.prototype.changeSelection = function (coord) {
     var _self = this;
 
     var rect = {
@@ -499,18 +550,18 @@ MainGrid.prototype.changeSelection = function(coord) {
     };
 
     var move = {
-        x : coord[0] - Number(_self.selectionRegion.attr('x')),
-        y : coord[1] - Number(_self.selectionRegion.attr('y'))
+        x: coord[0] - Number(_self.selectionRegion.attr('x')),
+        y: coord[1] - Number(_self.selectionRegion.attr('y'))
     };
 
-    if( move.x < 1 || (move.x*2<rect.width)) {
+    if (move.x < 1 || (move.x * 2 < rect.width)) {
         rect.x = coord[0];
         rect.width -= move.x;
     } else {
         rect.width = move.x;
     }
 
-    if( move.y < 1 || (move.y*2<rect.height)) {
+    if (move.y < 1 || (move.y * 2 < rect.height)) {
         rect.y = coord[1];
         rect.height -= move.y;
     } else {
@@ -523,7 +574,7 @@ MainGrid.prototype.changeSelection = function(coord) {
 /**
  * Event behavior when releasing mouse when finishing with a selection
  */
-MainGrid.prototype.finishSelection = function() {
+MainGrid.prototype.finishSelection = function () {
     var _self = this;
 
     if (_self.crosshair && typeof _self.selectionRegion !== 'undefined') {
@@ -556,7 +607,7 @@ MainGrid.prototype.finishSelection = function() {
  * @param start - start index of the selection
  * @param stop - end index of the selection
  */
-MainGrid.prototype.sliceGenes = function(start, stop) {
+MainGrid.prototype.sliceGenes = function (start, stop) {
     var _self = this;
 
     for (var i = 0; i < _self.genes.length; i++) {
@@ -565,7 +616,7 @@ MainGrid.prototype.sliceGenes = function(start, stop) {
             d3.selectAll('.' + _self.prefix + gene.id + '-cell').remove();
             d3.selectAll('.' + _self.prefix + gene.id + '-bar').remove();
             _self.genes.splice(i, 1);
-            i--;start--;stop--;
+            i--; start--; stop--;
         }
     }
 };
@@ -575,7 +626,7 @@ MainGrid.prototype.sliceGenes = function(start, stop) {
  * @param start - start index of the selection
  * @param stop - end index of the selection
  */
-MainGrid.prototype.sliceDonors = function(start, stop) {
+MainGrid.prototype.sliceDonors = function (start, stop) {
     var _self = this;
 
     for (var i = 0; i < _self.donors.length; i++) {
@@ -584,7 +635,7 @@ MainGrid.prototype.sliceDonors = function(start, stop) {
             d3.selectAll('.' + _self.prefix + donor.id + '-cell').remove();
             d3.selectAll('.' + _self.prefix + donor.id + '-bar').remove();
             _self.donors.splice(i, 1);
-            i--;start--;stop--;
+            i--; start--; stop--;
         }
     }
 };
@@ -646,7 +697,7 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
     });
 };
 
-MainGrid.prototype.createGeneMap = function() {
+MainGrid.prototype.createGeneMap = function () {
     var _self = this;
     var geneMap = {};
     for (var i = 0; i < _self.genes.length; i += 1) {
@@ -746,7 +797,7 @@ MainGrid.prototype.setHeatmap = function (active) {
 
 MainGrid.prototype.setGridLines = function (active) {
     var _self = this;
-    if(_self.drawGridLines === active) return _self.drawGridLines;
+    if (_self.drawGridLines === active) return _self.drawGridLines;
     _self.drawGridLines = active;
 
     _self.geneTrack.setGridLines(_self.drawGridLines);
@@ -796,16 +847,16 @@ MainGrid.prototype.removeGene = function (i) {
 };
 
 
-MainGrid.prototype.rangeToDomain = function(scale, value) {
+MainGrid.prototype.rangeToDomain = function (scale, value) {
     return scale.domain()[d3.bisect(scale.range(), value) - 1];
 };
 
 
-MainGrid.prototype.nullableObsLookup = function(donor, gene) {
+MainGrid.prototype.nullableObsLookup = function (donor, gene) {
     var _self = this;
 
-    if(!donor || typeof donor !== 'object') return null;
-    if(!gene || typeof gene !== 'object') return null;
+    if (!donor || typeof donor !== 'object') return null;
+    if (!gene || typeof gene !== 'object') return null;
 
     if (_self.lookupTable.hasOwnProperty(donor.id) && _self.lookupTable[donor.id].hasOwnProperty(gene.id)) {
         return _self.lookupTable[donor.id][gene.id].join(', '); // Table stores arrays and we want to return a string;
