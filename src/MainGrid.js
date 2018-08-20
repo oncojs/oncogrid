@@ -192,7 +192,7 @@ MainGrid.prototype.render = function () {
         })
         .attr('cons', function (d) {
           if (d.type === 'cnv') {
-            return d.cnv_change
+            return d.cnv_change;
           }
           return d.consequence;
         })
@@ -444,8 +444,8 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
-                gene: gene,
-                obs: _self.nullableObsLookup(donor, gene),
+                gene: gene
+                // obs: _self.nullableObsLookup(donor, gene),
             });
         }
     };
@@ -562,6 +562,7 @@ MainGrid.prototype.finishSelection = function() {
         _self.selectionRegion.remove();
         delete _self.selectionRegion;
 
+        // _self.crosshair = false; // this needs to be updated in frontend state
         _self.updateCallback(true);
     }
 };
@@ -713,12 +714,12 @@ MainGrid.prototype.getCellX = function (d) {
  */
 MainGrid.prototype.getColor = function (d) {
     var _self = this;
-    var colorKey = d.type === 'cnv' ? 'cnv_change' : 'consequence';
+    var colorKey = d.type === 'cnv' ? d.cnv_change : d.consequence;
 
     if (_self.heatMap === true) {
         return '#D33682';
     } else {
-        return _self.colorMap[d[colorKey]];
+        return _self.colorMap[d.type][colorKey];
     }
 };
 
@@ -747,8 +748,8 @@ MainGrid.prototype.getHeight = function (d) {
         if (_self.heatMap === true) {
             return _self.cellHeight;
         } else {
-          var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
-          return _self.cellHeight * (d.ids.length/totalIds);
+            var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
+            return _self.cellHeight * (d.ids.length / totalIds);
         }
     } else {
         return 0;
