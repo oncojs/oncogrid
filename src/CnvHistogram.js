@@ -25,10 +25,10 @@ var d3 = require('d3');
  */
 function getLargestCount(domain, type) {
     var retVal = 1;
-    console.log('topCount', type, domain);
+    // console.log('topCount', type, domain);
     if (type === 'cnv'){
         for(var i = 0; i< domain[0].length; i++){
-            retVal = Math.max(retVal, domain[0][i].y + domain[1][i].y + domain[2][i].y + domain[3][i].y);
+            retVal = Math.max(retVal, domain.reduce(function(acc, d){ return acc + d[i].y; }, 0));
         }
     }else{
         for (var i = 0; i < domain.length; i++) {
@@ -37,7 +37,6 @@ function getLargestCount(domain, type) {
     }
     return retVal;
 }
-// GOOD ^
 
 var OncoHistogram = function (params, s, rotated, type) {
     var _self = this;
@@ -64,18 +63,16 @@ var OncoHistogram = function (params, s, rotated, type) {
 
     _self.domain = d3.layout.stack()(
         _self.component.map(function(component) {
-            return ((_self.type === "cnv" ? (_self.rotated ? params.cnvGenes : params.cnvDonors) : (_self.rotated ? params.genes : params.donors)) || []).map(function(d) {
-                return {x: d.x, y: +d[component]};
+            return ((_self.rotated ? params.cnvGenes : params.cnvDonors) || []).map(function(d) {
+                return { x: _self.rotated? d.y : d.x, y: +d[component] };
             });
-          })); //.keys(["gain2","gain1","loss1","loss2"]);
-    // _self.domain = _self.type === 'cnv'? stack(makeData(arr, _self.domain)) : _self.domain;
-    console.log("stackedData222", _self.type, _self.domain);
+          }));
     _self.numDomain = _self.domain.length;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
     _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding + _self.offset;
     _self.wrapper = d3.select(params.wrapper || 'body');
     var color = d3.scale.ordinal().range(_self.colors);
-    console.log("domin111", _self.type, _self.domain);
+    // console.log("domin111", _self.type, _self.domain);
     var arr = ["gain2","gain1","loss1","loss2"];
     // console.log("stackedData222", _self.type, stackedData);
 
@@ -132,47 +129,45 @@ OncoHistogram.prototype.render = function () {
             });
         });
 
-    //！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
     // var stack = d3.stack().keys(["gain2","gain1","loss1","loss2"]);
     // var yScale = d3.scale.linear()
     //     .rangeRound([_self.topCount, 0]);
-    var colors = ["b33040", "#d25c4d", "#f2b447", "#d9d574"];
     // yScale.domain([0, d3.max(_self.domain[_self.domain.length-1], function(d) { return d.y0 + d.y; })]);
-    console.log("cnv", _self.type === 'cnv');
     // var cnvChange = _self.histogram.selectAll(".cnvChange")
     // .data(_self.domain);
     var groups = _self.histogram.selectAll("g.cost")
     .data(_self.domain)
-    .enter().append("g")
+    .enter()
+    .append("g")
     .attr("class", "cost")
-    .style("fill", function(d, i) { return colors[i]; });
-    var x = d3.scale.ordinal()
-        .domain(_self.domain.map(function(d) { return d.displayId; }))
-        .rangeRoundBands([10, _self.width - 10], 0.02);
+    .style("fill", function(d, i) { return _self.colors[i]; });
+    // console.log("xScale", _self.type, _self.domain);
+    // var x = d3.scale.ordinal()
+    //     .domain(_self.domain.map(function(d) { return d.x; }))
+    //     .rangeRoundBands([10, _self.width - 10], 0.02);
   
     var y = d3.scale.linear()
-        .domain([0, d3.max(_self.domain[_self.domain.length -1], function(d) { return d.y0 + d.y; })])
+        .domain([0, d3.max(_self.domain, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
         .range([_self.topCount, 0]);
-    console.log("barWidth", _self.barWidth - (_self.barWidth < 3 ? 0 : 1))
-    var rect = groups.selectAll("g.cost rect")
+    // console.log("xinde", _self.topCount)
+    var rect = groups.selectAll("rect")
         .data(function(d) { return d; })
         .enter()
         .append("rect")
         .attr('x', function (d) {
-            return x(d.x);
+            // console.log("xxxxx", _self.type, x(d.x));
+            return d.x;
             // return _self.rotated ? d.y : d.x;
         })
-        .attr("y", function(d) { return y(d.y0 + d.y); })
-        .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
-        .attr('width', x.rangeBand());
-    //！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-
+        .attr("y", function(d) { return _self.histogramHeight - _self.histogramHeight * (d.y0 + d.y) / topCount ; })
+        .attr("height", function(d) { return _self.histogramHeight * d.y / topCount; })
+        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1));
 };
 
 OncoHistogram.prototype.update = function (domain) {
     var _self = this;
     _self.domain = domain;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
 
     var topCount = _self.topCount || getLargestCount(_self.domain);
 
@@ -248,7 +243,7 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
         .attr('text-anchor', 'end');
 
     _self.leftLabel = _self.histogram.append('text')
-        .text("Mutation freq.")
+        .text("CNV freq.")
         .attr({
             'class': _self.prefix + 'label-text-font',
             'text-anchor': 'middle',
@@ -279,9 +274,9 @@ OncoHistogram.prototype.updateAxis = function (topCount) {
     // Round to a nice round number and then adjust position accordingly
     var halfInt = parseInt(topCount / 2);
     var secondHeight = _self.histogramHeight - _self.histogramHeight / (topCount / halfInt);
-    console.log('_self.histogramHeight',_self.type, _self.histogramHeight);
-    console.log('topCount',_self.type, topCount);
-    console.log('halfInt',_self.type, halfInt);
+    // console.log('_self.histogramHeight',_self.type, _self.histogramHeight);
+    // console.log('topCount',_self.type, topCount);
+    // console.log('halfInt',_self.type, halfInt);
     _self.middleText
         .attr('x', _self.centerText)
         .attr('y', secondHeight)

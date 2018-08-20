@@ -31,7 +31,7 @@ var OncoGrid = function(params) {
   _self.minCellHeight = params.minCellHeight || 10;
   
   _self.inputHeight = params.height || 500;
-  console.log("inputHeight",_self.Width);
+  console.log("inputHeightparams",params);
   _self.height = _self.inputHeight;
   if (_self.height / params.genes.length < _self.minCellHeight) {
       _self.height = params.genes.length * _self.minCellHeight;

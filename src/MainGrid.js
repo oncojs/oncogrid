@@ -42,34 +42,33 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.histogramHeight = _self.donorHistogram.totalHeight;
     // Test
     var params2 = Object.assign({}, params);
-    params2.offset = 120
-    params2.cnvColors = {
-        gain2: "#900000", gain1: "#d33737", loss1: "#0d71e8", loss2: "#00457c",
-    }
+    params2.offset = 120;
+    params2.cnvColors = [
+        "#900000", "#d33737", "#0d71e8", "#00457c",];
+    params2.cnvDonors = [];
     params2.component = ["gain2","gain1","loss1","loss2"];
-    params2.cnvDonors = [
-            { displayId: "TCGA-CHOL / TCGA-W5-AA31", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 0 }, 
-            // { displayId: "TCGA-CHOL / TCGA-4G-AAZT", gain2: 9, gain1: 4, loss1: 3, loss2: 4, x: 60 }, 
-            // { displayId: "TCGA-CHOL / TCGA-4G-AAZF", gain2: 15, gain1: 7, loss1: 3, loss2: 4, x: 120 }, 
-            // { displayId: "TCGA-CHOL / TCGA-4G-AAZO", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 180 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W6-AA0T", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 240 }, 
-            // { displayId: "TCGA-CHOL / TCGA-3X-AAVE", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 300 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA2J", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 360 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA33", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 420 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA2R", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 480 }, 
-            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y8", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 540 }, 
-            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y7", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 600 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA30", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 660 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA38", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 720 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W6-AA0S", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 780 }, 
-            // { displayId: "TCGA-CHOL / TCGA-3X-AAVC", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 840 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA2Q", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 900 }, 
-            // { displayId: "TCGA-CHOL / TCGA-4G-AAZG", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 960 }, 
-            // { displayId: "TCGA-CHOL / TCGA-W5-AA2G", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1020 }, 
-            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y6", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1080 }, 
-            // { displayId: "TCGA-CHOL / TCGA-ZH-A8Y5", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1140 }, 
-            // { displayId: "TCGA-CHOL / TCGA-3X-AAVB", gain2: 10, gain1: 7, loss1: 3, loss2: 4, x: 1200 }, 
-    ]
+    for(var i = 0; i < params2.donors.length; i++){
+        params2.cnvDonors.push({
+            x: params2.donors[i].x,
+            displayId: params2.donors[i].displayId,
+            gain2: Math.floor(Math.random() * 10),
+            gain1: Math.floor(Math.random() * 10),
+            loss1: Math.floor(Math.random() * 10),
+            loss2: Math.floor(Math.random() * 10),
+        });
+    };
+    params2.cnvGenes = [];
+    for(var i = 0; i < params2.genes.length; i++){
+        params2.cnvGenes.push({
+            y: params2.genes[i].y,
+            symbol: params2.genes[i].symbol,
+            gain2: Math.floor(Math.random() * 10),
+            gain1: Math.floor(Math.random() * 10),
+            loss1: Math.floor(Math.random() * 10),
+            loss2: Math.floor(Math.random() * 10),
+        });
+    };
+    
     _self.cnvDonorHistogram = new CnvHistogram(params2, _self.container, false, 'cnv');
 
     _self.donorTrack =
@@ -100,6 +99,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.minCellHeight = params.minCellHeight || 10;
 
     _self.donors = params.donors || [];
+    _self.cnvDonors = params.cnvDonors || [];
     _self.genes = params.genes || [];
     _self.observations = params.observations || [];
     _self.wrapper = d3.select(params.wrapper || 'body');
@@ -312,7 +312,7 @@ MainGrid.prototype.update = function (x, y) {
 
     _self.donorHistogram.update(_self.donors);
     _self.donorTrack.update(_self.donors);
-    _self.cnvDonorHistogram.update(_self.donors);
+    _self.cnvDonorHistogram.update(_self.cnvDonors);
 
     _self.geneHistogram.update(_self.genes);
     _self.geneTrack.update(_self.genes);
