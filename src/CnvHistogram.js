@@ -23,17 +23,22 @@ var d3 = require('d3');
  * No need to make this function public.
  * @returns {number}
  */
-function getLargestCount(domain) {
+function getLargestCount(domain, type) {
     var retVal = 1;
-
-    for (var i = 0; i < domain.length; i++) {
-        retVal = Math.max(retVal, domain[i].count);
+    // console.log('topCount', type, domain);
+    if (type === 'cnv'){
+        for(var i = 0; i< domain[0].length; i++){
+            retVal = Math.max(retVal, domain.reduce(function(acc, d){ return acc + d[i].y; }, 0));
+        }
+    }else{
+        for (var i = 0; i < domain.length; i++) {
+            retVal = Math.max(retVal, domain[i].count);
+        }
     }
-
     return retVal;
 }
 
-var OncoHistogram = function (params, s, rotated) {
+var OncoHistogram = function (params, s, rotated, type) {
     var _self = this;
 
     var histogramBorderPadding = params.histogramBorderPadding || {};
@@ -41,33 +46,43 @@ var OncoHistogram = function (params, s, rotated) {
     _self.lineHeightOffset = histogramBorderPadding.bottom || 5;
     _self.padding = 20;
     _self.centerText = -6;
-
     _self.prefix = params.prefix || 'og-';
     _self.emit = params.emit;
     _self.observations = params.observations;
     _self.svg = s;
+    _self.type = type;
     _self.rotated = rotated || false;
-
-    _self.domain = (_self.rotated ? params.genes : params.donors) || [];
+    _self.offset = params.offset || 0;
+    _self.colors = params.cnvColors;
     _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
-
     _self.width = params.width || 500;
     _self.height = params.height || 500;
-
     _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
     _self.histogramHeight = 80;
+    _self.component = params.component || [];
 
+    _self.domain = d3.layout.stack()(
+        _self.component.map(function(component) {
+            return ((_self.rotated ? params.cnvGenes : params.cnvDonors) || []).map(function(d) {
+                return { x: _self.rotated? d.y : d.x, y: +d[component] };
+            });
+          }));
     _self.numDomain = _self.domain.length;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
-
-    _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
+    _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding + _self.offset;
     _self.wrapper = d3.select(params.wrapper || 'body');
+    var color = d3.scale.ordinal().range(_self.colors);
+    // console.log("domin111", _self.type, _self.domain);
+    var arr = ["gain2","gain1","loss1","loss2"];
+    // console.log("stackedData222", _self.type, stackedData);
+
 };
+//Good ^
 
 OncoHistogram.prototype.render = function () {
     var _self = this;
 
-    var topCount = getLargestCount(_self.domain);
+    var topCount = getLargestCount(_self.domain, _self.type);
     _self.topCount = topCount;
 
     _self.container = _self.svg.append('g')
@@ -114,31 +129,45 @@ OncoHistogram.prototype.render = function () {
             });
         });
 
-    _self.histogram.selectAll('rect')
-        .data(_self.domain)
+    // var stack = d3.stack().keys(["gain2","gain1","loss1","loss2"]);
+    // var yScale = d3.scale.linear()
+    //     .rangeRound([_self.topCount, 0]);
+    // yScale.domain([0, d3.max(_self.domain[_self.domain.length-1], function(d) { return d.y0 + d.y; })]);
+    // var cnvChange = _self.histogram.selectAll(".cnvChange")
+    // .data(_self.domain);
+    var groups = _self.histogram.selectAll("g.cost")
+    .data(_self.domain)
+    .enter()
+    .append("g")
+    .attr("class", "cost")
+    .style("fill", function(d, i) { return _self.colors[i]; });
+    // console.log("xScale", _self.type, _self.domain);
+    // var x = d3.scale.ordinal()
+    //     .domain(_self.domain.map(function(d) { return d.x; }))
+    //     .rangeRoundBands([10, _self.width - 10], 0.02);
+  
+    var y = d3.scale.linear()
+        .domain([0, d3.max(_self.domain, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+        .range([_self.topCount, 0]);
+    // console.log("xinde", _self.topCount)
+    var rect = groups.selectAll("rect")
+        .data(function(d) { return d; })
         .enter()
-        .append('rect')
-        .attr('class', function (d) {
-            return _self.prefix + 'sortable-bar ' + _self.prefix + d.id + '-bar';
-        })
-        .attr('data-domain-index', function(d, i) { return i; })
-        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
-        .attr('height', function (d) {
-            return _self.histogramHeight * d.count / topCount;
-        })
+        .append("rect")
         .attr('x', function (d) {
-            return _self.rotated ? d.y : d.x;
+            // console.log("xxxxx", _self.type, x(d.x));
+            return d.x;
+            // return _self.rotated ? d.y : d.x;
         })
-        .attr('y', function (d) {
-            return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
-        })
-        .attr('fill', '#1693C0');
+        .attr("y", function(d) { return _self.histogramHeight - _self.histogramHeight * (d.y0 + d.y) / topCount ; })
+        .attr("height", function(d) { return _self.histogramHeight * d.y / topCount; })
+        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1));
 };
 
 OncoHistogram.prototype.update = function (domain) {
     var _self = this;
     _self.domain = domain;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
 
     var topCount = _self.topCount || getLargestCount(_self.domain);
 
@@ -214,7 +243,7 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
         .attr('text-anchor', 'end');
 
     _self.leftLabel = _self.histogram.append('text')
-        .text("Mutation freq.")
+        .text("CNV freq.")
         .attr({
             'class': _self.prefix + 'label-text-font',
             'text-anchor': 'middle',
@@ -245,7 +274,9 @@ OncoHistogram.prototype.updateAxis = function (topCount) {
     // Round to a nice round number and then adjust position accordingly
     var halfInt = parseInt(topCount / 2);
     var secondHeight = _self.histogramHeight - _self.histogramHeight / (topCount / halfInt);
-
+    // console.log('_self.histogramHeight',_self.type, _self.histogramHeight);
+    // console.log('topCount',_self.type, topCount);
+    // console.log('halfInt',_self.type, halfInt);
     _self.middleText
         .attr('x', _self.centerText)
         .attr('y', secondHeight)
