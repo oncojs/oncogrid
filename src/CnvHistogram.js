@@ -23,24 +23,19 @@ var d3 = require('d3');
  * No need to make this function public.
  * @returns {number}
  */
-function getLargestCount(domain, type) {
+function getLargestCount(domain, cnvLength) {
     var retVal = 1;
-    // console.log('topCount', type, domain);
-    if (type === 'cnv'){
-        for(var i = 0; i< domain[0].length; i++){
-            retVal = Math.max(retVal, domain.reduce(function(acc, d){ return acc + d[i].y; }, 0));
-        }
-    }else{
-        for (var i = 0; i < domain.length; i++) {
-            retVal = Math.max(retVal, domain[i].count);
-        }
+    for(var i = 0; i< cnvLength; i++){
+        retVal = Math.max(retVal, domain.reduce(function(acc, d){ return acc + d[i].y; }, 0));
     }
     return retVal;
 }
 
 var OncoHistogram = function (params, s, rotated, type) {
     var _self = this;
-
+    params.cnvColors = [
+        "#900000", "#d33737", "#0d71e8", "#00457c",];
+    params.component = ["gain2","gain1","loss1","loss2"];
     var histogramBorderPadding = params.histogramBorderPadding || {};
     _self.lineWidthOffset = histogramBorderPadding.left || 10;
     _self.lineHeightOffset = histogramBorderPadding.bottom || 5;
@@ -52,7 +47,7 @@ var OncoHistogram = function (params, s, rotated, type) {
     _self.svg = s;
     _self.type = type;
     _self.rotated = rotated || false;
-    _self.offset = params.offset || 0;
+    _self.offset = params.offset || 120;
     _self.colors = params.cnvColors;
     _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
     _self.width = params.width || 500;
@@ -60,7 +55,7 @@ var OncoHistogram = function (params, s, rotated, type) {
     _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
     _self.histogramHeight = 80;
     _self.component = params.component || [];
-
+    _self.cnvLength = (_self.rotated ? params.cnvGenes : params.cnvDonors).length;
     _self.domain = d3.layout.stack()(
         _self.component.map(function(component) {
             return ((_self.rotated ? params.cnvGenes : params.cnvDonors) || []).map(function(d) {
@@ -68,7 +63,7 @@ var OncoHistogram = function (params, s, rotated, type) {
             });
           }));
     _self.numDomain = _self.domain.length;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.cnvLength;
     _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding + _self.offset;
     _self.wrapper = d3.select(params.wrapper || 'body');
     var color = d3.scale.ordinal().range(_self.colors);
@@ -82,7 +77,7 @@ var OncoHistogram = function (params, s, rotated, type) {
 OncoHistogram.prototype.render = function () {
     var _self = this;
 
-    var topCount = getLargestCount(_self.domain, _self.type);
+    var topCount = getLargestCount(_self.domain, _self.cnvLength);
     _self.topCount = topCount;
 
     _self.container = _self.svg.append('g')
@@ -167,26 +162,31 @@ OncoHistogram.prototype.render = function () {
 OncoHistogram.prototype.update = function (domain) {
     var _self = this;
     _self.domain = domain;
-    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain[0].length;
+    _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.cnvLength;
 
-    var topCount = _self.topCount || getLargestCount(_self.domain);
+    var topCount = _self.topCount || getLargestCount(_self.domain, _self.cnvLength);
 
     _self.updateAxis(topCount);
-
-    _self.histogram.selectAll('rect')
-        .data(_self.domain)
-        .attr('data-domain-index', function(d, i) { return i; })
-        .transition()
-        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
-        .attr('height', function (d) {
-            return _self.histogramHeight * d.count / topCount;
-        })
-        .attr('y', function (d) {
-            return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
-        })
+    var groups = _self.histogram.selectAll("g.cost")
+    .data(_self.domain)
+    .enter()
+    .append("g")
+    .attr("class", "cost")
+    .style("fill", function(d, i) { return _self.colors[i]; });
+    var y = d3.scale.linear()
+    .domain([0, d3.max(_self.domain, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+    .range([_self.topCount, 0]);
+    // console.log("xinde", _self.topCount)
+    var rect = groups.selectAll("rect")
+        .data(function(d) { return d; })
+        .enter()
+        .append("rect")
         .attr('x', function (d) {
-            return _self.rotated ? d.y : d.x;
-        });
+            return d.x;
+        })
+        .attr("y", function(d) { return _self.histogramHeight - _self.histogramHeight * (d.y0 + d.y) / topCount ; })
+        .attr("height", function(d) { return _self.histogramHeight * d.y / topCount; })
+        .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1));
 };
 
 OncoHistogram.prototype.resize = function (width, height) {

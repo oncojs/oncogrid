@@ -35,40 +35,9 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.createGeneMap();
     _self.init();
     // Histograms and tracks.
-    // console.log("params", params);
-
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
-    // Test
-    var params2 = Object.assign({}, params);
-    params2.offset = 120;
-    params2.cnvColors = [
-        "#900000", "#d33737", "#0d71e8", "#00457c",];
-    params2.cnvDonors = [];
-    params2.component = ["gain2","gain1","loss1","loss2"];
-    for(var i = 0; i < params2.donors.length; i++){
-        params2.cnvDonors.push({
-            x: params2.donors[i].x,
-            displayId: params2.donors[i].displayId,
-            gain2: Math.floor(Math.random() * 10),
-            gain1: Math.floor(Math.random() * 10),
-            loss1: Math.floor(Math.random() * 10),
-            loss2: Math.floor(Math.random() * 10),
-        });
-    };
-    params2.cnvGenes = [];
-    for(var i = 0; i < params2.genes.length; i++){
-        params2.cnvGenes.push({
-            y: params2.genes[i].y,
-            symbol: params2.genes[i].symbol,
-            gain2: Math.floor(Math.random() * 10),
-            gain1: Math.floor(Math.random() * 10),
-            loss1: Math.floor(Math.random() * 10),
-            loss2: Math.floor(Math.random() * 10),
-        });
-    };
-
-    _self.cnvDonorHistogram = new CnvHistogram(params2, _self.container, false, 'cnv');
+    _self.cnvDonorHistogram = new CnvHistogram(params, _self.container, false);
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
@@ -81,9 +50,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
             params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight * 2, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
-    _self.cnvGeneHistogram = new CnvHistogram(params2, _self.container, true, 'cnv');
-
-    console.log("params: ", params)
+    _self.cnvGeneHistogram = new CnvHistogram(params, _self.container, true);
 };
 
 /**
@@ -101,7 +68,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.donors = params.donors || [];
     _self.cnvDonors = params.cnvDonors || [];
     _self.genes = params.genes || [];
-    _self.types = ['cnv', 'mutation'];
+    _self.cnvGenes = params.cnvGenes || [];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
@@ -343,7 +310,7 @@ MainGrid.prototype.computeCoordinates = function () {
 
     _self.cellWidth = _self.getCNVCellWidth();
     // _self.cellWidth = _self.width / _self.donors.length;
-    console.log('cellWidth', _self.cellWidth);
+    // console.log('cellWidth', _self.cellWidth);
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
     }
@@ -491,13 +458,18 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var yIndex = _self.height < coord[1] ? -1 : _self.rangeToDomain(_self.y, coord[1]);
 
             var donor = _self.donors[xIndex];
+            var cnvDonor = _self.cnvDonors[xIndex];
             var gene = _self.genes[yIndex];
+            var cnvGene = _self.cnvGenes[yIndex];
 
-            if (!donor || !gene) return;
+            if (!donor || !gene || !cnvDonor || !cnvGene) return;
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
-                gene: gene
+                gene: gene,
+                cnvDonor,
+                cnvGene,
+
                 // obs: _self.nullableObsLookup(donor, gene),
             });
         }
