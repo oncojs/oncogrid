@@ -732,7 +732,7 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap) {
+    if (_self.heatMap || d.type === 'cnv') {
         return y;
     }
 
@@ -798,7 +798,7 @@ MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        if (_self.heatMap === true) {
+        if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
         } else {
             var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
