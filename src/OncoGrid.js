@@ -63,10 +63,13 @@ OncoGrid.prototype.initCharts = function(reloading) {
   _self.donors = _self.clonedParams.donors || [];
   _self.genes = _self.clonedParams.genes || [];
   // _self.types = _self.clonedParams.types || [];
-  _self.types = ['cnv', 'mutation'];
+
   _self.ssmObservations = _self.clonedParams.observations || [];   // change params to specify ssmObservations
   _self.cnvObservations = _self.clonedParams.cnvObservations || [];
   _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
+  _self.types = [];
+  if (_self.cnvObservations.length) { _self.types.push('cnv'); }
+  if (_self.observations.length) { _self.types.push('mutation'); }
 
   _self.createLookupTable();
   _self.computeDonorCounts();

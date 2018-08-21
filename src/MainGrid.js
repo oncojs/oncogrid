@@ -65,7 +65,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
-    _self.types = ['cnv', 'mutation'];
+    _self.types = [];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
@@ -82,6 +82,9 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
+
+    if (_self.cnvObservations.length) { _self.types.push('cnv'); }
+    if (_self.observations.length) { _self.types.push('mutation'); }
 
     _self.fullscreen = false;
 
