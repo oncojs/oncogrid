@@ -34,7 +34,6 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.loadParams(params);
     _self.createGeneMap();
     _self.init();
-
     // Histograms and tracks.
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
@@ -66,7 +65,10 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
-    _self.observations = params.observations || [];
+    _self.types = ['cnv', 'mutation'];
+    _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
+    _self.cnvObservations = params.cnvObservations || [];
+    _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
     _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
@@ -87,13 +89,21 @@ MainGrid.prototype.loadParams = function (params) {
       return _self.fullscreen;
     };
 
+    _self.getCNVCellWidth = function(){
+      if (_self.cnvObservations.length && _self.ssmObservations.length) {
+        return (_self.width / _self.donors.length)/2;
+      } else {
+        return _self.width / _self.donors.length;
+      }
+    }
+
     _self.width = params.width || 500;
     _self.height = params.height || 500;
 
     _self.inputWidth = params.width || 500;
     _self.inputHeight = params.height || 500;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight <  _self.minCellHeight) {
@@ -150,6 +160,7 @@ MainGrid.prototype.render = function () {
     _self.svg.on('mouseover', function (d) {
         var target = d3.event.target;
         var coord = d3.mouse(target);
+
         var xIndex = _self.rangeToDomain(_self.x, coord[0]);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
         var obs = _self.observations[target.dataset.obsIndex];
@@ -171,6 +182,7 @@ MainGrid.prototype.render = function () {
         if(!observation) return;
         _self.emit('gridClick', { observation: observation });
     });
+
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('rect')
@@ -179,10 +191,13 @@ MainGrid.prototype.render = function () {
             return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
-            return d.consequence;
+          if (d.type === 'cnv') {
+            return d.cnv_change;
+          }
+          return d.consequence;
         })
         .attr('x', function (d) {
-            return _self.lookupTable[d.donorId].x;
+            return _self.getCellX(d);
         })
         .attr('y', function (d) {
             return _self.getY(d);
@@ -237,7 +252,7 @@ MainGrid.prototype.update = function (x, y) {
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
         _self.numGenes = _self.genes.length;
-        _self.cellWidth = _self.width / _self.numDonors;
+        _self.cellWidth = _self.getCNVCellWidth();
         _self.cellHeight = _self.height / _self.numGenes;
         _self.computeCoordinates();
     } else {
@@ -264,7 +279,7 @@ MainGrid.prototype.update = function (x, y) {
             return _self.getY(d);
         })
         .attr('x', function (d) {
-            return _self.lookupTable[d.donorId].x;
+            return _self.getCellX(d);
         });
 
     _self.donorHistogram.update(_self.donors);
@@ -280,7 +295,7 @@ MainGrid.prototype.update = function (x, y) {
 MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
 
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
@@ -352,7 +367,7 @@ MainGrid.prototype.resize = function(width, height, x, y) {
     _self.width = width;
     _self.height = height;
 
-    _self.cellWidth = _self.width / _self.donors.length;
+    _self.cellWidth = _self.getCNVCellWidth();
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight <  _self.minCellHeight) {
@@ -398,7 +413,7 @@ MainGrid.prototype.resizeSvg = function() {
 
     _self.container
         .attr('transform', 'translate(' +
-            (_self.margin.left + _self.leftTextWidth) + ',' + 
+            (_self.margin.left + _self.leftTextWidth) + ',' +
             (_self.margin.top + _self.histogramHeight) +
         ')');
 };
@@ -429,8 +444,8 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
-                gene: gene,
-                obs: _self.nullableObsLookup(donor, gene),
+                gene: gene
+                // obs: _self.nullableObsLookup(donor, gene),
             });
         }
     };
@@ -547,6 +562,7 @@ MainGrid.prototype.finishSelection = function() {
         _self.selectionRegion.remove();
         delete _self.selectionRegion;
 
+        // _self.crosshair = false; // this needs to be updated in frontend state
         _self.updateCallback(true);
     }
 };
@@ -667,9 +683,30 @@ MainGrid.prototype.getY = function (d) {
         return y;
     }
 
-    var obsArray = _self.lookupTable[d.donorId][d.geneId];
-    return y + (_self.cellHeight / obsArray.length) * (obsArray.indexOf(d.id));
+    var obsArray = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]);
+    var totalIds = obsArray.length;
+    var count = d.ids.length;
+
+    var obHeight = (_self.cellHeight/totalIds);
+    var obIndex = _self.lookupTable[d.type][d.donorId][d.geneId].indexOf(d.ids);
+    var previousIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId].slice(0, obIndex));
+
+    return y + (obHeight * previousIds.length);
 };
+
+/**
+ * Function that determines the x position of a mutation or cnv within a cell
+ * move x position one half cell width if type is cnv and there are 2 sets of data
+ */
+MainGrid.prototype.getCellX = function (d) {
+  var _self = this;
+
+  if (d.type === 'cnv' && _self.ssmObservations.length) {
+    var cellWidth = _self.getCNVCellWidth();
+    return _self.lookupTable[d.type][d.donorId].x + cellWidth;
+  }
+  return _self.lookupTable[d.type][d.donorId].x;
+}
 
 /**
  * Returns the color for the given observation.
@@ -677,11 +714,12 @@ MainGrid.prototype.getY = function (d) {
  */
 MainGrid.prototype.getColor = function (d) {
     var _self = this;
+    var colorKey = d.type === 'cnv' ? d.cnv_change : d.consequence;
 
     if (_self.heatMap === true) {
         return '#D33682';
     } else {
-        return _self.colorMap[d.consequence];
+        return _self.colorMap[d.type][colorKey];
     }
 };
 
@@ -710,8 +748,8 @@ MainGrid.prototype.getHeight = function (d) {
         if (_self.heatMap === true) {
             return _self.cellHeight;
         } else {
-            var count = _self.lookupTable[d.donorId][d.geneId].length;
-            return _self.cellHeight / count;
+            var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
+            return _self.cellHeight * (d.ids.length / totalIds);
         }
     } else {
         return 0;

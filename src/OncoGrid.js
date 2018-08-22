@@ -29,7 +29,7 @@ var OncoGrid = function(params) {
   _self.inputWidth = params.width || 500;
   _self.width = _self.inputWidth;
   _self.minCellHeight = params.minCellHeight || 10;
-  
+
   _self.inputHeight = params.height || 500;
   _self.height = _self.inputHeight;
   if (_self.height / params.genes.length < _self.minCellHeight) {
@@ -62,7 +62,11 @@ OncoGrid.prototype.initCharts = function(reloading) {
 
   _self.donors = _self.clonedParams.donors || [];
   _self.genes = _self.clonedParams.genes || [];
-  _self.observations = _self.clonedParams.observations || [];
+  // _self.types = _self.clonedParams.types || [];
+  _self.types = ['cnv', 'mutation'];
+  _self.ssmObservations = _self.clonedParams.observations || [];   // change params to specify ssmObservations
+  _self.cnvObservations = _self.clonedParams.cnvObservations || [];
+  _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
 
   _self.createLookupTable();
   _self.computeDonorCounts();
@@ -71,7 +75,7 @@ OncoGrid.prototype.initCharts = function(reloading) {
   _self.computeScores();
   _self.sortByScores();
   _self.calculatePositions();
-  
+
   if(reloading) {
     _self.clonedParams.width = _self.width;
     _self.clonedParams.height = _self.height;
@@ -96,15 +100,20 @@ OncoGrid.prototype.calculatePositions = function () {
     .domain(d3.range(_self.donors.length))
     .rangeBands([0, _self.width]);
 
-  for(var i = 0, donor, donorId, x; i < _self.donors.length; i += 1) {
-    donor = _self.donors[i];
-    donorId = donor.id;
+  for (var t = 0, type; t < _self.types.length; t++) {
+    type = _self.types[t];
+    for(var i = 0, donor, donorId, x; i < _self.donors.length; i += 1) {
+      donor = _self.donors[i];
+      donorId = donor.id;
 
-    x = getX(i);
-    donor.x = x;
-    _self.lookupTable[donorId] = _self.lookupTable[donorId] || {};
-    _self.lookupTable[donorId].x = x;
+      x = getX(i);
+      donor.x = x;
+
+      _self.lookupTable[type][donorId] = _self.lookupTable[type][donorId] || {};
+      _self.lookupTable[type][donorId].x = x;
+    }
   }
+
 
   var getY = d3.scale.ordinal()
     .domain(d3.range(_self.genes.length))
@@ -129,16 +138,23 @@ OncoGrid.prototype.createLookupTable = function () {
     var obs = _self.observations[i];
     var donorId = obs.donorId;
     var geneId = obs.geneId;
+    var type = obs.type;
 
-    if (lookupTable.hasOwnProperty(donorId)) {
-      if (lookupTable[donorId].hasOwnProperty(geneId)) {
-        lookupTable[donorId][geneId].push(obs.id);
+    if (lookupTable.hasOwnProperty(type)) {
+      if (lookupTable[type].hasOwnProperty(donorId)) {
+        if (lookupTable[type][donorId].hasOwnProperty(geneId)) {
+          lookupTable[type][donorId][geneId].push(obs.ids);
+        } else {
+          lookupTable[type][donorId][geneId] = [obs.ids];
+        }
       } else {
-        lookupTable[donorId][geneId] = [obs.id];
+        lookupTable[type][donorId] = {};
+        lookupTable[type][donorId][geneId] = [obs.ids];
       }
     } else {
-      lookupTable[donorId] = {};
-      lookupTable[donorId][geneId] = [obs.id];
+      lookupTable[type] = {};
+      lookupTable[type][donorId] = {};
+      lookupTable[type][donorId][geneId] = [obs.ids];
     }
 
     _self.lookupTable = lookupTable;
@@ -227,7 +243,7 @@ OncoGrid.prototype.genesSortbyScores = function() {
  */
 OncoGrid.prototype.cluster = function() {
   var _self = this;
-  
+
   _self.genesSortbyScores();
   _self.computeScores();
   _self.sortByScores();
@@ -364,7 +380,7 @@ OncoGrid.prototype.toggleCrosshair = function() {
 OncoGrid.prototype.mutationScore = function(donor, gene) {
   var _self = this;
 
-  if (_self.lookupTable.hasOwnProperty(donor) && _self.lookupTable[donor].hasOwnProperty(gene)) {
+  if (_self.lookupTable['mutation'].hasOwnProperty(donor) && _self.lookupTable['mutation'][donor].hasOwnProperty(gene)) {
     return 1;
   } else {
     return 0;
@@ -377,8 +393,8 @@ OncoGrid.prototype.mutationScore = function(donor, gene) {
 OncoGrid.prototype.mutationGeneScore = function(donor, gene) {
   var _self = this;
 
-  if (_self.lookupTable.hasOwnProperty(donor) && _self.lookupTable[donor].hasOwnProperty(gene)) {
-    return _self.lookupTable[donor][gene].length;
+  if (_self.lookupTable['mutation'].hasOwnProperty(donor) && _self.lookupTable['mutation'][donor].hasOwnProperty(gene)) {
+    return _self.lookupTable['mutation'][donor][gene].length;
   } else {
     return 0;
   }
@@ -425,7 +441,7 @@ OncoGrid.prototype.computeDonorCounts = function() {
   var _self = this;
   for (var i = 0; i < _self.donors.length; i++) {
     var donor = _self.donors[i];
-    var genes = values(_self.lookupTable[donor.id] || {});
+    var genes = values(_self.lookupTable['mutation'][donor.id] || {});
     donor.count = 0;
     for(var j = 0; j < genes.length; j++) {
       donor.count += genes[j].length;
