@@ -19,7 +19,6 @@ var d3 = require('d3');
 
 var OncoHistogram = require('./Histogram');
 var OncoTrack = require('./Track');
-var CnvHistogram = require('./CnvHistogram');
 
 var MainGrid;
 
@@ -37,7 +36,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     // Histograms and tracks.
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
-    _self.cnvDonorHistogram = new CnvHistogram(params, _self.container, false);
+    _self.cnvDonorHistogram = new OncoHistogram(params, _self.container, false, 'cnv');
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
@@ -50,7 +49,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
             params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight * 2, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
-    _self.cnvGeneHistogram = new CnvHistogram(params, _self.container, true);
+    _self.cnvGeneHistogram = new OncoHistogram(params, _self.container, true, 'cnv');
 };
 
 /**
@@ -292,9 +291,11 @@ MainGrid.prototype.update = function (x, y) {
         });
 
     _self.donorHistogram.update(_self.donors);
+    _self.cnvDonorHistogram.update(_self.donors);
     _self.donorTrack.update(_self.donors);
 
     _self.geneHistogram.update(_self.genes);
+    _self.cnvGeneHistogram.update(_self.genes);
     _self.geneTrack.update(_self.genes);
 };
 
@@ -391,15 +392,13 @@ MainGrid.prototype.resize = function (width, height, x, y) {
 
     _self.computeCoordinates();
 
-    console.log("width", _self.width);
     _self.donorHistogram.resize(width, _self.height);
     _self.cnvDonorHistogram.resize(width, _self.height);
     _self.donorTrack.resize(width, _self.height, _self.height);
 
     _self.geneHistogram.resize(width, _self.height);
     _self.cnvGeneHistogram.resize(width, _self.height);
-    _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight);
-
+    _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight + 120);
 
     _self.resizeSvg();
     _self.update(_self.x, _self.x);
@@ -418,7 +417,6 @@ MainGrid.prototype.resizeSvg = function () {
         .attr('width', width)
         .attr('height', height);
     // console.log('height', height);
-    // console.log('width', width)
     if (_self.scaleToFit) {
         _self.canvas.style('width', '100%');
         _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
