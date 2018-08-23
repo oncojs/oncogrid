@@ -66,9 +66,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.minCellHeight = params.minCellHeight || 10;
 
     _self.donors = params.donors || [];
-    _self.cnvDonors = params.cnvDonors || [];
     _self.genes = params.genes || [];
-    _self.cnvGenes = params.cnvGenes || [];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
@@ -295,11 +293,9 @@ MainGrid.prototype.update = function (x, y) {
 
     _self.donorHistogram.update(_self.donors);
     _self.donorTrack.update(_self.donors);
-    _self.cnvDonorHistogram.update(_self.cnvDonors);
 
     _self.geneHistogram.update(_self.genes);
     _self.geneTrack.update(_self.genes);
-    _self.cnvGeneHistogram.update(_self.genes);
 };
 
 /**
@@ -395,10 +391,10 @@ MainGrid.prototype.resize = function (width, height, x, y) {
 
     _self.computeCoordinates();
 
+    console.log("width", _self.width);
     _self.donorHistogram.resize(width, _self.height);
     _self.cnvDonorHistogram.resize(width, _self.height);
     _self.donorTrack.resize(width, _self.height, _self.height);
-    // console.log("_self.height", _self.height);
 
     _self.geneHistogram.resize(width, _self.height);
     _self.cnvGeneHistogram.resize(width, _self.height);
@@ -458,17 +454,13 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var yIndex = _self.height < coord[1] ? -1 : _self.rangeToDomain(_self.y, coord[1]);
 
             var donor = _self.donors[xIndex];
-            var cnvDonor = _self.cnvDonors[xIndex];
             var gene = _self.genes[yIndex];
-            var cnvGene = _self.cnvGenes[yIndex];
 
             if (!donor || !gene || !cnvDonor || !cnvGene) return;
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-                cnvDonor,
-                cnvGene,
 
                 // obs: _self.nullableObsLookup(donor, gene),
             });
