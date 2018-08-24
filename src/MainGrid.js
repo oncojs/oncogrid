@@ -19,7 +19,6 @@ var d3 = require('d3');
 
 var OncoHistogram = require('./Histogram');
 var OncoTrack = require('./Track');
-var CnvHistogram = require('./CnvHistogram');
 
 var MainGrid;
 
@@ -37,7 +36,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     // Histograms and tracks.
     _self.donorHistogram = new OncoHistogram(params, _self.container, false);
     _self.histogramHeight = _self.donorHistogram.totalHeight;
-    _self.cnvDonorHistogram = new CnvHistogram(params, _self.container, false);
+    _self.cnvDonorHistogram = new OncoHistogram(params, _self.container, false, 'cnv');
 
     _self.donorTrack =
         new OncoTrack(params, _self.container, false, params.donorTracks, params.donorOpacityFunc,
@@ -50,7 +49,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
             params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight * 2, _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
-    _self.cnvGeneHistogram = new CnvHistogram(params, _self.container, true);
+    _self.cnvGeneHistogram = new OncoHistogram(params, _self.container, true, 'cnv');
 };
 
 /**
@@ -66,9 +65,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.minCellHeight = params.minCellHeight || 10;
 
     _self.donors = params.donors || [];
-    _self.cnvDonors = params.cnvDonors || [];
     _self.genes = params.genes || [];
-    _self.cnvGenes = params.cnvGenes || [];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
@@ -294,12 +291,12 @@ MainGrid.prototype.update = function (x, y) {
         });
 
     _self.donorHistogram.update(_self.donors);
+    _self.cnvDonorHistogram.update(_self.donors);
     _self.donorTrack.update(_self.donors);
-    _self.cnvDonorHistogram.update(_self.cnvDonors);
 
     _self.geneHistogram.update(_self.genes);
-    _self.geneTrack.update(_self.genes);
     _self.cnvGeneHistogram.update(_self.genes);
+    _self.geneTrack.update(_self.genes);
 };
 
 /**
@@ -398,12 +395,10 @@ MainGrid.prototype.resize = function (width, height, x, y) {
     _self.donorHistogram.resize(width, _self.height);
     _self.cnvDonorHistogram.resize(width, _self.height);
     _self.donorTrack.resize(width, _self.height, _self.height);
-    // console.log("_self.height", _self.height);
 
     _self.geneHistogram.resize(width, _self.height);
     _self.cnvGeneHistogram.resize(width, _self.height);
-    _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight);
-
+    _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight + 120);
 
     _self.resizeSvg();
     _self.update(_self.x, _self.x);
@@ -422,7 +417,6 @@ MainGrid.prototype.resizeSvg = function () {
         .attr('width', width)
         .attr('height', height);
     // console.log('height', height);
-    // console.log('width', width)
     if (_self.scaleToFit) {
         _self.canvas.style('width', '100%');
         _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
@@ -458,17 +452,13 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var yIndex = _self.height < coord[1] ? -1 : _self.rangeToDomain(_self.y, coord[1]);
 
             var donor = _self.donors[xIndex];
-            var cnvDonor = _self.cnvDonors[xIndex];
             var gene = _self.genes[yIndex];
-            var cnvGene = _self.cnvGenes[yIndex];
 
             if (!donor || !gene || !cnvDonor || !cnvGene) return;
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-                cnvDonor,
-                cnvGene,
 
                 // obs: _self.nullableObsLookup(donor, gene),
             });

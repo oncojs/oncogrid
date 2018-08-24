@@ -31,7 +31,7 @@ var OncoGrid = function(params) {
   _self.minCellHeight = params.minCellHeight || 10;
 
   _self.inputHeight = params.height || 500;
-  // console.log("inputHeightparams",params);
+
   _self.height = _self.inputHeight;
   if (_self.height / params.genes.length < _self.minCellHeight) {
       _self.height = params.genes.length * _self.minCellHeight;
@@ -47,7 +47,6 @@ var OncoGrid = function(params) {
     .style('position', 'relative');
 
   _self.initCharts();
-  // console.log("_self.height", _self.height); 
   EventEmitter.call(this);
 };
 
@@ -63,9 +62,6 @@ OncoGrid.prototype.initCharts = function(reloading) {
 
   _self.donors = _self.clonedParams.donors || [];
   _self.genes = _self.clonedParams.genes || [];
-  _self.cnvDonors = _self.clonedParams.cnvDonors || [];
-  // console.log("this is the one ", _self.cnvDonors);
-  _self.cnvGenes = _self.clonedParams.cnvGenes || [];
   // _self.types = _self.clonedParams.types || [];
   _self.types = ['cnv', 'mutation'];
   _self.ssmObservations = _self.clonedParams.observations || [];   // change params to specify ssmObservations
@@ -106,14 +102,12 @@ OncoGrid.prototype.calculatePositions = function () {
 
   for (var t = 0, type; t < _self.types.length; t++) {
     type = _self.types[t];
-    for(var i = 0, donor, donorId, cnvDonor, x; i < _self.donors.length; i += 1) {
+    for(var i = 0, donor, donorId, x; i < _self.donors.length; i += 1) {
       donor = _self.donors[i];
-      cnvDonor = _self.cnvDonors[i];
       donorId = donor.id;
 
       x = getX(i);
       donor.x = x;
-      cnvDonor.x = x;
 
       _self.lookupTable[type][donorId] = _self.lookupTable[type][donorId] || {};
       _self.lookupTable[type][donorId].x = x;
@@ -127,7 +121,6 @@ OncoGrid.prototype.calculatePositions = function () {
 
   for(var i = 0; i < _self.genes.length; i += 1) {
     _self.genes[i].y = getY(i);
-    _self.cnvGenes[i].y = getY(i);
   }
 
   _self.y = getY;
@@ -234,9 +227,7 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
  */
 OncoGrid.prototype.sortByScores = function() {
   var _self = this;
-
   _self.donors.sort(_self.sortScore);
-  _self.cnvDonors.sort(_self.sortScore);
 };
 
 OncoGrid.prototype.genesSortbyScores = function() {

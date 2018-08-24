@@ -23,17 +23,17 @@ var d3 = require('d3');
  * No need to make this function public.
  * @returns {number}
  */
-function getLargestCount(domain) {
+function getLargestCount(domain, type) {
     var retVal = 1;
 
     for (var i = 0; i < domain.length; i++) {
-        retVal = Math.max(retVal, domain[i].count);
+        retVal = Math.max(retVal, type == 'cnv'? domain[i].cnv : domain[i].count);
     }
 
     return retVal;
 }
 
-var OncoHistogram = function (params, s, rotated) {
+var OncoHistogram = function (params, s, rotated, type) {
     var _self = this;
 
     var histogramBorderPadding = params.histogramBorderPadding || {};
@@ -44,10 +44,9 @@ var OncoHistogram = function (params, s, rotated) {
 
     _self.prefix = params.prefix || 'og-';
     _self.emit = params.emit;
-    _self.observations = params.observations;
     _self.svg = s;
     _self.rotated = rotated || false;
-
+    _self.type = type || 'mutation';
     _self.domain = (_self.rotated ? params.genes : params.donors) || [];
     _self.margin = params.margin || {top: 30, right: 15, bottom: 15, left: 80};
 
@@ -60,7 +59,7 @@ var OncoHistogram = function (params, s, rotated) {
     _self.numDomain = _self.domain.length;
     _self.barWidth = (_self.rotated ? _self.height : _self.width) / _self.domain.length;
 
-    _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding;
+    _self.totalHeight = _self.histogramHeight + _self.lineHeightOffset + _self.padding +(_self.type === 'cnv'? 120: 0);
     _self.wrapper = d3.select(params.wrapper || 'body');
 };
 
@@ -99,7 +98,7 @@ OncoHistogram.prototype.render = function () {
             var target = d3.event.target;
             var domain = _self.domain[target.dataset.domainIndex];
             if(!domain) return;
-            _self.emit('histogramMouseOver', { domain: domain });
+            _self.emit((_self.type === 'cnv'? 'cnvHistogramMouseOver' : 'histogramMouseOver'), { domain: domain });
         })
         .on('mouseout', function () {
             _self.emit('histogramMouseOut');
@@ -124,13 +123,13 @@ OncoHistogram.prototype.render = function () {
         .attr('data-domain-index', function(d, i) { return i; })
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {
-            return _self.histogramHeight * d.count / topCount;
+            return _self.histogramHeight * (_self.type === 'cnv'? d.cnv : d.count) / topCount;
         })
         .attr('x', function (d) {
             return _self.rotated ? d.y : d.x;
         })
         .attr('y', function (d) {
-            return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
+            return _self.histogramHeight - _self.histogramHeight * (_self.type === 'cnv'? d.cnv : d.count) / topCount;
         })
         .attr('fill', '#1693C0');
 };
@@ -150,10 +149,10 @@ OncoHistogram.prototype.update = function (domain) {
         .transition()
         .attr('width', _self.barWidth - (_self.barWidth < 3 ? 0 : 1)) // If bars are small, do not use whitespace.
         .attr('height', function (d) {
-            return _self.histogramHeight * d.count / topCount;
+            return _self.histogramHeight * (_self.type === 'cnv'? d.cnv : d.count) / topCount;
         })
         .attr('y', function (d) {
-            return _self.histogramHeight - _self.histogramHeight * d.count / topCount;
+            return _self.histogramHeight - _self.histogramHeight * (_self.type === 'cnv'? d.cnv : d.count) / topCount;
         })
         .attr('x', function (d) {
             return _self.rotated ? d.y : d.x;
@@ -167,7 +166,6 @@ OncoHistogram.prototype.resize = function (width, height) {
     _self.height = height;
 
     _self.histogramWidth = (_self.rotated ? _self.height : _self.width);
-
     _self.container
         .attr('width', function () {
             if (_self.rotated) {
@@ -214,7 +212,7 @@ OncoHistogram.prototype.renderAxis = function (topCount) {
         .attr('text-anchor', 'end');
 
     _self.leftLabel = _self.histogram.append('text')
-        .text("Mutation freq.")
+        .text(_self.type === 'cnv'? "CNV freq." : "Mutation freq.")
         .attr({
             'class': _self.prefix + 'label-text-font',
             'text-anchor': 'middle',
