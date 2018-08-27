@@ -27,7 +27,7 @@ function getLargestCount(domain, type) {
     var retVal = 1;
 
     for (var i = 0; i < domain.length; i++) {
-        retVal = Math.max(retVal, type == 'cnv'? domain[i].cnv : domain[i].count);
+        retVal = Math.max(retVal, type === 'cnv' ? domain[i].cnv : domain[i].count);
     }
 
     return retVal;
@@ -66,7 +66,7 @@ var OncoHistogram = function (params, s, rotated, type) {
 OncoHistogram.prototype.render = function () {
     var _self = this;
 
-    var topCount = getLargestCount(_self.domain);
+    var topCount = getLargestCount(_self.domain, _self.type);
     _self.topCount = topCount;
 
     _self.container = _self.svg.append('g')
