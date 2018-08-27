@@ -29,7 +29,6 @@ var OncoGrid = function(params) {
   _self.inputWidth = params.width || 500;
   _self.width = _self.inputWidth;
   _self.minCellHeight = params.minCellHeight || 10;
-
   _self.inputHeight = params.height || 500;
 
   _self.height = _self.inputHeight;

@@ -94,20 +94,21 @@ MainGrid.prototype.loadParams = function (params) {
     };
 
     _self.getCNVCellWidth = function(){
-      if (_self.cnvObservations.length && _self.ssmObservations.length) {
-        return (_self.width / _self.donors.length)/2;
-      } else {
-        return _self.width / _self.donors.length;
-      }
+      // if (_self.cnvObservations.length && _self.ssmObservations.length) {
+      //   return (_self.width / _self.donors.length)/2;
+      // } else {
+      console.log(_self.width / _self.donors.length)
+      return _self.width / _self.donors.length;
+      // }
     }
 
     _self.width = params.width || 500;
     _self.height = params.height || 500;
-
     _self.inputWidth = params.width || 500;
     _self.inputHeight = params.height || 500;
 
     _self.cellWidth = _self.getCNVCellWidth();
+    // _self.cellHeight = _self.cellWidth;
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight < _self.minCellHeight) {
@@ -188,35 +189,101 @@ MainGrid.prototype.render = function () {
     });
 
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-        .data(_self.observations).enter()
+        .data(_self.cnvObservations).enter()
         .append('rect')
         .attr('data-obs-index', function (d, i) { return i; })
         .attr('class', function (d) {
-            return _self.prefix + 'sortable-rect ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+            return _self.prefix + 'sortable-rect-cnv ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
-          if (d.type === 'cnv') {
             return d.cnv_change;
-          }
-          return d.consequence;
         })
         .attr('x', function (d) {
-            return _self.getCellX(d);
+            return (_self.getCellX(d) + (_self.cellWidth/6));
         })
         .attr('y', function (d) {
+            // return _self.getY(d);
+            return _self.getY(d) + (_self.cellHeight/6);
+        })
+        .attr('width', _self.cellWidth/1.5)
+        .attr('height', _self.cellHeight/1.5)
+        .attr('stroke', function (d) {
+          if (d.cnv_change.includes('loss')) {
+            return '#00457c'
+          }
+          return '#900000'
+            // return _self.getColor(d);
+        })
+        .attr('stroke-width', 0.5)
+        .attr('fill-opacity', 0)
+
+    _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
+        .data(_self.ssmObservations).enter()
+        .append('circle')
+        .attr('data-obs-index', function (d, i) { return i; })
+        .attr('class', function (d) {
+            return _self.prefix + 'sortable-rect-ssm ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+        })
+        .attr('cons', function (d) {
+          return d.consequence;
+        })
+        .attr('cx', function (d) {
+            return _self.getCellX(d) + (_self.cellWidth/2);
+        })
+        .attr('cy', function (d) {
             return _self.getY(d);
         })
-        .attr('width', _self.cellWidth)
-        .attr('height', function (d) {
-            return _self.getHeight(d);
-        })
-        .attr('fill', function (d) {
-            return _self.getColor(d);
-        })
+        .attr('r', _self.cellWidth/4)
+        // .attr('width', _self.cellWidth/2)
+        // .attr('height', function (d) {
+        //     return _self.getHeight(d)/2;
+        // })
+        .attr('fill', 'gray')
         .attr('opacity', function (d) {
             return _self.getOpacity(d);
         })
-        .attr('stroke-width', 2);
+        .attr('stroke-width', 1);
+
+        // .attr('width', _self.cellWidth)
+        // .attr('height', function (d) {
+        //     return _self.getHeight(d);
+        // })
+        // .attr('fill', function (d) {
+        //     return _self.getColor(d);
+        // })
+        // .attr('opacity', function (d) {
+        //     return _self.getOpacity(d);
+        // })
+
+
+            // .attr('fill-opacity', 0);
+    // _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
+    //     .data(_self.cnvObservations).enter()
+    //     .append('circle')
+    //     .attr('data-obs-index', function (d, i) { return i; })
+    //     .attr('class', function (d) {
+    //         return _self.prefix + 'sortable-circle-cnv ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+    //     })
+    //     .attr('cons', function (d) {
+    //         return d.cnv_change;
+    //     })
+    //     .attr('cx', function (d) {
+    //         return _self.getCellX(d);
+    //     })
+    //     .attr('cy', function (d) {
+    //         // return _self.getY(d);
+    //         return _self.getY(d) + (_self.cellHeight/2);
+    //     })
+    //     .attr('r', (_self.cellWidth/2 - _self.cellWidth/8))
+    //     .attr('stroke', function (d) {
+    //       if (d.cnv_change.includes('loss')) {
+    //         return 'blue'
+    //       }
+    //       return 'red'
+    //         // return _self.getColor(d);
+    //     })
+    //     .attr('stroke-width', 0.5)
+    //     .attr('fill-opacity', 0);
 
     _self.emit('render:mainGrid:end');
 
@@ -265,7 +332,7 @@ MainGrid.prototype.update = function (x, y) {
         _self.numDonors = _self.donors.length;
         _self.numGenes = _self.genes.length;
         _self.cellWidth = _self.getCNVCellWidth();
-        _self.cellHeight = _self.height / _self.numGenes;
+        _self.cellHeight = _self.height / _self.genes.length;
         _self.computeCoordinates();
     } else {
         _self.row.selectAll('text').attr('style', function () {
@@ -366,8 +433,8 @@ MainGrid.prototype.computeCoordinates = function () {
             }
         })
         .text(function (d, i) {
-            return _self.genes[i].symbol;
-        });
+            return _self.genes[i].symbol
+        })
 
     _self.defineRowDragBehaviour();
 };
@@ -701,16 +768,16 @@ MainGrid.prototype.getY = function (d) {
     if (_self.heatMap || d.type === 'cnv') {
         return y;
     }
-
-    var obsArray = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]);
-    var totalIds = obsArray.length;
-    var count = d.ids.length;
-
-    var obHeight = (_self.cellHeight/totalIds);
-    var obIndex = _self.lookupTable[d.type][d.donorId][d.geneId].indexOf(d.ids);
-    var previousIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId].slice(0, obIndex));
-
-    return y + (obHeight * previousIds.length);
+    return y + _self.cellHeight/2;
+    // var obsArray = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]);
+    // var totalIds = obsArray.length;
+    // var count = d.ids.length;
+    //
+    // var obHeight = (_self.cellHeight/totalIds);
+    // var obIndex = _self.lookupTable[d.type][d.donorId][d.geneId].indexOf(d.ids);
+    // var previousIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId].slice(0, obIndex));
+    //
+    // return y + (obHeight * previousIds.length);
 };
 
 /**
@@ -720,10 +787,10 @@ MainGrid.prototype.getY = function (d) {
 MainGrid.prototype.getCellX = function (d) {
   var _self = this;
 
-  if (d.type === 'cnv' && _self.ssmObservations.length) {
-    var cellWidth = _self.getCNVCellWidth();
-    return _self.lookupTable[d.type][d.donorId].x + cellWidth;
-  }
+  // if (d.type === 'cnv' && _self.ssmObservations.length) {
+  //   var cellWidth = _self.getCNVCellWidth();
+  //   return _self.lookupTable[d.type][d.donorId].x + cellWidth;
+  // }
   return _self.lookupTable[d.type][d.donorId].x;
 }
 
@@ -764,12 +831,12 @@ MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        if (_self.heatMap === true || d.type === 'cnv') {
+        // if (_self.heatMap === true || d.type === 'cnv') {
             return _self.cellHeight;
-        } else {
-            var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
-            return _self.cellHeight * (d.ids.length / totalIds);
-        }
+        // } else {
+        //     var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
+        //     return _self.cellHeight * (d.ids.length / totalIds);
+        // }
     } else {
         return 0;
     }
