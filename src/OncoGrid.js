@@ -31,6 +31,7 @@ var OncoGrid = function(params) {
   _self.minCellHeight = params.minCellHeight || 10;
 
   _self.inputHeight = params.height || 500;
+
   _self.height = _self.inputHeight;
   if (_self.height / params.genes.length < _self.minCellHeight) {
       _self.height = params.genes.length * _self.minCellHeight;
@@ -46,7 +47,6 @@ var OncoGrid = function(params) {
     .style('position', 'relative');
 
   _self.initCharts();
-
   EventEmitter.call(this);
 };
 
@@ -230,7 +230,6 @@ OncoGrid.prototype.resize = function(width, height, fullscreen) {
  */
 OncoGrid.prototype.sortByScores = function() {
   var _self = this;
-
   _self.donors.sort(_self.sortScore);
 };
 
