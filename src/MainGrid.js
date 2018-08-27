@@ -454,7 +454,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var donor = _self.donors[xIndex];
             var gene = _self.genes[yIndex];
 
-            if (!donor || !gene || !cnvDonor || !cnvGene) return;
+            if (!donor || !gene) return;
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
