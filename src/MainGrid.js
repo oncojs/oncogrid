@@ -63,13 +63,13 @@ MainGrid.prototype.loadParams = function (params) {
     _self.prefix = params.prefix || 'og-';
 
     _self.minCellHeight = params.minCellHeight || 10;
-
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.types = [];
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
-    _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
+    _self.observations = _self.cnvObservations.concat(_self.ssmObservations) || [];
+
     _self.wrapper = d3.select(params.wrapper || 'body');
 
     _self.colorMap = params.colorMap || {
@@ -85,7 +85,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.numGenes = _self.genes.length;
 
     if (_self.cnvObservations.length) { _self.types.push('cnv'); }
-    if (_self.observations.length) { _self.types.push('mutation'); }
+    if (_self.ssmObservations.length) { _self.types.push('mutation'); }
 
     _self.fullscreen = false;
 
@@ -97,7 +97,6 @@ MainGrid.prototype.loadParams = function (params) {
       // if (_self.cnvObservations.length && _self.ssmObservations.length) {
       //   return (_self.width / _self.donors.length)/2;
       // } else {
-      console.log(_self.width / _self.donors.length)
       return _self.width / _self.donors.length;
       // }
     }
@@ -109,6 +108,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.cellWidth = _self.getCNVCellWidth();
     // _self.cellHeight = _self.cellWidth;
+
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight < _self.minCellHeight) {
@@ -188,102 +188,86 @@ MainGrid.prototype.render = function () {
         _self.emit('gridClick', { observation: observation });
     });
 
+
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-        .data(_self.cnvObservations).enter()
+        .data(_self.observations).enter()
         .append('rect')
         .attr('data-obs-index', function (d, i) { return i; })
         .attr('class', function (d) {
-            return _self.prefix + 'sortable-rect-cnv ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+            return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
-            return d.cnv_change;
+            return _self.getValueByType(d)
         })
         .attr('x', function (d) {
-            return (_self.getCellX(d) + (_self.cellWidth/6));
+            return _self.getCellX(d);
         })
         .attr('y', function (d) {
-            // return _self.getY(d);
-            return _self.getY(d) + (_self.cellHeight/6);
-        })
-        .attr('width', _self.cellWidth/1.5)
-        .attr('height', _self.cellHeight/1.5)
-        .attr('stroke', function (d) {
-          if (d.cnv_change.includes('loss')) {
-            return '#00457c'
-          }
-          return '#900000'
-            // return _self.getColor(d);
-        })
-        .attr('stroke-width', 0.5)
-        .attr('fill-opacity', 0)
-
-    _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-        .data(_self.ssmObservations).enter()
-        .append('circle')
-        .attr('data-obs-index', function (d, i) { return i; })
-        .attr('class', function (d) {
-            return _self.prefix + 'sortable-rect-ssm ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
-        })
-        .attr('cons', function (d) {
-          return d.consequence;
-        })
-        .attr('cx', function (d) {
-            return _self.getCellX(d) + (_self.cellWidth/2);
-        })
-        .attr('cy', function (d) {
             return _self.getY(d);
         })
-        .attr('r', _self.cellWidth/4)
-        // .attr('width', _self.cellWidth/2)
-        // .attr('height', function (d) {
-        //     return _self.getHeight(d)/2;
-        // })
-        .attr('fill', 'gray')
+        .attr('rx', function (d) {
+            // return _self.getCellX(d)
+            if (d.type === 'cnv') { return 0; }
+            return _self.getCellX(d);
+        })
+        .attr('ry', function (d) {
+            if (d.type === 'cnv') { return 0; }
+            return _self.getY(d);
+            // return _self.getY(d) + _self.cellHeight/3;
+        })
+        .attr('width', function (d) {
+          return _self.getCellWidth(d);
+          // if (d.type === 'cnv') {
+          //   return _self.cellWidth;
+          // }
+          // return 3 * (_self.cellWidth/4);
+        })
+        .attr('height', function (d) {
+          return _self.getHeight(d);
+          // if (d.type === 'cnv') {
+          //   return _self.cellHeight;
+          // }
+          // return 3 * (_self.cellWidth/4);
+        })
+        .attr('fill', function (d) {
+            return _self.getColor(d);
+        })
         .attr('opacity', function (d) {
             return _self.getOpacity(d);
         })
-        .attr('stroke-width', 1);
 
-        // .attr('width', _self.cellWidth)
-        // .attr('height', function (d) {
-        //     return _self.getHeight(d);
-        // })
-        // .attr('fill', function (d) {
-        //     return _self.getColor(d);
-        // })
-        // .attr('opacity', function (d) {
-        //     return _self.getOpacity(d);
-        // })
-
-
-            // .attr('fill-opacity', 0);
     // _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-    //     .data(_self.cnvObservations).enter()
-    //     .append('circle')
+    //     .data(_self.ssmObservations).enter()
+    //     .append('rect')
     //     .attr('data-obs-index', function (d, i) { return i; })
     //     .attr('class', function (d) {
-    //         return _self.prefix + 'sortable-circle-cnv ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
+    //         return _self.prefix + 'sortable-rect-mutation ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
     //     })
     //     .attr('cons', function (d) {
-    //         return d.cnv_change;
+    //        return d.consequence;
     //     })
-    //     .attr('cx', function (d) {
+    //     .attr('x', function (d) {
     //         return _self.getCellX(d);
     //     })
-    //     .attr('cy', function (d) {
-    //         // return _self.getY(d);
-    //         return _self.getY(d) + (_self.cellHeight/2);
+    //     .attr('y', function (d) {
+    //       return _self.getY(d);
     //     })
-    //     .attr('r', (_self.cellWidth/2 - _self.cellWidth/8))
-    //     .attr('stroke', function (d) {
-    //       if (d.cnv_change.includes('loss')) {
-    //         return 'blue'
-    //       }
-    //       return 'red'
-    //         // return _self.getColor(d);
+    //     .attr('rx', function (d) {
+    //         // return _self.getCellX(d)
+    //         return _self.getCellX(d);
     //     })
-    //     .attr('stroke-width', 0.5)
-    //     .attr('fill-opacity', 0);
+    //     .attr('ry', function (d) {
+    //         return _self.getY(d) + _self.cellHeight/3;
+    //     })
+    //     .attr('width', 3 * (_self.cellWidth/4))
+    //     .attr('height', 3 * (_self.cellWidth/4))
+    //     // .attr('r', _self.cellWidth/4)
+    //     .attr('opacity', function (d) {
+    //         return _self.getOpacity(d);
+    //     })
+    //     .attr('fill', function (d) {
+    //         return _self.getColor(d);
+    //     })
 
     _self.emit('render:mainGrid:end');
 
@@ -321,7 +305,6 @@ MainGrid.prototype.render = function () {
  */
 MainGrid.prototype.update = function (x, y) {
     var _self = this;
-
     _self.createGeneMap();
 
     _self.x = x;
@@ -350,16 +333,28 @@ MainGrid.prototype.update = function (x, y) {
             return 'translate( 0, ' + d.y + ')';
         });
 
-    _self.container.selectAll('.' + _self.prefix + 'sortable-rect')
-        .transition()
-        .attr('width', _self.cellWidth)
-        .attr('height', function (d) { return _self.getHeight(d); })
-        .attr('y', function (d) {
-            return _self.getY(d);
-        })
-        .attr('x', function (d) {
-            return _self.getCellX(d);
-        });
+    for (var i = 0; i < _self.types.length; i++) {
+        _self.container.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
+            .transition()
+            .attr('x', function (d) {
+                return _self.getCellX(d);
+            })
+            .attr('y', function (d) {
+              return _self.getY(d);
+            })
+            .attr('rx', function (d) {
+                return _self.getCellXRadius(d);
+            })
+            .attr('ry', function (d) {
+                return _self.getCellYRadius(d);
+            })
+            .attr('width', function (d) {
+                return _self.getCellWidth(d);
+            })
+            .attr('height', function (d) {
+                return _self.getHeight(d);
+            })
+    }
 
     _self.donorHistogram.update(_self.donors);
     _self.cnvDonorHistogram.update(_self.donors);
@@ -369,6 +364,7 @@ MainGrid.prototype.update = function (x, y) {
     _self.cnvGeneHistogram.update(_self.genes);
     _self.geneTrack.update(_self.genes);
 };
+
 
 /**
  * Updates coordinate system and renders the lines of the grid.
@@ -487,7 +483,7 @@ MainGrid.prototype.resizeSvg = function () {
     _self.canvas
         .attr('width', width)
         .attr('height', height);
-    // console.log('height', height);
+
     if (_self.scaleToFit) {
         _self.canvas.style('width', '100%');
         _self.svg.attr('viewBox', '0 0 ' + width + ' ' + height);
@@ -765,19 +761,10 @@ MainGrid.prototype.getY = function (d) {
 
     var y = _self.geneMap[d.geneId].y;
 
-    if (_self.heatMap || d.type === 'cnv') {
-        return y;
+    if (!_self.heatMap && d.type === 'mutation') {
+        return y + _self.cellHeight/3;
     }
-    return y + _self.cellHeight/2;
-    // var obsArray = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]);
-    // var totalIds = obsArray.length;
-    // var count = d.ids.length;
-    //
-    // var obHeight = (_self.cellHeight/totalIds);
-    // var obIndex = _self.lookupTable[d.type][d.donorId][d.geneId].indexOf(d.ids);
-    // var previousIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId].slice(0, obIndex));
-    //
-    // return y + (obHeight * previousIds.length);
+    return y;
 };
 
 /**
@@ -786,12 +773,12 @@ MainGrid.prototype.getY = function (d) {
  */
 MainGrid.prototype.getCellX = function (d) {
   var _self = this;
+  var x = _self.lookupTable[d.type][d.donorId].x;
 
-  // if (d.type === 'cnv' && _self.ssmObservations.length) {
-  //   var cellWidth = _self.getCNVCellWidth();
-  //   return _self.lookupTable[d.type][d.donorId].x + cellWidth;
-  // }
-  return _self.lookupTable[d.type][d.donorId].x;
+  if (!_self.heatMap && d.type === 'mutation') {
+    return x + (_self.cellWidth/8);
+  }
+  return x;
 }
 
 /**
@@ -805,7 +792,7 @@ MainGrid.prototype.getColor = function (d) {
     if (_self.heatMap === true) {
         return '#D33682';
     } else {
-        return _self.colorMap[d.type][colorKey];
+      return _self.colorMap[d.type][colorKey];
     }
 };
 
@@ -824,24 +811,57 @@ MainGrid.prototype.getOpacity = function () {
 };
 
 /**
- * Returns the height of an observation cell. This changes between heatmap and regular mode.
+ * Returns the height of an observation cell.
  * @returns {number}
  */
 MainGrid.prototype.getHeight = function (d) {
     var _self = this;
 
     if (typeof d !== 'undefined') {
-        // if (_self.heatMap === true || d.type === 'cnv') {
-            return _self.cellHeight;
-        // } else {
-        //     var totalIds = [].concat.apply([], _self.lookupTable[d.type][d.donorId][d.geneId]).length;
-        //     return _self.cellHeight * (d.ids.length / totalIds);
-        // }
+        if (!_self.heatMap === true && d.type === 'mutation') {
+          return (3 * (_self.cellWidth/4));
+        } else {
+          return _self.cellHeight;
+        }
     } else {
         return 0;
     }
 };
 
+/**
+ * Returns the correct observation value based on the data type.
+*/
+MainGrid.prototype.getValueByType = function (d) {
+  var _self = this;
+  if (d.type === 'cnv') {
+    return d.cnv_change;
+  }
+  return d.consequence;
+}
+
+MainGrid.prototype.getCellXRadius = function (d) {
+    var _self = this;
+    if (_self.heatMap || d.type === 'cnv') {
+      return 0;
+    }
+    return _self.getCellX(d);
+}
+
+MainGrid.prototype.getCellYRadius = function (d) {
+    var _self = this;
+    if (_self.heatMap || d.type === 'cnv') {
+      return 0;
+    }
+    return _self.getY(d);
+}
+
+MainGrid.prototype.getCellWidth = function (d) {
+    var _self = this;
+    if (_self.heatmap || d.type === 'cnv') {
+      return _self.cellWidth;
+    }
+    return 3 * (_self.cellWidth/4);
+}
 /**
  * set the observation rects between heatmap and regular mode.
  */
@@ -850,20 +870,36 @@ MainGrid.prototype.setHeatmap = function (active) {
     if (active === _self.heatMap) return _self.heatMap;
     _self.heatMap = active;
 
-    d3.selectAll('.' + _self.prefix + 'sortable-rect')
-        .transition()
-        .attr('y', function (d) {
-            return _self.getY(d);
-        })
-        .attr('height', function (d) {
-            return _self.getHeight(d);
-        })
-        .attr('fill', function (d) {
-            return _self.getColor(d);
-        })
-        .attr('opacity', function (d) {
-            return _self.getOpacity(d);
-        });
+// are we showing cnv on heatmap yet?
+    for (var i = 0; i < _self.types.length; i++) {
+      d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
+          .transition()
+          .attr('rx', function (d) {
+              return _self.getCellXRadius(d);
+          })
+          .attr('ry', function (d) {
+            return _self.getCellYRadius(d);
+          })
+          .attr('x', function (d) {
+              return _self.getCellX(d);
+          })
+          .attr('y', function (d) {
+              return _self.getY(d);
+          })
+          .attr('width', function (d) {
+            return _self.getCellWidth(d);
+          })
+          .attr('height', function (d) {
+              return _self.getHeight(d);
+          })
+          .attr('fill', function (d) {
+              return _self.getColor(d);
+          })
+          .attr('opacity', function (d) {
+              return _self.getOpacity(d);
+          });
+    }
+
 
     return _self.heatMap;
 };
