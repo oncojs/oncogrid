@@ -762,7 +762,7 @@ MainGrid.prototype.getY = function (d) {
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
-        return y + _self.cellHeight/3;
+        return y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
     }
     return y;
 };
@@ -857,7 +857,7 @@ MainGrid.prototype.getCellYRadius = function (d) {
 
 MainGrid.prototype.getCellWidth = function (d) {
     var _self = this;
-    if (_self.heatmap || d.type === 'cnv') {
+    if (_self.heatMap || d.type === 'cnv') {
       return _self.cellWidth;
     }
     return 3 * (_self.cellWidth/4);
