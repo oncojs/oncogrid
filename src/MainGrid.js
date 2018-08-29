@@ -107,9 +107,8 @@ MainGrid.prototype.loadParams = function (params) {
     _self.inputHeight = params.height || 500;
 
     _self.cellWidth = _self.getCNVCellWidth();
-    // _self.cellHeight = _self.cellWidth;
 
-    _self.cellHeight = _self.height / _self.genes.length;
+    _self.cellHeight = _self.height / _self.numGenes;
 
     if (_self.cellHeight < _self.minCellHeight) {
         _self.cellHeight = _self.minCellHeight;
@@ -776,7 +775,7 @@ MainGrid.prototype.getCellX = function (d) {
   var x = _self.lookupTable[d.type][d.donorId].x;
 
   if (!_self.heatMap && d.type === 'mutation') {
-    return x + (_self.cellWidth/8);
+    return x + (_self.cellWidth/4);
   }
   return x;
 }
@@ -819,7 +818,7 @@ MainGrid.prototype.getHeight = function (d) {
 
     if (typeof d !== 'undefined') {
         if (!_self.heatMap === true && d.type === 'mutation') {
-          return (3 * (_self.cellWidth/4));
+          return (_self.cellWidth/2);
         } else {
           return _self.cellHeight;
         }
@@ -860,7 +859,7 @@ MainGrid.prototype.getCellWidth = function (d) {
     if (_self.heatMap || d.type === 'cnv') {
       return _self.cellWidth;
     }
-    return 3 * (_self.cellWidth/4);
+    return _self.cellWidth/2;
 }
 /**
  * set the observation rects between heatmap and regular mode.
