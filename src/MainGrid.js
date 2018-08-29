@@ -758,10 +758,12 @@ MainGrid.prototype.createGeneMap = function () {
 MainGrid.prototype.getY = function (d) {
     var _self = this;
 
+    // fails here when last gene filter is cleared, geneId is not found in the geneMap
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
-        return y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
+      var foo = y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
+      return foo;
     }
     return y;
 };
@@ -815,9 +817,12 @@ MainGrid.prototype.getOpacity = function () {
  */
 MainGrid.prototype.getHeight = function (d) {
     var _self = this;
-
+    var maxHeight = _self.height;
     if (typeof d !== 'undefined') {
         if (!_self.heatMap === true && d.type === 'mutation') {
+          if (_self.cellWidth/2 > maxHeight) {
+            return maxHeight/2;
+          }
           return (_self.cellWidth/2);
         } else {
           return _self.cellHeight;
@@ -856,7 +861,11 @@ MainGrid.prototype.getCellYRadius = function (d) {
 
 MainGrid.prototype.getCellWidth = function (d) {
     var _self = this;
+    var maxWidth = _self.width;
     if (_self.heatMap || d.type === 'cnv') {
+      if (_self.cellWidth > maxWidth) {
+        return maxWidth/2;
+      }
       return _self.cellWidth;
     }
     return _self.cellWidth/2;
