@@ -94,11 +94,7 @@ MainGrid.prototype.loadParams = function (params) {
     };
 
     _self.getCNVCellWidth = function(){
-      // if (_self.cnvObservations.length && _self.ssmObservations.length) {
-      //   return (_self.width / _self.donors.length)/2;
-      // } else {
-      return _self.width / _self.donors.length;
-      // }
+        return _self.width / _self.donors.length;
     }
 
     _self.width = params.width || 500;
@@ -372,8 +368,7 @@ MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
     _self.cellWidth = _self.getCNVCellWidth();
-    // _self.cellWidth = _self.width / _self.donors.length;
-    // console.log('cellWidth', _self.cellWidth);
+
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
     }
@@ -636,15 +631,20 @@ MainGrid.prototype.finishSelection = function () {
 
         var yStart = _self.rangeToDomain(_self.y, y1);
         var yStop = _self.rangeToDomain(_self.y, y2);
+        // if ((yStop - yStart) < 4 || (xStop - xStart) < 4) {
+        //     delete _self.selectionRegion;
+        //     _self.updateCallback(true);
+        //     return;
+        // } else {
+            _self.sliceDonors(xStart, xStop);
+            _self.sliceGenes(yStart, yStop);
 
-        _self.sliceDonors(xStart, xStop);
-        _self.sliceGenes(yStart, yStop);
-
-        _self.selectionRegion.remove();
-        delete _self.selectionRegion;
-
+            _self.selectionRegion.remove();
+            delete _self.selectionRegion;
+            _self.updateCallback(true);
+        // }
         // _self.crosshair = false; // this needs to be updated in frontend state
-        _self.updateCallback(true);
+
     }
 };
 
@@ -762,8 +762,11 @@ MainGrid.prototype.getY = function (d) {
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
-      var foo = y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
-      return foo;
+      var yPosition = y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
+      if (yPosition < 0) {
+        return 0;
+      }
+      return yPosition;
     }
     return y;
 };
@@ -817,12 +820,9 @@ MainGrid.prototype.getOpacity = function () {
  */
 MainGrid.prototype.getHeight = function (d) {
     var _self = this;
-    var maxHeight = _self.height;
+
     if (typeof d !== 'undefined') {
         if (!_self.heatMap === true && d.type === 'mutation') {
-          if (_self.cellWidth/2 > maxHeight) {
-            return maxHeight/2;
-          }
           return (_self.cellWidth/2);
         } else {
           return _self.cellHeight;
@@ -831,6 +831,14 @@ MainGrid.prototype.getHeight = function (d) {
         return 0;
     }
 };
+
+MainGrid.prototype.getCellWidth = function (d) {
+    var _self = this;
+    if (_self.heatMap || d.type === 'cnv') {
+      return _self.cellWidth;
+    }
+    return _self.cellWidth/2;
+}
 
 /**
  * Returns the correct observation value based on the data type.
@@ -859,17 +867,6 @@ MainGrid.prototype.getCellYRadius = function (d) {
     return _self.getY(d);
 }
 
-MainGrid.prototype.getCellWidth = function (d) {
-    var _self = this;
-    var maxWidth = _self.width;
-    if (_self.heatMap || d.type === 'cnv') {
-      if (_self.cellWidth > maxWidth) {
-        return maxWidth/2;
-      }
-      return _self.cellWidth;
-    }
-    return _self.cellWidth/2;
-}
 /**
  * set the observation rects between heatmap and regular mode.
  */
