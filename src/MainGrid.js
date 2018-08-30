@@ -266,13 +266,13 @@ MainGrid.prototype.render = function () {
 
     _self.emit('render:mainGrid:end');
 
-    _self.emit('render:donorHisogram:start');
+    _self.emit('render:donorHistogram:start');
     _self.donorHistogram.render();
-    _self.emit('render:donorHisogram:end');
+    _self.emit('render:donorHistogram:end');
 
     _self.emit('render:cnvDonorHistogram:start');
     _self.cnvDonorHistogram.render();
-    _self.emit('render:cnvDonorHisogram:end');
+    _self.emit('render:cnvDonorHistogram:end');
 
     _self.emit('render:donorTrack:start');
     _self.donorTrack.render();
@@ -471,7 +471,7 @@ MainGrid.prototype.resize = function (width, height, x, y) {
 MainGrid.prototype.resizeSvg = function () {
     var _self = this;
     var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight * 2 + _self.geneTrack.height + _self.margin.right;
-    // The total hight of the Grid. 729
+
     var height = _self.margin.top + _self.histogramHeight * 2 + _self.height + _self.donorTrack.height + _self.margin.bottom;
 
     _self.canvas
@@ -520,7 +520,6 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-
                 // obs: _self.nullableObsLookup(donor, gene),
             });
         }
@@ -773,7 +772,6 @@ MainGrid.prototype.getY = function (d) {
 
 /**
  * Function that determines the x position of a mutation or cnv within a cell
- * move x position one half cell width if type is cnv and there are 2 sets of data
  */
 MainGrid.prototype.getCellX = function (d) {
   var _self = this;
