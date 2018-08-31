@@ -739,10 +739,13 @@ MainGrid.prototype.getColor = function (d) {
  * Returns the desired opacity of observation rects. This changes between heatmap and regular mode.
  * @returns {number}
  */
-MainGrid.prototype.getOpacity = function () {
+MainGrid.prototype.getOpacity = function (d) {
     var _self = this;
 
     if (_self.heatMap === true) {
+        // if (d.type === 'cnv') {
+        //   return 0;
+        // }
         return 0.25;
     } else {
         return 1;
@@ -829,6 +832,7 @@ MainGrid.prototype.setHeatmap = function (active) {
         if (d.type === 'cnv' || _self.heatMap) {
           return _self.getRectangularPath(d);
         }
+        return _self.getCircularPath(d);
       })
       .attr('fill', function (d) {
           return _self.getColor(d);
