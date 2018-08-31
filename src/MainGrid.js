@@ -188,7 +188,6 @@ MainGrid.prototype.render = function () {
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('path')
-        // .append('rect')
         .attr('data-obs-index', function (d, i) { return i; })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
@@ -208,71 +207,7 @@ MainGrid.prototype.render = function () {
         .attr('opacity', function (d) {
             return _self.getOpacity(d);
         })
-        // .attr('x', function (d) {
-        //     return _self.getCellX(d);
-        // })
-        // .attr('y', function (d) {
-        //     return _self.getY(d);
-        // })
-        // .attr('fill', 'blue')
-        // .attr('rx', function (d) {
-        //     // return _self.getCellX(d)
-        //     if (d.type === 'cnv') { return 0; }
-        //     return _self.getCellX(d);
-        // })
-        // .attr('ry', function (d) {
-        //     if (d.type === 'cnv') { return 0; }
-        //     return _self.getY(d);
-        //     // return _self.getY(d) + _self.cellHeight/3;
-        // })
-        // .attr('width', function (d) {
-        //   return _self.getCellWidth(d);
-        //   // if (d.type === 'cnv') {
-        //   //   return _self.cellWidth;
-        //   // }
-        //   // return 3 * (_self.cellWidth/4);
-        // })
-        // .attr('height', function (d) {
-        //   return _self.getHeight(d);
-        //   // if (d.type === 'cnv') {
-        //   //   return _self.cellHeight;
-        //   // }
-        //   // return 3 * (_self.cellWidth/4);
-        // })
 
-
-    // _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-    //     .data(_self.ssmObservations).enter()
-    //     .append('rect')
-    //     .attr('data-obs-index', function (d, i) { return i; })
-    //     .attr('class', function (d) {
-    //         return _self.prefix + 'sortable-rect-mutation ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
-    //     })
-    //     .attr('cons', function (d) {
-    //        return d.consequence;
-    //     })
-    //     .attr('x', function (d) {
-    //         return _self.getCellX(d);
-    //     })
-    //     .attr('y', function (d) {
-    //       return _self.getY(d);
-    //     })
-    //     .attr('rx', function (d) {
-    //         // return _self.getCellX(d)
-    //         return _self.getCellX(d);
-    //     })
-    //     .attr('ry', function (d) {
-    //         return _self.getY(d) + _self.cellHeight/3;
-    //     })
-    //     .attr('width', 3 * (_self.cellWidth/4))
-    //     .attr('height', 3 * (_self.cellWidth/4))
-    //     // .attr('r', _self.cellWidth/4)
-    //     .attr('opacity', function (d) {
-    //         return _self.getOpacity(d);
-    //     })
-    //     .attr('fill', function (d) {
-    //         return _self.getColor(d);
-    //     })
 
     _self.emit('render:mainGrid:end');
 
@@ -346,26 +281,7 @@ MainGrid.prototype.update = function (x, y) {
                 return _self.getRectangularPath(d);
               }
               return _self.getCircularPath(d);
-              // return 'M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0'
             })
-            // .attr('x', function (d) {
-            //     return _self.getCellX(d);
-            // })
-            // .attr('y', function (d) {
-            //   return _self.getY(d);
-            // })
-            // .attr('rx', function (d) {
-            //     return _self.getCellXRadius(d);
-            // })
-            // .attr('ry', function (d) {
-            //     return _self.getCellYRadius(d);
-            // })
-            // .attr('width', function (d) {
-            //     return _self.getCellWidth(d);
-            // })
-            // .attr('height', function (d) {
-            //     return _self.getHeight(d);
-            // })
     }
 
     _self.donorHistogram.update(_self.donors);
@@ -488,7 +404,7 @@ MainGrid.prototype.resize = function (width, height, x, y) {
 MainGrid.prototype.resizeSvg = function () {
     var _self = this;
     var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight * 2 + _self.geneTrack.height + _self.margin.right;
-    // The total hight of the Grid. 729
+
     var height = _self.margin.top + _self.histogramHeight * 2 + _self.height + _self.donorTrack.height + _self.margin.bottom;
 
     _self.canvas
@@ -648,18 +564,14 @@ MainGrid.prototype.finishSelection = function () {
 
         var yStart = _self.rangeToDomain(_self.y, y1);
         var yStop = _self.rangeToDomain(_self.y, y2);
-        // if ((yStop - yStart) < 4 || (xStop - xStart) < 4) {
-        //     delete _self.selectionRegion;
-        //     _self.updateCallback(true);
-        //     return;
-        // } else {
-            _self.sliceDonors(xStart, xStop);
-            _self.sliceGenes(yStart, yStop);
 
-            _self.selectionRegion.remove();
-            delete _self.selectionRegion;
-            _self.updateCallback(true);
-        // }
+        _self.sliceDonors(xStart, xStop);
+        _self.sliceGenes(yStart, yStop);
+
+        _self.selectionRegion.remove();
+        delete _self.selectionRegion;
+        _self.updateCallback(true);
+
         // _self.crosshair = false; // this needs to be updated in frontend state
 
     }
@@ -899,21 +811,6 @@ MainGrid.prototype.getRectangularPath = function (d) {
   var y1 = _self.getY(d);
   return 'M ' + x1 + ' ' + y1 + ' H ' + (x1 + _self.cellWidth) + ' V ' + (y1 + _self.getHeight(d)) + ' H ' + x1 + 'Z';
 }
-// MainGrid.prototype.getCellXRadius = function (d) {
-//     var _self = this;
-//     if (_self.heatMap || d.type === 'cnv') {
-//       return 0;
-//     }
-//     return _self.getCellX(d);
-// }
-//
-// MainGrid.prototype.getCellYRadius = function (d) {
-//     var _self = this;
-//     if (_self.heatMap || d.type === 'cnv') {
-//       return 0;
-//     }
-//     return _self.getY(d);
-// }
 
 /**
  * set the observation rects between heatmap and regular mode.
@@ -939,31 +836,6 @@ MainGrid.prototype.setHeatmap = function (active) {
       .attr('opacity', function (d) {
           return _self.getOpacity(d);
       })
-          // .transition()
-          // .attr('rx', function (d) {
-          //     return _self.getCellXRadius(d);
-          // })
-          // .attr('ry', function (d) {
-          //   return _self.getCellYRadius(d);
-          // })
-          // .attr('x', function (d) {
-          //     return _self.getCellX(d);
-          // })
-          // .attr('y', function (d) {
-          //     return _self.getY(d);
-          // })
-          // .attr('width', function (d) {
-          //   return _self.getCellWidth(d);
-          // })
-          // .attr('height', function (d) {
-          //     return _self.getHeight(d);
-          // })
-          // .attr('fill', function (d) {
-          //     return _self.getColor(d);
-          // })
-          // .attr('opacity', function (d) {
-          //     return _self.getOpacity(d);
-          // });
     }
 
 
