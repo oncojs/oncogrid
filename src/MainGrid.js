@@ -822,7 +822,6 @@ MainGrid.prototype.setHeatmap = function (active) {
     for (var i = 0; i < _self.types.length; i++) {
       d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
         .transition()
-      // .append('rect')
       .attr('d', function (d) {
         if (d.type === 'cnv' || _self.heatMap) {
           return _self.getRectangularPath(d);
