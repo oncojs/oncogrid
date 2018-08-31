@@ -184,9 +184,10 @@ MainGrid.prototype.render = function () {
     });
 
 
+
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
-        .append('rect')
+        .append('path')
         .attr('data-obs-index', function (d, i) { return i; })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
@@ -194,35 +195,11 @@ MainGrid.prototype.render = function () {
         .attr('cons', function (d) {
             return _self.getValueByType(d)
         })
-        .attr('x', function (d) {
-            return _self.getCellX(d);
-        })
-        .attr('y', function (d) {
-            return _self.getY(d);
-        })
-        .attr('rx', function (d) {
-            // return _self.getCellX(d)
-            if (d.type === 'cnv') { return 0; }
-            return _self.getCellX(d);
-        })
-        .attr('ry', function (d) {
-            if (d.type === 'cnv') { return 0; }
-            return _self.getY(d);
-            // return _self.getY(d) + _self.cellHeight/3;
-        })
-        .attr('width', function (d) {
-          return _self.getCellWidth(d);
-          // if (d.type === 'cnv') {
-          //   return _self.cellWidth;
-          // }
-          // return 3 * (_self.cellWidth/4);
-        })
-        .attr('height', function (d) {
-          return _self.getHeight(d);
-          // if (d.type === 'cnv') {
-          //   return _self.cellHeight;
-          // }
-          // return 3 * (_self.cellWidth/4);
+        .attr('d', function (d) {
+          if (d.type === 'cnv' || _self.heatMap) {
+            return _self.getRectangularPath(d);
+          }
+          return _self.getCircularPath(d);
         })
         .attr('fill', function (d) {
             return _self.getColor(d);
@@ -231,38 +208,6 @@ MainGrid.prototype.render = function () {
             return _self.getOpacity(d);
         })
 
-    // _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
-    //     .data(_self.ssmObservations).enter()
-    //     .append('rect')
-    //     .attr('data-obs-index', function (d, i) { return i; })
-    //     .attr('class', function (d) {
-    //         return _self.prefix + 'sortable-rect-mutation ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
-    //     })
-    //     .attr('cons', function (d) {
-    //        return d.consequence;
-    //     })
-    //     .attr('x', function (d) {
-    //         return _self.getCellX(d);
-    //     })
-    //     .attr('y', function (d) {
-    //       return _self.getY(d);
-    //     })
-    //     .attr('rx', function (d) {
-    //         // return _self.getCellX(d)
-    //         return _self.getCellX(d);
-    //     })
-    //     .attr('ry', function (d) {
-    //         return _self.getY(d) + _self.cellHeight/3;
-    //     })
-    //     .attr('width', 3 * (_self.cellWidth/4))
-    //     .attr('height', 3 * (_self.cellWidth/4))
-    //     // .attr('r', _self.cellWidth/4)
-    //     .attr('opacity', function (d) {
-    //         return _self.getOpacity(d);
-    //     })
-    //     .attr('fill', function (d) {
-    //         return _self.getColor(d);
-    //     })
 
     _self.emit('render:mainGrid:end');
 
@@ -304,7 +249,7 @@ MainGrid.prototype.update = function (x, y) {
 
     _self.x = x;
     _self.y = y;
-
+    console.log('updating')
     // Recalculate positions and dimensions of cells only on change in number of elements
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
@@ -331,23 +276,11 @@ MainGrid.prototype.update = function (x, y) {
     for (var i = 0; i < _self.types.length; i++) {
         _self.container.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
             .transition()
-            .attr('x', function (d) {
-                return _self.getCellX(d);
-            })
-            .attr('y', function (d) {
-              return _self.getY(d);
-            })
-            .attr('rx', function (d) {
-                return _self.getCellXRadius(d);
-            })
-            .attr('ry', function (d) {
-                return _self.getCellYRadius(d);
-            })
-            .attr('width', function (d) {
-                return _self.getCellWidth(d);
-            })
-            .attr('height', function (d) {
-                return _self.getHeight(d);
+            .attr('d', function (d) {
+              if (d.type === 'cnv' || _self.heatMap) {
+                return _self.getRectangularPath(d);
+              }
+              return _self.getCircularPath(d);
             })
     }
 
@@ -630,18 +563,14 @@ MainGrid.prototype.finishSelection = function () {
 
         var yStart = _self.rangeToDomain(_self.y, y1);
         var yStop = _self.rangeToDomain(_self.y, y2);
-        // if ((yStop - yStart) < 4 || (xStop - xStart) < 4) {
-        //     delete _self.selectionRegion;
-        //     _self.updateCallback(true);
-        //     return;
-        // } else {
-            _self.sliceDonors(xStart, xStop);
-            _self.sliceGenes(yStart, yStop);
 
-            _self.selectionRegion.remove();
-            delete _self.selectionRegion;
-            _self.updateCallback(true);
-        // }
+        _self.sliceDonors(xStart, xStop);
+        _self.sliceGenes(yStart, yStop);
+
+        _self.selectionRegion.remove();
+        delete _self.selectionRegion;
+        _self.updateCallback(true);
+
         // _self.crosshair = false; // this needs to be updated in frontend state
 
     }
@@ -743,6 +672,7 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
 };
 
 MainGrid.prototype.createGeneMap = function () {
+  console.log('creating gene map');
     var _self = this;
     var geneMap = {};
     for (var i = 0; i < _self.genes.length; i += 1) {
@@ -757,11 +687,16 @@ MainGrid.prototype.createGeneMap = function () {
 MainGrid.prototype.getY = function (d) {
     var _self = this;
 
-    // fails here when last gene filter is cleared, geneId is not found in the geneMap
+    // failing when some filters are removed, or a filter is re-added. related to caching at all?
+    if (!_self.geneMap[d.geneId]) { debugger; }
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
-      var yPosition = y + _self.cellHeight/2 - (_self.getCellWidth(d)/2);
+      var yReposition = _self.getHeight(d)/2
+      // if (_self.cellHeight < _self.cellWidth) {
+      //   yReposition = _self.getCellWidth(d)/2;
+      // }
+      var yPosition = y + _self.cellHeight/2;
       if (yPosition < 0) {
         return 0;
       }
@@ -821,6 +756,9 @@ MainGrid.prototype.getHeight = function (d) {
 
     if (typeof d !== 'undefined') {
         if (!_self.heatMap === true && d.type === 'mutation') {
+          if (_self.cellWidth > _self.cellHeight) {
+            return _self.cellHeight/2;
+          }
           return (_self.cellWidth/2);
         } else {
           return _self.cellHeight;
@@ -835,7 +773,10 @@ MainGrid.prototype.getCellWidth = function (d) {
     if (_self.heatMap || d.type === 'cnv') {
       return _self.cellWidth;
     }
-    return _self.cellWidth/2;
+    if (_self.cellWidth > _self.cellHeight) {
+      return _self.cellHeight/4;
+    }
+    return _self.cellWidth/4;
 }
 
 /**
@@ -849,20 +790,24 @@ MainGrid.prototype.getValueByType = function (d) {
   return d.consequence;
 }
 
-MainGrid.prototype.getCellXRadius = function (d) {
-    var _self = this;
-    if (_self.heatMap || d.type === 'cnv') {
-      return 0;
-    }
-    return _self.getCellX(d);
+/**
+* Returns circular path based on cell dimensions
+*/
+MainGrid.prototype.getCircularPath = function (d) {
+  var _self = this;
+  var x1 = _self.getCellX(d);
+  var y1 = _self.getY(d);
+  return 'M ' + (x1 + _self.cellWidth/4) + ', ' + y1 + ' m ' + (-1 * _self.getCellWidth(d)) + ', 0 ' + 'a ' + _self.getCellWidth(d) + ', ' + _self.getCellWidth(d) + ' 0 1,0 ' + (2 * _self.getCellWidth(d)) + ',0 a ' + _self.getCellWidth(d) + ',' + _self.getCellWidth(d) + ' 0 1,0 ' + (-1 * (2 *_self.getCellWidth(d))) + ',0';
 }
 
-MainGrid.prototype.getCellYRadius = function (d) {
-    var _self = this;
-    if (_self.heatMap || d.type === 'cnv') {
-      return 0;
-    }
-    return _self.getY(d);
+/**
+* Returns rectangular path based on cell dimensions
+*/
+MainGrid.prototype.getRectangularPath = function (d) {
+  var _self = this;
+  var x1 = _self.getCellX(d);
+  var y1 = _self.getY(d);
+  return 'M ' + x1 + ' ' + y1 + ' H ' + (x1 + _self.cellWidth) + ' V ' + (y1 + _self.getHeight(d)) + ' H ' + x1 + 'Z';
 }
 
 /**
@@ -876,31 +821,19 @@ MainGrid.prototype.setHeatmap = function (active) {
 // are we showing cnv on heatmap yet?
     for (var i = 0; i < _self.types.length; i++) {
       d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
-          .transition()
-          .attr('rx', function (d) {
-              return _self.getCellXRadius(d);
-          })
-          .attr('ry', function (d) {
-            return _self.getCellYRadius(d);
-          })
-          .attr('x', function (d) {
-              return _self.getCellX(d);
-          })
-          .attr('y', function (d) {
-              return _self.getY(d);
-          })
-          .attr('width', function (d) {
-            return _self.getCellWidth(d);
-          })
-          .attr('height', function (d) {
-              return _self.getHeight(d);
-          })
-          .attr('fill', function (d) {
-              return _self.getColor(d);
-          })
-          .attr('opacity', function (d) {
-              return _self.getOpacity(d);
-          });
+        .transition()
+      // .append('rect')
+      .attr('d', function (d) {
+        if (d.type === 'cnv' || _self.heatMap) {
+          return _self.getRectangularPath(d);
+        }
+      })
+      .attr('fill', function (d) {
+          return _self.getColor(d);
+      })
+      .attr('opacity', function (d) {
+          return _self.getOpacity(d);
+      })
     }
 
 
