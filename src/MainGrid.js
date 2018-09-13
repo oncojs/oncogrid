@@ -163,9 +163,14 @@ MainGrid.prototype.render = function () {
 
         var xIndex = _self.rangeToDomain(_self.x, coord[0]);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
-        var obs = _self.observations[target.dataset.obsIndex];
 
-        if (!obs || _self.crosshair) return;
+        if (!target.dataset.obsIndex || _self.crosshair) return;
+        var obsIds = target.dataset.obsIndex.split(' ')
+        var obs = _self.observations.filter(function (o) {
+          return o.donorId === obsIds[0] && o.geneId === obsIds[1];
+        })
+        // var obs = _self.observations[target.dataset.obsIndex];
+        // if (!obs || _self.crosshair) return;
         _self.emit('gridMouseOver', {
             observation: obs,
             donor: _self.donors[xIndex],
@@ -188,7 +193,10 @@ MainGrid.prototype.render = function () {
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('path')
-        .attr('data-obs-index', function (d, i) { return i; })
+        .attr('data-obs-index', function (d, i) {
+          return d.donorId + ' ' + d.geneId;
+          // return i;
+        })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
@@ -673,7 +681,6 @@ MainGrid.prototype.defineRowDragBehaviour = function () {
 };
 
 MainGrid.prototype.createGeneMap = function () {
-  console.log('creating gene map');
     var _self = this;
     var geneMap = {};
     for (var i = 0; i < _self.genes.length; i += 1) {
