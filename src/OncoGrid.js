@@ -61,7 +61,6 @@ OncoGrid.prototype.initCharts = function(reloading) {
 
   _self.donors = _self.clonedParams.donors || [];
   _self.genes = _self.clonedParams.genes || [];
-  // _self.types = _self.clonedParams.types || [];
 
   _self.ssmObservations = _self.clonedParams.observations || [];   // change params to specify ssmObservations
   _self.cnvObservations = _self.clonedParams.cnvObservations || [];
@@ -142,23 +141,6 @@ OncoGrid.prototype.createLookupTable = function () {
     var geneId = obs.geneId;
     var type = obs.type;
 
-    // if (lookupTable.hasOwnProperty(donorId)) {
-    //   if (lookupTable[donorId].hasOwnProperty(geneId)) {
-    //     if (lookupTable[donorId][geneId].hasOwnProperty(type)) {
-    //       if (lookupTable[donorId][geneId])
-    //       lookupTable[donorId][geneId][type].push(obs.ids);
-    //     } else {
-    //       lookupTable[donorId][geneId][type] = [obs.ids];
-    //     }
-    //   } else {
-    //     lookupTable[donorId][geneId] = {};
-    //     lookupTable[donorId][geneId][type] = [obs.ids];
-    //   }
-    // } else {
-    //   lookupTable[donorId] = {};
-    //   lookupTable[donorId][geneId] = {};
-    //   lookupTable[donorId][geneId][type] = [obs.ids];
-    // }
     if (lookupTable.hasOwnProperty(type)) {
       if (lookupTable[type].hasOwnProperty(donorId)) {
         if (lookupTable[type][donorId].hasOwnProperty(geneId)) {
@@ -412,9 +394,9 @@ OncoGrid.prototype.mutationGeneScore = function(donor, gene) {
   var _self = this;
 
   if (_self.lookupTable['mutation'].hasOwnProperty(donor) && _self.lookupTable['mutation'][donor].hasOwnProperty(gene)) {
+    // genes are in nested arrays in the lookup table, need to flatten to get the correct count
     var totalGenes = [].concat.apply([], _self.lookupTable['mutation'][donor][gene]);
     return totalGenes.length;
-    // return _self.lookupTable['mutation'][donor][gene].length;
   } else {
     return 0;
   }
@@ -461,12 +443,10 @@ OncoGrid.prototype.computeDonorCounts = function() {
   var _self = this;
   for (var i = 0; i < _self.donors.length; i++) {
     var donor = _self.donors[i];
-    // var genes = values(_self.lookupTable['mutation'][donor.id] || {});
+    // genes are in nested arrays in the lookup table, need to flatten to get the correct count
     var genes = [].concat.apply([], values(_self.lookupTable['mutation'][donor.id]))
     donor.count = 0;
     for(var j = 0; j < genes.length; j++) {
-      // var mutatedGenes = [].concat.apply([], genes[j])
-      // donor.count += mutatedGenes.length;
       donor.count += genes[j].length;
     }
   }
