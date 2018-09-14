@@ -46,7 +46,7 @@ MainGrid = function (params, lookupTable, updateCallback, resizeCallback, x, y) 
     _self.geneHistogram = new OncoHistogram(params, _self.container, true);
     _self.geneTrack =
         new OncoTrack(params, _self.container, true, params.geneTracks, params.geneOpacityFunc,
-            params.geneFillFunc, updateCallback, _self.width + _self.histogramHeight * 2, _self.resizeCallback, _self.isFullscreen);
+            params.geneFillFunc, updateCallback, _self.width + (_self.histogramHeight * _self.numTypes), _self.resizeCallback, _self.isFullscreen);
     _self.geneTrack.init();
 
     _self.cnvGeneHistogram = new OncoHistogram(params, _self.container, true, 'cnv');
@@ -69,6 +69,8 @@ MainGrid.prototype.loadParams = function (params) {
     _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.cnvObservations.concat(_self.ssmObservations) || [];
+    if (_self.cnvObservations.length) { _self.types.push('cnv'); }
+    if (_self.ssmObservations.length) { _self.types.push('mutation'); }
 
     _self.wrapper = d3.select(params.wrapper || 'body');
 
@@ -83,9 +85,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.numDonors = _self.donors.length;
     _self.numGenes = _self.genes.length;
-
-    if (_self.cnvObservations.length) { _self.types.push('cnv'); }
-    if (_self.ssmObservations.length) { _self.types.push('mutation'); }
+    _self.numTypes = _self.types.length;
 
     _self.fullscreen = false;
 
@@ -219,25 +219,29 @@ MainGrid.prototype.render = function () {
 
     _self.emit('render:mainGrid:end');
 
-    _self.emit('render:donorHisogram:start');
-    _self.donorHistogram.render();
-    _self.emit('render:donorHisogram:end');
+    if (_self.cnvObservations.length) {
+      _self.emit('render:cnvDonorHistogram:start');
+      _self.cnvDonorHistogram.render();
+      _self.emit('render:cnvDonorHistogram:end');
 
-    _self.emit('render:cnvDonorHistogram:start');
-    _self.cnvDonorHistogram.render();
-    _self.emit('render:cnvDonorHisogram:end');
+      _self.emit('render:cnvGeneHistogram:start');
+      _self.cnvGeneHistogram.render();
+      _self.emit('render:cnvGeneHistogram:end');
+    }
+
+    if (_self.ssmObservations.length) {
+      _self.emit('render:donorHistogram:start');
+      _self.donorHistogram.render();
+      _self.emit('render:donorHistogram:end');
+
+      _self.emit('render:geneHistogram:start');
+      _self.geneHistogram.render();
+      _self.emit('render:geneHistogram:end');
+    }
 
     _self.emit('render:donorTrack:start');
     _self.donorTrack.render();
     _self.emit('render:donorTrack:end');
-
-    _self.emit('render:geneHistogram:start');
-    _self.geneHistogram.render();
-    _self.emit('render:geneHistogram:end');
-
-    _self.emit('render:cnvGeneHistogram:start');
-    _self.cnvGeneHistogram.render();
-    _self.emit('render:cnvGeneHistogram:end');
 
     _self.emit('render:geneTrack:start');
     _self.geneTrack.render();
@@ -257,7 +261,7 @@ MainGrid.prototype.update = function (x, y) {
 
     _self.x = x;
     _self.y = y;
-    console.log('updating')
+
     // Recalculate positions and dimensions of cells only on change in number of elements
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
@@ -281,7 +285,7 @@ MainGrid.prototype.update = function (x, y) {
             return 'translate( 0, ' + d.y + ')';
         });
 
-    for (var i = 0; i < _self.types.length; i++) {
+    for (var i = 0; i < _self.numTypes; i++) {
         _self.container.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
             .transition()
             .attr('d', function (d) {
@@ -292,12 +296,17 @@ MainGrid.prototype.update = function (x, y) {
             })
     }
 
-    _self.donorHistogram.update(_self.donors);
-    _self.cnvDonorHistogram.update(_self.donors);
-    _self.donorTrack.update(_self.donors);
+    if (_self.ssmObservations.length) {
+      _self.donorHistogram.update(_self.donors);
+      _self.geneHistogram.update(_self.genes);
+    }
 
-    _self.geneHistogram.update(_self.genes);
-    _self.cnvGeneHistogram.update(_self.genes);
+    if (_self.cnvObservations.length) {
+      _self.cnvDonorHistogram.update(_self.donors);
+      _self.cnvGeneHistogram.update(_self.genes);
+    }
+
+    _self.donorTrack.update(_self.donors);
     _self.geneTrack.update(_self.genes);
 };
 
@@ -394,26 +403,31 @@ MainGrid.prototype.resize = function (width, height, x, y) {
 
     _self.computeCoordinates();
 
-    _self.donorHistogram.resize(width, _self.height);
-    _self.cnvDonorHistogram.resize(width, _self.height);
-    _self.donorTrack.resize(width, _self.height, _self.height);
+    if (_self.ssmObservations.length) {
+      _self.donorHistogram.resize(width, _self.height);
+      _self.geneHistogram.resize(width, _self.height);
+    }
 
-    _self.geneHistogram.resize(width, _self.height);
-    _self.cnvGeneHistogram.resize(width, _self.height);
+    if (_self.cnvObservations.length) {
+      _self.cnvDonorHistogram.resize(width, _self.height);
+      _self.cnvGeneHistogram.resize(width, _self.height);
+    }
+
+    _self.donorTrack.resize(width, _self.height, _self.height);
     _self.geneTrack.resize(width, _self.height, _self.width + _self.histogramHeight + 120);
 
     _self.resizeSvg();
     _self.update(_self.x, _self.x);
 
     _self.verticalCross.attr('y2', _self.height + _self.donorTrack.height);
-    _self.horizontalCross.attr('x2', _self.width + _self.histogramHeight * 2 + _self.geneTrack.height);
+    _self.horizontalCross.attr('x2', _self.width + (_self.histogramHeight * _self.numTypes) + _self.geneTrack.height);
 };
 
 MainGrid.prototype.resizeSvg = function () {
     var _self = this;
-    var width = _self.margin.left + _self.leftTextWidth + _self.width + _self.histogramHeight * 2 + _self.geneTrack.height + _self.margin.right;
+    var width = _self.margin.left + _self.leftTextWidth + _self.width + (_self.histogramHeight * _self.numTypes) + _self.geneTrack.height + _self.margin.right;
 
-    var height = _self.margin.top + _self.histogramHeight * 2 + _self.height + _self.donorTrack.height + _self.margin.bottom;
+    var height = _self.margin.top + (_self.histogramHeight * _self.numTypes) + _self.height + _self.donorTrack.height + _self.margin.bottom;
 
     _self.canvas
         .attr('width', width)
@@ -430,7 +444,7 @@ MainGrid.prototype.resizeSvg = function () {
     _self.container
         .attr('transform', 'translate(' +
             (_self.margin.left + _self.leftTextWidth) + ',' +
-            (_self.margin.top + _self.histogramHeight * 2) +
+            (_self.margin.top + (_self.histogramHeight * _self.numTypes)) +
             ')');
 };
 
@@ -719,6 +733,7 @@ MainGrid.prototype.getY = function (d) {
  */
 MainGrid.prototype.getCellX = function (d) {
   var _self = this;
+
   var x = _self.lookupTable[d.type][d.donorId].x;
 
   if (!_self.heatMap && d.type === 'mutation') {
@@ -831,7 +846,7 @@ MainGrid.prototype.setHeatmap = function (active) {
     _self.heatMap = active;
 
 // are we showing cnv on heatmap yet?
-    for (var i = 0; i < _self.types.length; i++) {
+    for (var i = 0; i < _self.numTypes; i++) {
       d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
         .transition()
       // .append('rect')
