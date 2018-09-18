@@ -62,7 +62,7 @@ OncoGrid.prototype.initCharts = function(reloading) {
   _self.donors = _self.clonedParams.donors || [];
   _self.genes = _self.clonedParams.genes || [];
 
-  _self.ssmObservations = _self.clonedParams.observations || [];   // change params to specify ssmObservations
+  _self.ssmObservations = _self.clonedParams.ssmObservations || [];
   _self.cnvObservations = _self.clonedParams.cnvObservations || [];
   _self.observations = _self.ssmObservations.concat(_self.cnvObservations) || [];
   _self.types = [];

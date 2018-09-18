@@ -66,7 +66,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.donors = params.donors || [];
     _self.genes = params.genes || [];
     _self.types = [];
-    _self.ssmObservations = params.observations || []; // change params to specify ssmObservations
+    _self.ssmObservations = params.ssmObservations || [];
     _self.cnvObservations = params.cnvObservations || [];
     _self.observations = _self.cnvObservations.concat(_self.ssmObservations) || [];
     if (_self.cnvObservations.length) { _self.types.push('cnv'); }
@@ -169,6 +169,7 @@ MainGrid.prototype.render = function () {
         var obs = _self.observations.filter(function (o) {
           return o.donorId === obsIds[0] && o.geneId === obsIds[1];
         })
+
         // var obs = _self.observations[target.dataset.obsIndex];
         // if (!obs || _self.crosshair) return;
         _self.emit('gridMouseOver', {
@@ -748,8 +749,7 @@ MainGrid.prototype.getCellX = function (d) {
  */
 MainGrid.prototype.getColor = function (d) {
     var _self = this;
-    var colorKey = d.type === 'cnv' ? d.cnv_change : d.consequence;
-
+    var colorKey = d.type === 'cnv' ? d.cnvChange : d.consequence;
     if (_self.heatMap === true) {
         return '#D33682';
     } else {
@@ -812,7 +812,7 @@ MainGrid.prototype.getCellWidth = function (d) {
 MainGrid.prototype.getValueByType = function (d) {
   var _self = this;
   if (d.type === 'cnv') {
-    return d.cnv_change;
+    return d.cnvChange;
   }
   return d.consequence;
 }
