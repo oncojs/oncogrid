@@ -170,8 +170,6 @@ MainGrid.prototype.render = function () {
           return o.donorId === obsIds[0] && o.geneId === obsIds[1];
         })
 
-        // var obs = _self.observations[target.dataset.obsIndex];
-        // if (!obs || _self.crosshair) return;
         _self.emit('gridMouseOver', {
             observation: obs,
             donor: _self.donors[xIndex],
@@ -184,19 +182,21 @@ MainGrid.prototype.render = function () {
     });
 
     _self.svg.on('click', function () {
-        var observation = _self.observations[d3.event.target.dataset.obsIndex];
+        var obsIds = d3.event.target.dataset.obsIndex && d3.event.target.dataset.obsIndex.split(' ');
+        if (!obsIds) return;
+
+        var observation = _self.observations.filter(function (o) {
+          return o.donorId === obsIds[0] && o.geneId === obsIds[1];
+        })
         if (!observation) return;
-        _self.emit('gridClick', { observation: observation });
+        _self.emit('gridClick', { donorId: obsIds[0], geneId: obsIds[1] });
     });
-
-
 
     _self.container.selectAll('.' + _self.prefix + 'maingrid-svg')
         .data(_self.observations).enter()
         .append('path')
         .attr('data-obs-index', function (d, i) {
           return d.donorId + ' ' + d.geneId;
-          // return i;
         })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
