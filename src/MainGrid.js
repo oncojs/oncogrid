@@ -476,7 +476,6 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-
                 // obs: _self.nullableObsLookup(donor, gene),
             });
         }
@@ -730,7 +729,6 @@ MainGrid.prototype.getY = function (d) {
 
 /**
  * Function that determines the x position of a mutation or cnv within a cell
- * move x position one half cell width if type is cnv and there are 2 sets of data
  */
 MainGrid.prototype.getCellX = function (d) {
   var _self = this;
@@ -849,7 +847,6 @@ MainGrid.prototype.setHeatmap = function (active) {
     for (var i = 0; i < _self.numTypes; i++) {
       d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
         .transition()
-      // .append('rect')
       .attr('d', function (d) {
         if (d.type === 'cnv' || _self.heatMap) {
           return _self.getRectangularPath(d);
