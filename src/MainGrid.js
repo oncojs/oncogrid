@@ -117,6 +117,7 @@ MainGrid.prototype.loadParams = function (params) {
 
     _self.drawGridLines = params.grid || false;
     _self.crosshair = false;
+    _self.heatMapColor = params.heatMapColor || '#D33682';
 };
 
 /**
@@ -749,7 +750,7 @@ MainGrid.prototype.getColor = function (d) {
     var _self = this;
     var colorKey = d.type === 'cnv' ? d.cnvChange : d.consequence;
     if (_self.heatMap === true) {
-        return '#D33682';
+        return _self.heatMapColor;
     } else {
       return _self.colorMap[d.type][colorKey];
     }
