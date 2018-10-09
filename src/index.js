@@ -17,4 +17,4 @@
 
 "use strict";
 
-// window.OncoGrid = require('./OncoGrid');
+window.OncoGrid = require('./OncoGrid');

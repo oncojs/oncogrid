@@ -93,7 +93,7 @@ MainGrid.prototype.loadParams = function (params) {
         return _self.fullscreen;
     };
 
-    _self.getCNVCellWidth = function(){
+    _self.getCellWidth = function(){
         return _self.width / _self.donors.length;
     }
 
@@ -102,7 +102,7 @@ MainGrid.prototype.loadParams = function (params) {
     _self.inputWidth = params.width || 500;
     _self.inputHeight = params.height || 500;
 
-    _self.cellWidth = _self.getCNVCellWidth();
+    _self.cellWidth = _self.getCellWidth();
 
     _self.cellHeight = _self.height / _self.numGenes;
 
@@ -268,7 +268,7 @@ MainGrid.prototype.update = function (x, y) {
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
         _self.numGenes = _self.genes.length;
-        _self.cellWidth = _self.getCNVCellWidth();
+        _self.cellWidth = _self.getCellWidth();
         _self.cellHeight = _self.height / _self.genes.length;
         _self.computeCoordinates();
     } else {
@@ -319,7 +319,7 @@ MainGrid.prototype.update = function (x, y) {
 MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
-    _self.cellWidth = _self.getCNVCellWidth();
+    _self.cellWidth = _self.getCellWidth();
 
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
@@ -391,7 +391,7 @@ MainGrid.prototype.resize = function (width, height, x, y) {
     _self.width = width;
     _self.height = height;
 
-    _self.cellWidth = _self.getCNVCellWidth();
+    _self.cellWidth = _self.getCellWidth();
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight < _self.minCellHeight) {
@@ -477,7 +477,6 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
                 gene: gene,
-                // obs: _self.nullableObsLookup(donor, gene),
             });
         }
     };
@@ -596,6 +595,7 @@ MainGrid.prototype.finishSelection = function () {
         _self.updateCallback(true);
 
         // _self.crosshair = false; // this needs to be updated in frontend state
+        // emit event to ui
 
     }
 };
@@ -715,10 +715,6 @@ MainGrid.prototype.getY = function (d) {
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
-      var yReposition = _self.getHeight(d)/2
-      // if (_self.cellHeight < _self.cellWidth) {
-      //   yReposition = _self.getCellWidth(d)/2;
-      // }
       var yPosition = y + _self.cellHeight/2;
       if (yPosition < 0) {
         return 0;
@@ -764,9 +760,6 @@ MainGrid.prototype.getOpacity = function (d) {
     var _self = this;
 
     if (_self.heatMap === true) {
-        // if (d.type === 'cnv') {
-        //   return 0;
-        // }
         return 0.25;
     } else {
         return 1;
@@ -844,7 +837,6 @@ MainGrid.prototype.setHeatmap = function (active) {
     if (active === _self.heatMap) return _self.heatMap;
     _self.heatMap = active;
 
-// are we showing cnv on heatmap yet?
     for (var i = 0; i < _self.numTypes; i++) {
       d3.selectAll('.' + _self.prefix + 'sortable-rect-' + _self.types[i])
         .transition()
