@@ -93,16 +93,12 @@ MainGrid.prototype.loadParams = function (params) {
         return _self.fullscreen;
     };
 
-    _self.getCellWidth = function(){
-        return _self.width / _self.donors.length;
-    }
-
     _self.width = params.width || 500;
     _self.height = params.height || 500;
     _self.inputWidth = params.width || 500;
     _self.inputHeight = params.height || 500;
 
-    _self.cellWidth = _self.getCellWidth();
+    _self.cellWidth = _self.width / _self.donors.length;
 
     _self.cellHeight = _self.height / _self.numGenes;
 
@@ -268,7 +264,7 @@ MainGrid.prototype.update = function (x, y) {
     if (_self.numDonors !== _self.donors.length || _self.numGenes !== _self.genes.length) {
         _self.numDonors = _self.donors.length;
         _self.numGenes = _self.genes.length;
-        _self.cellWidth = _self.getCellWidth();
+        _self.cellWidth = _self.width / _self.donors.length;
         _self.cellHeight = _self.height / _self.genes.length;
         _self.computeCoordinates();
     } else {
@@ -319,7 +315,7 @@ MainGrid.prototype.update = function (x, y) {
 MainGrid.prototype.computeCoordinates = function () {
     var _self = this;
 
-    _self.cellWidth = _self.getCellWidth();
+    _self.cellWidth = _self.width / _self.donors.length;
 
     if (typeof _self.column !== 'undefined') {
         _self.column.remove();
@@ -391,7 +387,7 @@ MainGrid.prototype.resize = function (width, height, x, y) {
     _self.width = width;
     _self.height = height;
 
-    _self.cellWidth = _self.getCellWidth();
+    _self.cellWidth = _self.width / _self.donors.length;
     _self.cellHeight = _self.height / _self.genes.length;
 
     if (_self.cellHeight < _self.minCellHeight) {
