@@ -161,11 +161,11 @@ MainGrid.prototype.render = function () {
         var xIndex = _self.rangeToDomain(_self.x, coord[0]);
         var yIndex = _self.rangeToDomain(_self.y, coord[1]);
 
-        if (!target.dataset.obsIndex || _self.crosshair) return;
-        var obsIds = target.dataset.obsIndex.split(' ')
+        if (!target.dataset.obsIndex || _self.crosshair) { return; }
+        var obsIds = target.dataset.obsIndex.split(' ');
         var obs = _self.observations.filter(function (o) {
           return o.donorId === obsIds[0] && o.geneId === obsIds[1];
-        })
+        });
 
         _self.emit('gridMouseOver', {
             observation: obs,
@@ -180,12 +180,12 @@ MainGrid.prototype.render = function () {
 
     _self.svg.on('click', function () {
         var obsIds = d3.event.target.dataset.obsIndex && d3.event.target.dataset.obsIndex.split(' ');
-        if (!obsIds) return;
+        if (!obsIds) { return; }
 
         var observation = _self.observations.filter(function (o) {
-          return o.donorId === obsIds[0] && o.geneId === obsIds[1];
+            return o.donorId === obsIds[0] && o.geneId === obsIds[1];
         })
-        if (!observation) return;
+        if (!observation) { return; }
         _self.emit('gridClick', { donorId: obsIds[0], geneId: obsIds[1] });
     });
 
@@ -193,19 +193,19 @@ MainGrid.prototype.render = function () {
         .data(_self.observations).enter()
         .append('path')
         .attr('data-obs-index', function (d, i) {
-          return d.donorId + ' ' + d.geneId;
+            return d.donorId + ' ' + d.geneId;
         })
         .attr('class', function (d) {
             return _self.prefix + 'sortable-rect-' + d.type + ' ' + _self.prefix + d.donorId + '-cell ' + _self.prefix + d.geneId + '-cell';
         })
         .attr('cons', function (d) {
-            return _self.getValueByType(d)
+            return _self.getValueByType(d);
         })
         .attr('d', function (d) {
-          if (d.type === 'cnv' || _self.heatMap) {
-            return _self.getRectangularPath(d);
-          }
-          return _self.getCircularPath(d);
+            if (d.type === 'cnv' || _self.heatMap) {
+              return _self.getRectangularPath(d);
+            }
+            return _self.getCircularPath(d);
         })
         .attr('fill', function (d) {
             return _self.getColor(d);
@@ -371,7 +371,7 @@ MainGrid.prototype.computeCoordinates = function () {
             }
         })
         .text(function (d, i) {
-            return _self.genes[i].symbol
+            return _self.genes[i].symbol;
         })
 
     _self.defineRowDragBehaviour();
@@ -468,7 +468,7 @@ MainGrid.prototype.defineCrosshairBehaviour = function () {
             var donor = _self.donors[xIndex];
             var gene = _self.genes[yIndex];
 
-            if (!donor || !gene) return;
+            if (!donor || !gene) { return; }
 
             _self.emit('gridCrosshairMouseOver', {
                 donor: donor,
@@ -732,7 +732,7 @@ MainGrid.prototype.getCellX = function (d) {
     return x + (_self.cellWidth/4);
   }
   return x;
-}
+};
 
 /**
  * Returns the color for the given observation.
@@ -838,7 +838,7 @@ MainGrid.prototype.setHeatmap = function (active) {
         .transition()
       .attr('d', function (d) {
         if (d.type === 'cnv' || _self.heatMap) {
-          return _self.getRectangularPath(d);
+            return _self.getRectangularPath(d);
         }
         return _self.getCircularPath(d);
       })

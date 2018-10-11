@@ -444,7 +444,7 @@ OncoGrid.prototype.computeDonorCounts = function() {
   for (var i = 0; i < _self.donors.length; i++) {
     var donor = _self.donors[i];
     // genes are in nested arrays in the lookup table, need to flatten to get the correct count
-    var genes = [].concat.apply([], values(_self.lookupTable['mutation'][donor.id]))
+    var genes = [].concat.apply([], values(_self.lookupTable['mutation'][donor.id]));
     donor.count = 0;
     for(var j = 0; j < genes.length; j++) {
       donor.count += genes[j].length;
