@@ -184,7 +184,7 @@ MainGrid.prototype.render = function () {
 
         var observation = _self.observations.filter(function (o) {
             return o.donorId === obsIds[0] && o.geneId === obsIds[1];
-        })
+        });
         if (!observation) { return; }
         _self.emit('gridClick', { donorId: obsIds[0], geneId: obsIds[1] });
     });
@@ -706,8 +706,6 @@ MainGrid.prototype.createGeneMap = function () {
 MainGrid.prototype.getY = function (d) {
     var _self = this;
 
-    // failing when some filters are removed, or a filter is re-added. related to caching at all?
-    if (!_self.geneMap[d.geneId]) { debugger; }
     var y = _self.geneMap[d.geneId].y;
 
     if (!_self.heatMap && d.type === 'mutation') {
@@ -792,7 +790,7 @@ MainGrid.prototype.getCellWidth = function (d) {
       return _self.cellHeight/4;
     }
     return _self.cellWidth/4;
-}
+};
 
 /**
  * Returns the correct observation value based on the data type.
@@ -803,7 +801,7 @@ MainGrid.prototype.getValueByType = function (d) {
     return d.cnvChange;
   }
   return d.consequence;
-}
+};
 
 /**
 * Returns circular path based on cell dimensions
@@ -813,7 +811,7 @@ MainGrid.prototype.getCircularPath = function (d) {
   var x1 = _self.getCellX(d);
   var y1 = _self.getY(d);
   return 'M ' + (x1 + _self.cellWidth/4) + ', ' + y1 + ' m ' + (-1 * _self.getCellWidth(d)) + ', 0 ' + 'a ' + _self.getCellWidth(d) + ', ' + _self.getCellWidth(d) + ' 0 1,0 ' + (2 * _self.getCellWidth(d)) + ',0 a ' + _self.getCellWidth(d) + ',' + _self.getCellWidth(d) + ' 0 1,0 ' + (-1 * (2 *_self.getCellWidth(d))) + ',0';
-}
+};
 
 /**
 * Returns rectangular path based on cell dimensions
@@ -823,7 +821,7 @@ MainGrid.prototype.getRectangularPath = function (d) {
   var x1 = _self.getCellX(d);
   var y1 = _self.getY(d);
   return 'M ' + x1 + ' ' + y1 + ' H ' + (x1 + _self.cellWidth) + ' V ' + (y1 + _self.getHeight(d)) + ' H ' + x1 + 'Z';
-}
+};
 
 /**
  * set the observation rects between heatmap and regular mode.
